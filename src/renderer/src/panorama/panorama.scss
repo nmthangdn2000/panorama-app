@@ -1,0 +1,260 @@
+#viewer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  .psv-navbar,
+  .psv-loader-container {
+    display: none;
+  }
+  &.active {
+    pointer-events: all;
+    opacity: 1;
+  }
+
+  .btn-remove-marker {
+    position: absolute;
+    top: 0;
+    right: -20px;
+    background-color: #fff;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 100%;
+    color: red;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+
+    &:hover {
+      background-color: red;
+      color: #fff;
+    }
+  }
+
+  #panorama-image-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    width: 100vw;
+    height: 100vh;
+    opacity: 1;
+    transform: scale(1);
+    transition: all 0.7s ease-in-out;
+    pointer-events: none;
+  }
+
+  #panorama-texture-transition {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 10;
+    width: 100vw;
+    height: 100vh;
+    opacity: 1;
+    transition: all 0.7s ease-in-out;
+    pointer-events: none;
+  }
+}
+
+#section-new-hotspot {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1000;
+  width: 100vw;
+  height: 100vh;
+  transition: all 0.7s ease-in-out;
+  background: rgba(143, 143, 143, 0.6);
+
+  .form {
+    width: 300px;
+    height: auto;
+    border-radius: 8px;
+    padding: 16px;
+    background-color: white;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+
+    & > div {
+      display: flex;
+      gap: 8px;
+    }
+
+    & > div:last-child {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      align-items: center;
+
+      & > button {
+        border-radius: 8px;
+        width: 120px;
+        padding: 4px;
+        background-color: #f0f0f0;
+      }
+    }
+  }
+}
+
+#toolbar_debug {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  background-color: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px;
+
+  & > div:first-child {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
+    & > div {
+      width: 30px;
+      height: 30px;
+    }
+  }
+
+  & > div:nth-child(2) {
+    color: #fff;
+  }
+
+  .btn_option_toolbar {
+    background-color: #fff;
+    border-radius: 8px;
+    transition: all 0.3s ease-in-out;
+    font-size: 14px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    &:hover {
+      cursor: pointer;
+      background-color: #f7ee7b;
+    }
+
+    &.active {
+      background-color: #ffee00;
+    }
+  }
+
+  #btn_export_data_panorama {
+    padding: 4px 8px;
+  }
+}
+
+#debug_screen_center_viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+  border: 4px solid red;
+  pointer-events: none;
+}
+
+/*  */
+.hotspot {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+}
+
+.hotspot.arrow .hotspot-arrow {
+  transform: rotate(180deg);
+}
+
+.hotspot.arrow > .title-marker {
+  position: absolute;
+  bottom: 100%;
+  width: max-content;
+  transition: all 0.3s ease-in-out;
+  pointer-events: none;
+  transform: translateY(-50%);
+  pointer-events: all;
+
+  .hotspot-label {
+    pointer-events: all;
+    padding: 3px;
+    position: relative;
+
+    ::after {
+      content: '';
+      border-color: #000;
+    }
+
+    ::before {
+      border-color: #000;
+    }
+
+    & > div {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #121212;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.6);
+      padding: 1px 10px 1px 10px;
+      height: 24px;
+      transition: all 0.3s ease-in-out;
+      width: max-content;
+      font-weight: 600;
+
+      &:hover {
+        background: var(--grey, rgba(143, 143, 143, 0.8)) !important;
+        cursor: pointer;
+        color: #fff;
+      }
+    }
+  }
+}
+
+.hotspot.arrow > .title-marker::before {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translate(-50%, 99%);
+  border: 10px solid transparent;
+  border-top-color: #000;
+}
+
+/* .hotspot.arrow:hover > .title-marker {
+   opacity: 1;
+   transform: translateY(0%);
+   pointer-events: all;
+ } */
+
+.hotspot.change:hover stop {
+  stop-color: white;
+}
+
+.hotspot-arrow {
+  pointer-events: none;
+}
+
+/*  */
