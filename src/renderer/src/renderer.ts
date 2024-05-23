@@ -1,6 +1,4 @@
 import 'flowbite';
-import openDirectory from './open-directory/open-directory';
-import renderPanorama from './render-panorama/render-panorama';
 
 function init(): void {
   window.addEventListener('DOMContentLoaded', () => {
@@ -8,9 +6,6 @@ function init(): void {
   });
 }
 
-function doAThing(): void {
-  openDirectory();
-  renderPanorama();
-}
+function doAThing(): void {}
 
 init();

@@ -1,8 +1,9 @@
 import { ElectronAPI } from '@electron-toolkit/preload';
-import { FileType } from '../main/panorama/panorama.d';
+import { FileType } from '../main/project-panorama/handle';
+import { ProjectPanoramaApi } from './project-panorama';
 
 export type Api = {
-  selectFolder: () => Promise<FileType[] | undefined>;
+  projectPanorama: ProjectPanoramaApi;
 };
 
 declare global {

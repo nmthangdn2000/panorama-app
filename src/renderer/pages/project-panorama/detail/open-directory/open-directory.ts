@@ -1,4 +1,4 @@
-import { WINDOW } from '../../common/constant';
+import { WINDOW } from '../../../../common/constant';
 import { viewerPanorama } from '../render-panorama/render-panorama';
 import { itemImagePanorama } from './html';
 
@@ -6,7 +6,7 @@ WINDOW.panoramas = [];
 
 const openDirectory = () => {
   document.getElementById('btn-open-dialog')!.addEventListener('click', async () => {
-    const folderPath = await window.api.selectFolder();
+    const folderPath = await window.api.projectPanorama.selectFolder();
 
     if (!folderPath) return;
 
@@ -14,9 +14,7 @@ const openDirectory = () => {
 
     document.getElementById('btn-render-panorama')!.removeAttribute('disabled');
 
-    const imagePanoramaContainer = document.getElementById(
-      'image-panorama-container',
-    )! as HTMLDivElement;
+    const imagePanoramaContainer = document.getElementById('image-panorama-container')! as HTMLDivElement;
 
     const html = folderPath.map((path, index) => {
       WINDOW.panoramas.push({

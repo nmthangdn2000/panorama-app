@@ -1,8 +1,10 @@
-import { PanoramaDataType } from '../src/panorama/panorama.type';
+import { ProjectPanorama } from '../../main/project-panorama/type';
+import { PanoramaDataType } from '../pages/project-panorama/detail/lib-panorama/panorama.type';
 
 type WindowType = {
   onMarkerClick: (id: number, markerId: string) => void;
   panoramas: PanoramaDataType[];
+  projectRemove: ProjectPanorama;
 } & typeof window;
 
 export const WINDOW: WindowType = window as WindowType;

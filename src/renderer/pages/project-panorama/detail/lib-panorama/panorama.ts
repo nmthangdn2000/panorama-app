@@ -14,7 +14,7 @@ import {
 import './panorama.scss';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/markers-plugin/index.css';
-import { WINDOW } from '../../common/constant';
+import { WINDOW } from '../../../../common/constant';
 
 export const CURRENT_TIME_MS = '1710909225459';
 

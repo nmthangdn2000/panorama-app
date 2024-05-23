@@ -1,10 +1,11 @@
-import { contextBridge, ipcRenderer } from 'electron';
+import { contextBridge } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
 import { Api } from './index.d';
+import * as projectPanorama from './project-panorama';
 
 // Custom APIs for renderer
 const api: Api = {
-  selectFolder: () => ipcRenderer.invoke('dialog:openDirectory')
+  projectPanorama,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

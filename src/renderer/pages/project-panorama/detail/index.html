@@ -9,7 +9,7 @@
       content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
     /> -->
 
-    <link href="./assets/scss/main.scss" type="text/css" rel="stylesheet" />
+    <link href="../../assets/scss/main.scss" type="text/css" rel="stylesheet" />
   </head>
 
   <body data-theme="light">
@@ -36,7 +36,7 @@
           ></path>
         </svg>
       </button>
-      <div></div>
+      <div>Dự Án Panorama ABC</div>
       <div></div>
     </div>
 
@@ -46,20 +46,20 @@
       aria-label="Sidebar"
     >
       <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
-        <a href="/" class="flex items-center ps-2.5 mb-5">
+        <a href="https://flowbite.com/" class="flex items-center ps-2.5 mb-5">
           <img
-            src="/assets/images/main_photo.jpg"
-            class="h-12 me-3 rounded-full"
+            src="https://flowbite.com/docs/images/logo.svg"
+            class="h-6 me-3 xl:h-7"
             alt="Flowbite Logo"
           />
           <span class="self-center text-xl font-semibold whitespace-nowrap dark:text-white"
-            >Thắng Nguyễn</span
+            >Flowbite</span
           >
         </a>
         <ul class="space-y-2 font-medium">
           <li>
             <a
-              href="/pages/project-panorama/index.html"
+              href="/pages/panorama.html"
               class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
             >
               <svg
@@ -76,7 +76,7 @@
                   d="M12.5 0c-.157 0-.311.01-.565.027A1 1 0 0 0 11 1.02V10h8.975a1 1 0 0 0 1-.935c.013-.188.028-.374.028-.565A8.51 8.51 0 0 0 12.5 0Z"
                 />
               </svg>
-              <span class="ms-3">Panorama</span>
+              <span class="ms-3">Dashboard</span>
             </a>
           </li>
           <li>
@@ -213,11 +213,52 @@
       </div>
     </aside>
 
-    <div class="p-4 xl:ml-64">
-      <!-- <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-      </div> -->
+    <div class="p-4">
+      <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
+        <div class="flex justify-between">
+          <button
+            id="btn-open-dialog"
+            type="button"
+            class="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-full border border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+          >
+            Chọn thư mục ảnh Panorama
+          </button>
+          <button
+            id="btn-render-panorama"
+            type="button"
+            class="text-white disabled:cursor-not-allowed disabled:bg-green-400 bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-full text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+          >
+            Render panorama
+          </button>
+        </div>
+
+        <div class="flex flex-col gap-4" id="image-panorama-container"></div>
+      </div>
     </div>
 
-    <script type="module" src="./src/renderer.ts"></script>
+    <!-- Modal toggle -->
+    <button
+      data-modal-target="default-modal"
+      data-modal-toggle="default-modal"
+      class="hidden text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+      type="button"
+      id="btn-toggle-modal-panorama"
+    >
+      Toggle modal
+    </button>
+
+    <!-- Main modal -->
+    <div
+      id="default-modal"
+      tabindex="-1"
+      aria-hidden="true"
+      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full"
+    >
+      <div class="relative p-4 w-full h-full bg-white">
+        <section id="viewer"></section>
+      </div>
+    </div>
+
+    <script type="module" src="./detail.ts"></script>
   </body>
 </html>
