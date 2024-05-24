@@ -39,7 +39,12 @@ export class DebuggerPanorama {
     this.setMarkers = setMarkers;
     this.setAnimationToBtnArrow = setAnimationToBtnArrow;
 
+    this.toggleDebugMode();
     this.openAndCloseDebugModeWithKey();
+  }
+
+  setDataPanoramaExport(panorama: PanoramaDataType[]) {
+    this.panoramaExport = panorama;
   }
 
   getDebugMode() {
@@ -52,19 +57,23 @@ export class DebuggerPanorama {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'd') {
         this.debugMode = !this.debugMode;
 
-        const currentPanorama = this.getCurrentPanorama();
-        if (currentPanorama) this.setMarkers(currentPanorama);
-
-        if (this.debugMode) {
-          this.createToolbarDebug();
-          this.registerEvents();
-        } else {
-          document.getElementById('toolbar_debug')?.remove();
-          this.viewer.setCursor('all-scroll');
-          this.unregisterEvents();
-        }
+        this.toggleDebugMode();
       }
     });
+  }
+
+  private toggleDebugMode() {
+    const currentPanorama = this.getCurrentPanorama();
+    if (currentPanorama) this.setMarkers(currentPanorama);
+
+    if (this.debugMode) {
+      this.createToolbarDebug();
+      this.registerEvents();
+    } else {
+      document.getElementById('toolbar_debug')?.remove();
+      this.viewer.setCursor('all-scroll');
+      this.unregisterEvents();
+    }
   }
 
   private registerEvents() {
@@ -81,9 +90,7 @@ export class DebuggerPanorama {
   private handleClickViewer({ data }: any) {
     if (!data) return;
 
-    console.log(
-      `${data.rightclick ? 'right ' : ''}clicked at yaw: ${data.yaw} pitch: ${data.pitch}`,
-    );
+    console.log(`${data.rightclick ? 'right ' : ''}clicked at yaw: ${data.yaw} pitch: ${data.pitch}`);
     console.log({
       yaw: data.yaw,
       pitch: data.pitch,
@@ -170,8 +177,7 @@ export class DebuggerPanorama {
       btnAddHotSpot.classList.add('active');
       this.viewer.setCursor('crosshair');
       this.isAddHotSpot = true;
-      document.getElementById('debug_info_option')!.textContent =
-        'Click on the panorama to add a new hotspot';
+      document.getElementById('debug_info_option')!.textContent = 'Click on the panorama to add a new hotspot';
       this.viewer.addEventListener('click', this.functionClick);
     });
   }
@@ -193,8 +199,7 @@ export class DebuggerPanorama {
       const centerElement = document.createElement('div');
       centerElement.id = 'debug_screen_center_viewer';
       this.isOriginalPerspective = true;
-      document.getElementById('debug_info_option')!.textContent =
-        'Press "space" to save the current perspective';
+      document.getElementById('debug_info_option')!.textContent = 'Press "space" to save the current perspective';
       document.removeEventListener('keydown', this.functionEscKey);
       document.addEventListener('keydown', this.functionSpaceKey);
 
@@ -299,43 +304,29 @@ export class DebuggerPanorama {
     btnRemove.onclick = () => {
       markersPlugin.clearMarkers();
 
-      const markerIndex = this.panoramas.findIndex(
-        (panorama) => panorama.id === currentPanorama.id,
-      );
+      const markerIndex = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
       if (markerIndex < 0) return;
 
-      const markerIndexRemove = this.panoramas[markerIndex].markers.findIndex(
-        (m) => m.id === marker.id,
-      );
+      const markerIndexRemove = this.panoramas[markerIndex].markers.findIndex((m) => m.id === marker.id);
       if (markerIndexRemove < 0) return;
 
       this.panoramas[markerIndex].markers.splice(markerIndexRemove, 1);
-      this.panoramas[markerIndex].markers = this.panoramas[markerIndex].markers.map(
-        (marker, index) => {
-          return {
-            ...marker,
-            id: `marker${currentPanorama.id}-${index + 1}`,
-            html: marker.html?.replace(
-              /marker\d+-\d+/g,
-              `marker${currentPanorama.id}-${index + 1}`,
-            ),
-          };
-        },
-      );
+      this.panoramas[markerIndex].markers = this.panoramas[markerIndex].markers.map((marker, index) => {
+        return {
+          ...marker,
+          id: `marker${currentPanorama.id}-${index + 1}`,
+          html: marker.html?.replace(/marker\d+-\d+/g, `marker${currentPanorama.id}-${index + 1}`),
+        };
+      });
 
       this.panoramaExport[markerIndex].markers.splice(markerIndexRemove, 1);
-      this.panoramaExport[markerIndex].markers = this.panoramaExport[markerIndex].markers.map(
-        (marker, index) => {
-          return {
-            ...marker,
-            id: `marker${currentPanorama.id}-${index + 1}`,
-            html: marker.html?.replace(
-              /marker\d+-\d+/g,
-              `marker${currentPanorama.id}-${index + 1}`,
-            ),
-          };
-        },
-      );
+      this.panoramaExport[markerIndex].markers = this.panoramaExport[markerIndex].markers.map((marker, index) => {
+        return {
+          ...marker,
+          id: `marker${currentPanorama.id}-${index + 1}`,
+          html: marker.html?.replace(/marker\d+-\d+/g, `marker${currentPanorama.id}-${index + 1}`),
+        };
+      });
 
       navigator.clipboard?.writeText(JSON.stringify(this.panoramas));
 

@@ -4,17 +4,11 @@ import { GyroscopePlugin } from '@photo-sphere-viewer/gyroscope-plugin';
 import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 import Lottie from 'lottie-web';
 import { DebuggerPanorama } from './debugger.panorama';
-import {
-  EventListenerType,
-  PanoramaOptionsType,
-  PanoramaDataType,
-  PanoramaType,
-} from './panorama.type';
+import { EventListenerType, PanoramaOptionsType, PanoramaDataType, PanoramaType } from './panorama.type';
 
 import './panorama.scss';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/markers-plugin/index.css';
-import { WINDOW } from '../../../../common/constant';
 
 export const CURRENT_TIME_MS = '1710909225459';
 
@@ -35,12 +29,7 @@ export class Panorama implements PanoramaType {
    * const panorama = new Panorama(document.querySelector('#viewer')! as any, PANORAMA);
    * panorama.swapPanorama(1);
    */
-  constructor(
-    container: string | HTMLElement,
-    panoramas: PanoramaDataType[],
-    panoramaImport: PanoramaDataType[],
-    options?: PanoramaOptionsType,
-  ) {
+  constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], panoramaImport: PanoramaDataType[], options?: PanoramaOptionsType) {
     this.viewer = new Viewer({
       container,
       adapter: EquirectangularAdapter,
@@ -78,6 +67,14 @@ export class Panorama implements PanoramaType {
       this.__setMarkers.bind(this),
       this.__setAnimationToBtnArrow.bind(this),
     );
+  }
+
+  setData(panoramas: PanoramaDataType[]) {
+    this._panoramas = panoramas;
+  }
+
+  setDataImport(panoramasImport: PanoramaDataType[]) {
+    this._debuggerPanorama.setDataPanoramaExport(panoramasImport);
   }
 
   private __handleGyroscope() {
@@ -151,11 +148,7 @@ export class Panorama implements PanoramaType {
     });
   }
 
-  private async __transitionPanorama(
-    panoramaImage: string,
-    cb: () => void,
-    isFirstLoadPanorama: boolean,
-  ) {
+  private async __transitionPanorama(panoramaImage: string, cb: () => void, isFirstLoadPanorama: boolean) {
     const panorama = this._panoramas.find((panorama) => panorama.image === panoramaImage);
 
     if (!panorama) return;
@@ -171,9 +164,7 @@ export class Panorama implements PanoramaType {
       { once: true },
     );
 
-    const textureData = (await this.viewer.textureLoader.preloadPanorama(
-      this.__formatPanoramaPath(panoramaImage),
-    )) as any;
+    const textureData = (await this.viewer.textureLoader.preloadPanorama(this.__formatPanoramaPath(panoramaImage))) as any;
 
     if (isFirstLoadPanorama) {
       this.changeTexturePanorama(panorama, cb, true);
@@ -181,20 +172,12 @@ export class Panorama implements PanoramaType {
     }
 
     if (isGotoMarkerDone) {
-      this.viewer.addEventListener(
-        'render',
-        () => this.__handleChangePanorama(textureData, panorama, cb),
-        { once: true },
-      );
+      this.viewer.addEventListener('render', () => this.__handleChangePanorama(textureData, panorama, cb), { once: true });
       this.viewer.needsUpdate();
       return;
     }
 
-    return markersPlugin.addEventListener(
-      'goto-marker-done',
-      () => this.__handleChangePanorama(textureData, panorama, cb),
-      { once: true },
-    );
+    return markersPlugin.addEventListener('goto-marker-done', () => this.__handleChangePanorama(textureData, panorama, cb), { once: true });
   }
 
   /**
@@ -237,20 +220,10 @@ export class Panorama implements PanoramaType {
    * @example
    * panorama.changeTexturePanorama(panorama, () => {}, true);
    * */
-  async changeTexturePanorama(
-    panorama: PanoramaDataType,
-    cb?: () => void,
-    isRotate: boolean = false,
-  ) {
-    const textureData = (await this.viewer.textureLoader.preloadPanorama(
-      this.__formatPanoramaPath(panorama.image),
-    )) as any;
+  async changeTexturePanorama(panorama: PanoramaDataType, cb?: () => void, isRotate: boolean = false) {
+    const textureData = (await this.viewer.textureLoader.preloadPanorama(this.__formatPanoramaPath(panorama.image))) as any;
 
-    this.viewer.addEventListener(
-      'render',
-      () => this.__handleChangePanorama(textureData, panorama, cb, isRotate, true),
-      { once: true },
-    );
+    this.viewer.addEventListener('render', () => this.__handleChangePanorama(textureData, panorama, cb, isRotate, true), { once: true });
     this.viewer.needsUpdate();
   }
 
@@ -283,13 +256,7 @@ export class Panorama implements PanoramaType {
     this.__setMarkers(panorama);
   }
 
-  private async __handleChangePanorama(
-    textureData: any,
-    panorama: PanoramaDataType,
-    cb?: () => void,
-    isRotate: boolean = true,
-    changeTexture?: boolean,
-  ) {
+  private async __handleChangePanorama(textureData: any, panorama: PanoramaDataType, cb?: () => void, isRotate: boolean = true, changeTexture?: boolean) {
     (document.querySelector('.psv-container canvas')! as HTMLCanvasElement).toBlob(
       (blob) => {
         if (!blob) return;
@@ -378,7 +345,7 @@ export class Panorama implements PanoramaType {
 
   private async __preloadBtnArrowAnimation() {
     if (this._animationDataBtnArrow) return;
-    const response = await fetch('./assets/lottie/hotspot.json');
+    const response = await fetch('/assets/lottie/hotspot.json');
     this._animationDataBtnArrow = await response.json();
   }
 
@@ -417,7 +384,7 @@ export class Panorama implements PanoramaType {
 
   private __events() {
     // onMarkerClick
-    WINDOW.onMarkerClick = (id: number, markerId: string) => {
+    window.onMarkerClick = (id: number, markerId: string) => {
       this.swapPanorama(id, markerId);
       this._events.onMarkerClick(id, markerId);
     };

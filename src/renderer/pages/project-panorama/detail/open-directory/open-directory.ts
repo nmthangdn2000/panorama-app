@@ -1,8 +1,8 @@
-import { WINDOW } from '../../../../common/constant';
 import { viewerPanorama } from '../render-panorama/render-panorama';
 import { itemImagePanorama } from './html';
 
-WINDOW.panoramas = [];
+window.panoramas = [];
+window.panoramasImport = [];
 
 const openDirectory = () => {
   document.getElementById('btn-open-dialog')!.addEventListener('click', async () => {
@@ -12,12 +12,8 @@ const openDirectory = () => {
 
     if (viewerPanorama) viewerPanorama.viewer.destroy();
 
-    document.getElementById('btn-render-panorama')!.removeAttribute('disabled');
-
-    const imagePanoramaContainer = document.getElementById('image-panorama-container')! as HTMLDivElement;
-
-    const html = folderPath.map((path, index) => {
-      WINDOW.panoramas.push({
+    folderPath.forEach((path, index) => {
+      const d = {
         id: index + 1,
         title: path.name,
         pointPosition: { bottom: '50%', left: '50%' },
@@ -27,13 +23,39 @@ const openDirectory = () => {
         image: `file://${path.path}`,
         thumbnail: '1.png',
         markers: [],
-      });
+        metadata: path.metadata,
+      };
 
-      return itemImagePanorama(`data:image/png;base64,${path.base64}`, path.name, path.metadata);
+      window.panoramas.push(d);
+      window.panoramasImport.push(JSON.parse(JSON.stringify(d)));
     });
 
-    imagePanoramaContainer.innerHTML = html.join('');
+    renderListImage();
   });
+};
+
+const renderListImage = () => {
+  const imagePanoramaContainer = document.getElementById('image-panorama-container')! as HTMLDivElement;
+
+  const html = window.panoramas.map((panorama) => {
+    return itemImagePanorama(panorama.id, panorama.image, panorama.title, panorama.metadata);
+  });
+
+  imagePanoramaContainer.innerHTML = html.join('');
+
+  const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
+
+  if (window.panoramas.length > 0) {
+    btnRenderPanorama.removeAttribute('disabled');
+  } else {
+    btnRenderPanorama.setAttribute('disabled', 'true');
+  }
+};
+
+window.onRemovePanorama = (id: number) => {
+  window.panoramas = window.panoramas.filter((panorama) => panorama.id !== id);
+  window.panoramasImport = window.panoramasImport.filter((panorama) => panorama.id !== id);
+  renderListImage();
 };
 
 export default () => {

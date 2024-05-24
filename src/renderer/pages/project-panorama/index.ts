@@ -1,7 +1,6 @@
 import { initFlowbite, initDropdowns } from 'flowbite';
 import { Modal } from 'flowbite';
 import { itemProjectPanorama } from './html';
-import { WINDOW } from '../../common/constant';
 import slugify from 'slugify';
 
 initFlowbite();
@@ -35,7 +34,7 @@ const getProjects = async (modalNotificationRemoveProject: Modal) => {
 
       btnDelete.addEventListener('click', async () => {
         // const isDelete = await window.api.projectPanorama.deleteProject(project);
-        WINDOW.projectRemove = project;
+        window.projectRemove = project;
         modalNotificationRemoveProject.show();
       });
     });
@@ -73,9 +72,9 @@ window.addEventListener('DOMContentLoaded', async () => {
   });
 
   btnAgreeRemoveProject.addEventListener('click', async () => {
-    if (!WINDOW.projectRemove) return;
+    if (!window.projectRemove) return;
 
-    const isDelete = await window.api.projectPanorama.deleteProject(WINDOW.projectRemove.name);
+    const isDelete = await window.api.projectPanorama.deleteProject(window.projectRemove.name);
 
     if (isDelete) {
       console.log('Deleted');

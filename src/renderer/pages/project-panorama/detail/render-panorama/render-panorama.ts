@@ -1,28 +1,37 @@
-import { WINDOW } from '../../../../common/constant';
+import { Modal } from 'flowbite';
 import { Panorama } from '../lib-panorama';
 
 const viewerElement = document.getElementById('viewer')! as HTMLElement;
+const modalViewer = new Modal(document.getElementById('modal_viewer')!);
+
 export let viewerPanorama: Panorama;
 
 const onClickRenderPanorama = () => {
-  const btnRenderPanorama = document.getElementById('btn-render-panorama')! as HTMLButtonElement;
-  const btnToggleModalPanorama = document.getElementById(
-    'btn-toggle-modal-panorama',
-  )! as HTMLButtonElement;
+  const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
 
   btnRenderPanorama.addEventListener('click', () => {
-    btnToggleModalPanorama.click();
+    modalViewer.show();
     renderPanorama();
   });
 };
 
+// modalViewer.updateOnHide(() => {
+//   viewerPanorama.viewer.destroy();
+// });
+
 const renderPanorama = () => {
-  if (WINDOW.panoramas.length === 0) return;
+  if (window.panoramas.length === 0) return;
 
-  const panoramaImport = JSON.parse(JSON.stringify(WINDOW.panoramas));
+  if (viewerPanorama) {
+    viewerPanorama.setData(window.panoramas);
+    viewerPanorama.setDataImport(window.panoramasImport);
+    return;
+  }
 
-  viewerPanorama = new Panorama(viewerElement, WINDOW.panoramas, panoramaImport);
-  viewerPanorama.setPanorama(WINDOW.panoramas[0].image);
+  viewerPanorama = new Panorama(viewerElement, window.panoramas, window.panoramasImport, {
+    debug: true,
+  });
+  viewerPanorama.setPanorama(window.panoramas[0].image);
 };
 
 export default () => {

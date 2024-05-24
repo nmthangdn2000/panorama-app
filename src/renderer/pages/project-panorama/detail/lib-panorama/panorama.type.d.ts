@@ -1,4 +1,5 @@
 import { Viewer } from '@photo-sphere-viewer/core';
+import sharp from 'sharp';
 
 export type PanoramaType = {
   /**
@@ -131,4 +132,5 @@ export type PanoramaDataType = {
   image: string;
   thumbnail: string;
   markers: MarkerConfig[];
+  metadata?: sharp.Metadata;
 };
