@@ -1,5 +1,6 @@
-import { viewerPanorama } from '../render-panorama/render-panorama';
 import { itemImagePanorama } from './html';
+
+const btnRemoveAllPanorama = document.getElementById('btn_remove_all_panorama')! as HTMLButtonElement;
 
 window.panoramas = [];
 window.panoramasImport = [];
@@ -10,7 +11,7 @@ const openDirectory = () => {
 
     if (!folderPath) return;
 
-    if (viewerPanorama) viewerPanorama.viewer.destroy();
+    if (window.viewerPanorama) window.viewerPanorama.viewer.destroy();
 
     folderPath.forEach((path, index) => {
       const d = {
@@ -46,17 +47,54 @@ const renderListImage = () => {
   const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
 
   if (window.panoramas.length > 0) {
-    btnRenderPanorama.removeAttribute('disabled');
+    btnRemoveAllPanorama.classList.remove('hidden');
+    btnRenderPanorama.classList.remove('hidden');
   } else {
-    btnRenderPanorama.setAttribute('disabled', 'true');
+    btnRemoveAllPanorama.classList.add('hidden');
+    btnRenderPanorama.classList.add('hidden');
   }
 };
 
 window.onRemovePanorama = (id: number) => {
   window.panoramas = window.panoramas.filter((panorama) => panorama.id !== id);
+  window.panoramas = window.panoramas.map((panorama) => {
+    const markers = panorama.markers.filter((marker) => marker.toPanorama !== id);
+    return {
+      ...panorama,
+      markers,
+    };
+  });
+
   window.panoramasImport = window.panoramasImport.filter((panorama) => panorama.id !== id);
+  window.panoramasImport = window.panoramasImport.map((panorama) => {
+    const markers = panorama.markers.filter((marker) => marker.toPanorama !== id);
+    return {
+      ...panorama,
+      markers,
+    };
+  });
+
+  if (window.viewerPanorama) {
+    const parent = window.viewerPanorama.viewer.container.parentElement!;
+    parent.innerHTML = '';
+    window.viewerPanorama = undefined;
+  }
+
   renderListImage();
 };
+
+btnRemoveAllPanorama.addEventListener('click', () => {
+  window.panoramas = [];
+  window.panoramasImport = [];
+
+  if (window.viewerPanorama) {
+    const parent = window.viewerPanorama.viewer.container.parentElement!;
+    parent.innerHTML = '';
+    window.viewerPanorama = undefined;
+  }
+
+  renderListImage();
+});
 
 export default () => {
   openDirectory();

@@ -3,6 +3,7 @@ import { FileType } from '../main/project-panorama/handle';
 import { ProjectPanoramaApi } from './project-panorama';
 import { PanoramaDataType } from '../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 import { ProjectPanorama } from '../main/project-panorama/type';
+import { Panorama } from '../renderer/pages/project-panorama/detail/lib-panorama';
 
 export type Api = {
   projectPanorama: ProjectPanoramaApi;
@@ -17,5 +18,6 @@ declare global {
     panoramasImport: PanoramaDataType[];
     projectRemove: ProjectPanorama;
     onRemovePanorama: (id: number) => void;
+    viewerPanorama: Panorama | undefined;
   }
 }

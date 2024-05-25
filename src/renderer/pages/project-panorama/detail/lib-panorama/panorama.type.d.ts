@@ -1,4 +1,5 @@
 import { Viewer } from '@photo-sphere-viewer/core';
+import { MarkerConfig } from '@photo-sphere-viewer/markers-plugin';
 import sharp from 'sharp';
 
 export type PanoramaType = {
@@ -131,6 +132,8 @@ export type PanoramaDataType = {
   description: string;
   image: string;
   thumbnail: string;
-  markers: MarkerConfig[];
+  markers: (MarkerConfig & {
+    toPanorama?: number;
+  })[];
   metadata?: sharp.Metadata;
 };

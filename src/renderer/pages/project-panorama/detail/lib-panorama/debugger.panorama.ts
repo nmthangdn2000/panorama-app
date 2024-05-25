@@ -43,10 +43,6 @@ export class DebuggerPanorama {
     this.openAndCloseDebugModeWithKey();
   }
 
-  setDataPanoramaExport(panorama: PanoramaDataType[]) {
-    this.panoramaExport = panorama;
-  }
-
   getDebugMode() {
     return this.debugMode;
   }
@@ -255,6 +251,7 @@ export class DebuggerPanorama {
           yaw: data.yaw,
           pitch: data.pitch,
         },
+        toPanorama: toPanorama.id,
         html: btnHotSpot(`onMarkerClick(${toPanorama.id}, '${markerId}')`, `${toPanorama.title}`),
         style: {
           cursor: 'pointer',
@@ -297,7 +294,7 @@ export class DebuggerPanorama {
     const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
 
     const btnRemove = document.createElement('button');
-    btnRemove.innerText = 'X';
+    btnRemove.innerText = '×';
     btnRemove.className = 'btn-remove-marker';
     marker.domElement.appendChild(btnRemove);
 

@@ -69,14 +69,6 @@ export class Panorama implements PanoramaType {
     );
   }
 
-  setData(panoramas: PanoramaDataType[]) {
-    this._panoramas = panoramas;
-  }
-
-  setDataImport(panoramasImport: PanoramaDataType[]) {
-    this._debuggerPanorama.setDataPanoramaExport(panoramasImport);
-  }
-
   private __handleGyroscope() {
     let timer: any = 0;
     this.viewer.addEventListener('position-updated', () => {
