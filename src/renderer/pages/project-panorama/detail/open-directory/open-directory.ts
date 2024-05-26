@@ -36,7 +36,7 @@ const openDirectory = () => {
 };
 
 const renderListImage = () => {
-  const imagePanoramaContainer = document.getElementById('image-panorama-container')! as HTMLDivElement;
+  const imagePanoramaContainer = document.getElementById('image_panorama_container')! as HTMLDivElement;
 
   const html = window.panoramas.map((panorama) => {
     return itemImagePanorama(panorama.id, panorama.image, panorama.title, panorama.metadata);
@@ -49,9 +49,11 @@ const renderListImage = () => {
   if (window.panoramas.length > 0) {
     btnRemoveAllPanorama.classList.remove('hidden');
     btnRenderPanorama.classList.remove('hidden');
+    imagePanoramaContainer.parentElement!.querySelector('p')!.classList.add('hidden');
   } else {
     btnRemoveAllPanorama.classList.add('hidden');
     btnRenderPanorama.classList.add('hidden');
+    imagePanoramaContainer.parentElement!.querySelector('p')!.classList.remove('hidden');
   }
 };
 
