@@ -44,14 +44,16 @@ const renderListImage = () => {
 
   imagePanoramaContainer.innerHTML = html.join('');
 
+  const btnPreviewPanorama = document.getElementById('btn_preview_panorama')! as HTMLButtonElement;
   const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
-
   if (window.panoramas.length > 0) {
     btnRemoveAllPanorama.classList.remove('hidden');
+    btnPreviewPanorama.classList.remove('hidden');
     btnRenderPanorama.classList.remove('hidden');
     imagePanoramaContainer.parentElement!.querySelector('p')!.classList.add('hidden');
   } else {
     btnRemoveAllPanorama.classList.add('hidden');
+    btnPreviewPanorama.classList.add('hidden');
     btnRenderPanorama.classList.add('hidden');
     imagePanoramaContainer.parentElement!.querySelector('p')!.classList.remove('hidden');
   }

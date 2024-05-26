@@ -5,7 +5,7 @@ const viewerElement = document.getElementById('viewer')! as HTMLElement;
 const modalViewer = new Modal(document.getElementById('modal_viewer')!);
 
 const onClickRenderPanorama = () => {
-  const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
+  const btnRenderPanorama = document.getElementById('btn_preview_panorama')! as HTMLButtonElement;
 
   btnRenderPanorama.addEventListener('click', () => {
     modalViewer.show();
