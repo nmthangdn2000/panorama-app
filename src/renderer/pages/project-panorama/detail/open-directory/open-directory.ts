@@ -16,7 +16,7 @@ const openDirectory = () => {
     folderPath.forEach((path, index) => {
       const d = {
         id: index + 1,
-        title: path.name,
+        title: path.name.split('.')[0],
         pointPosition: { bottom: '50%', left: '50%' },
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
         subtitle: path.name,

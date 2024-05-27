@@ -1,8 +1,17 @@
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
+import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import { FileType, NewProject, ProjectPanorama } from './type';
-import sharp from 'sharp';
+import { ExportProject, FileType, NewProject, ProjectPanorama } from './type';
 import { dialog } from 'electron';
+import { convertImage, OptionsType } from './panorama-to-cubemap';
+import sharp = require('sharp');
+
+const options: OptionsType = {
+  rotation: 180,
+  interpolation: 'lanczos',
+  outformat: 'jpg',
+  outtype: 'buffer',
+  width: Infinity,
+};
 
 export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
   return Promise.all(
@@ -85,6 +94,46 @@ export const deleteProject = async (name: string) => {
   }
 
   rmSync(path, { recursive: true });
+
+  return true;
+};
+
+export const exportProject = async (name: string, exportData: ExportProject) => {
+  const { panoramasImport, panoramas } = exportData;
+
+  const newPanoramas = panoramas.map((panorama) => {
+    if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas', panorama.title))) {
+      mkdirSync(join(process.cwd(), 'projects', name, 'panoramas', panorama.title), { recursive: true });
+    }
+
+    copyFileSync(panorama.image.substring(7), join(process.cwd(), 'projects', name, 'panoramas', panorama.title, `${panorama.title}.jpg`));
+
+    return {
+      ...panorama,
+      image: `${panorama.title}.jpg`,
+    };
+  });
+
+  writeFileSync(join(process.cwd(), 'projects', name, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+  writeFileSync(join(process.cwd(), 'projects', name, 'import-panoramas.json'), JSON.stringify(panoramasImport, null, 2));
+
+  // panorama to cube
+  for (let i = 0; i < newPanoramas.length; i++) {
+    console.log(`Converting panorama ${i + 1} of ${newPanoramas.length}`);
+
+    const panorama = newPanoramas[i];
+
+    const { image } = panorama;
+    const filePath = join(process.cwd(), 'projects', name, 'panoramas', panorama.title, image);
+
+    console.log('Converting panorama', filePath);
+
+    const files = await convertImage(filePath, options);
+
+    files.forEach((file: { buffer: Buffer; filename: string }) => {
+      writeFileSync(join(process.cwd(), 'projects', name, 'panoramas', panorama.title, file.filename), file.buffer);
+    });
+  }
 
   return true;
 };

@@ -4,4 +4,5 @@ export enum KEY_IPC {
   NEW_PROJECT = 'project:new',
   GET_PROJECTS = 'project:getProjects',
   DELETE_PROJECT = 'project:delete',
+  EXPORT_PROJECT = 'project:export',
 }

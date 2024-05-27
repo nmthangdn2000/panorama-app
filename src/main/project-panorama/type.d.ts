@@ -1,4 +1,5 @@
-import sharp from 'sharp';
+import sharp = require('sharp');
+import { PanoramaDataType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 
 export type FileType = {
   name: string;
@@ -19,4 +20,9 @@ export type ProjectPanorama = {
   name: string;
   avatar: string;
   description?: string;
+};
+
+export type ExportProject = {
+  panoramas: PanoramaDataType[];
+  panoramasImport: PanoramaDataType[];
 };
