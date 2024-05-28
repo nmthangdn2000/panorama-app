@@ -104,6 +104,7 @@ const calculateProgress = (total: number, current: number) => {
 };
 
 const pushTaskProgress = (tasks: string[], totalProcess: number) => {
+  if (tasks.length === totalProcess) return;
   tasks.push('done');
   calculateProgress(totalProcess, tasks.length);
 };
