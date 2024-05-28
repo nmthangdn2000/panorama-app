@@ -20,6 +20,11 @@ export type ProjectPanorama = {
   name: string;
   avatar: string;
   description?: string;
+  panoramas?: PanoramaDataType[];
+  panoramasImport?: PanoramaDataType[];
+  imagesQuality?: string[];
+  imagesLow?: string[];
+  hasCube?: boolean;
 };
 
 export type ExportProject = {

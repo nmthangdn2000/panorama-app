@@ -81,6 +81,36 @@ export const getProjects = async () => {
   return projects;
 };
 
+export const getProject = async (name: string): Promise<ProjectPanorama | null> => {
+  const path = join(process.cwd(), 'projects', name);
+
+  if (!existsSync(path)) {
+    return null;
+  }
+
+  const avatar = `file://${path}/avatar.jpg`;
+  const description = existsSync(join(path, 'description.txt')) ? readFileSync(join(path, 'description.txt'), 'utf-8') : '';
+
+  const panoramas = existsSync(join(path, 'panoramas.json')) ? JSON.parse(readFileSync(join(path, 'panoramas.json'), 'utf-8')) : [];
+  const panoramasImport = existsSync(join(path, 'import-panoramas.json')) ? JSON.parse(readFileSync(join(path, 'import-panoramas.json'), 'utf-8')) : [];
+
+  const imagesQuality = existsSync(join(path, 'panoramas')) ? readdirSync(join(path, 'panoramas')) : [];
+  const imagesLow = existsSync(join(path, 'panoramas-low')) ? readdirSync(join(path, 'panoramas-low')) : [];
+  const listCube = existsSync(join(path, 'cube')) ? readdirSync(join(path, 'cube')) : [];
+  const hasCube = listCube.length > 0 && listCube.length === imagesQuality.length && listCube.length === imagesLow.length;
+
+  return {
+    name,
+    avatar,
+    description,
+    panoramas,
+    panoramasImport,
+    imagesQuality,
+    imagesLow,
+    hasCube,
+  };
+};
+
 export const deleteProject = async (name: string) => {
   const path = join(process.cwd(), 'projects', name);
 
@@ -94,11 +124,7 @@ export const deleteProject = async (name: string) => {
 };
 
 const calculateProgress = (total: number, current: number) => {
-  console.log('total', total);
-  console.log('current', current);
-
   const progressPercentage = Math.floor((current / total) * 100);
-  console.log('progressPercentage', progressPercentage);
 
   return BrowserWindow.getAllWindows()[0].webContents.send(KEY_IPC.PROCESSING_PROJECT, progressPercentage);
 };
@@ -112,7 +138,7 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
 export const exportProject = async (name: string, exportData: ExportProject) => {
   const { panoramasImport, panoramas } = exportData;
 
-  const totalProcess = panoramas.length * 3 + 2;
+  const totalProcess = panoramas.length * 3 + 2 + 1;
   const tasks: string[] = [];
 
   const newPanoramas = await Promise.all(
@@ -183,7 +209,7 @@ export const exportProject = async (name: string, exportData: ExportProject) => 
     });
 
     CHILD.stderr.on('data', (data) => {
-      const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\s*- PROCESSING PANORAMA TO CUBE MAP:/;
+      const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
 
       const match = data.toString().match(regex);
 

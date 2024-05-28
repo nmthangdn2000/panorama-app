@@ -3,6 +3,7 @@ export enum KEY_IPC {
   OPEN_DIALOG = 'dialog:openDirectory',
   NEW_PROJECT = 'project:new',
   GET_PROJECTS = 'project:getProjects',
+  GET_PROJECT = 'project:get',
   DELETE_PROJECT = 'project:delete',
   EXPORT_PROJECT = 'project:export',
   PROCESSING_PROJECT = 'project:processing',
