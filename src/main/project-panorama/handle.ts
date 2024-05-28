@@ -1,17 +1,12 @@
+import { spawn } from 'child_process';
+import { BrowserWindow, dialog } from 'electron';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import sharp from 'sharp';
 import { ExportProject, FileType, NewProject, ProjectPanorama } from './type';
-import { dialog } from 'electron';
-import { convertImage, OptionsType } from './panorama-to-cubemap';
-import sharp = require('sharp');
+import { KEY_IPC } from '../../constants/common.constant';
 
-const options: OptionsType = {
-  rotation: 180,
-  interpolation: 'lanczos',
-  outformat: 'jpg',
-  outtype: 'buffer',
-  width: Infinity,
-};
+let CHILD;
 
 export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
   return Promise.all(
@@ -98,41 +93,132 @@ export const deleteProject = async (name: string) => {
   return true;
 };
 
+const calculateProgress = (total: number, current: number) => {
+  console.log('total', total);
+  console.log('current', current);
+
+  const progressPercentage = Math.floor((current / total) * 100);
+  console.log('progressPercentage', progressPercentage);
+
+  return BrowserWindow.getAllWindows()[0].webContents.send(KEY_IPC.PROCESSING_PROJECT, progressPercentage);
+};
+
+const pushTaskProgress = (tasks: string[], totalProcess: number) => {
+  tasks.push('done');
+  calculateProgress(totalProcess, tasks.length);
+};
+
 export const exportProject = async (name: string, exportData: ExportProject) => {
   const { panoramasImport, panoramas } = exportData;
 
-  const newPanoramas = panoramas.map((panorama) => {
-    if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas', panorama.title))) {
-      mkdirSync(join(process.cwd(), 'projects', name, 'panoramas', panorama.title), { recursive: true });
-    }
+  const totalProcess = panoramas.length * 3 + 2;
+  const tasks: string[] = [];
 
-    copyFileSync(panorama.image.substring(7), join(process.cwd(), 'projects', name, 'panoramas', panorama.title, `${panorama.title}.jpg`));
+  const newPanoramas = await Promise.all(
+    panoramas.map(async (panorama) => {
+      if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas'))) {
+        mkdirSync(join(process.cwd(), 'projects', name, 'panoramas'), { recursive: true });
+      }
 
-    return {
-      ...panorama,
-      image: `${panorama.title}.jpg`,
-    };
-  });
+      if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas-low'))) {
+        mkdirSync(join(process.cwd(), 'projects', name, 'panoramas-low'), { recursive: true });
+      }
+
+      copyFileSync(panorama.image.substring(7), join(process.cwd(), 'projects', name, 'panoramas', `${panorama.title}.jpg`));
+
+      // create file low quality
+      const buffer = readFileSync(panorama.image.substring(7));
+
+      await sharp(buffer)
+        .resize(2000)
+        .toFormat('jpeg', {
+          quality: 40,
+          progressive: true,
+          force: true,
+          trellisQuantisation: true,
+          overshootDeringing: true,
+          optimizeScans: true,
+          optimizeCoding: true,
+          quantisationTable: 2,
+          chromaSubsampling: '4:4:4',
+          quantizationTable: 2,
+        })
+        .toFile(join(process.cwd(), 'projects', name, 'panoramas-low', `${panorama.title}-low.jpg`));
+
+      pushTaskProgress(tasks, totalProcess);
+
+      return {
+        ...panorama,
+        image: `${panorama.title}.jpg`,
+      };
+    }),
+  );
 
   writeFileSync(join(process.cwd(), 'projects', name, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+  pushTaskProgress(tasks, totalProcess);
+
   writeFileSync(join(process.cwd(), 'projects', name, 'import-panoramas.json'), JSON.stringify(panoramasImport, null, 2));
+  pushTaskProgress(tasks, totalProcess);
 
   // panorama to cube
-  for (let i = 0; i < newPanoramas.length; i++) {
-    console.log(`Converting panorama ${i + 1} of ${newPanoramas.length}`);
 
-    const panorama = newPanoramas[i];
+  const toolPath = `${process.cwd()}/resources/cubemap-generator-macos`;
+  const inputQualityPath = join(process.cwd(), 'projects', name, 'panoramas');
+  const inputLowPath = join(process.cwd(), 'projects', name, 'panoramas-low');
+  const outputPath = join(process.cwd(), 'projects', name, 'cube');
 
-    const { image } = panorama;
-    const filePath = join(process.cwd(), 'projects', name, 'panoramas', panorama.title, image);
+  await new Promise((resolve, reject) => {
+    if (CHILD) {
+      console.log('kill child process');
 
-    console.log('Converting panorama', filePath);
+      CHILD.kill();
+    }
 
-    const files = await convertImage(filePath, options);
+    console.log('spawn child process');
 
-    files.forEach((file: { buffer: Buffer; filename: string }) => {
-      writeFileSync(join(process.cwd(), 'projects', name, 'panoramas', panorama.title, file.filename), file.buffer);
+    // `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`
+    CHILD = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', '375', '--quality', '80'], {
+      shell: true,
     });
+
+    CHILD.stderr.on('data', (data) => {
+      const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\s*- PROCESSING PANORAMA TO CUBE MAP:/;
+
+      const match = data.toString().match(regex);
+
+      if (match) {
+        if (match[1]) {
+          pushTaskProgress(tasks, totalProcess);
+          pushTaskProgress(tasks, totalProcess);
+        }
+      }
+    });
+
+    CHILD.on('error', (err) => {
+      console.log(`error: ${err.message}`);
+      reject(err);
+    });
+
+    CHILD.on('close', (code) => {
+      console.log(`child process exited with code ${code}`);
+      resolve(true);
+    });
+  });
+
+  if (tasks.length < totalProcess) {
+    for (let i = tasks.length; i < totalProcess; i++) {
+      pushTaskProgress(tasks, totalProcess);
+    }
+  }
+
+  return true;
+};
+
+export const cancelProgress = () => {
+  if (CHILD) {
+    console.log('kill child process');
+
+    CHILD.kill();
   }
 
   return true;

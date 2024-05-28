@@ -8,6 +8,8 @@ export type ProjectPanoramaApi = {
   getProjects: () => Promise<ProjectPanorama[]>;
   deleteProject: (name: string) => Promise<boolean>;
   exportProject: (name: string, data: ExportProject) => Promise<boolean>;
+  processingProject: (cb: (progressPercentage: number) => void) => void;
+  cancelProgress: () => Promise<boolean>;
 };
 
 const selectFolder = () => ipcRenderer.invoke(KEY_IPC.OPEN_DIALOG);
@@ -15,5 +17,11 @@ const newProject = (data: NewProject) => ipcRenderer.invoke(KEY_IPC.NEW_PROJECT,
 const getProjects = () => ipcRenderer.invoke(KEY_IPC.GET_PROJECTS);
 const deleteProject = (name: string) => ipcRenderer.invoke(KEY_IPC.DELETE_PROJECT, name);
 const exportProject = (name: string, data: ExportProject) => ipcRenderer.invoke(KEY_IPC.EXPORT_PROJECT, name, data);
+const processingProject = (cb: (progressPercentage: number) => void) =>
+  ipcRenderer.on(KEY_IPC.PROCESSING_PROJECT, (_, progressPercentage: number) => {
+    cb(progressPercentage);
+  });
 
-export { selectFolder, newProject, getProjects, deleteProject, exportProject };
+const cancelProgress = () => ipcRenderer.invoke(KEY_IPC.CANCEL_PROCESSING_PROJECT);
+
+export { selectFolder, newProject, getProjects, deleteProject, exportProject, processingProject, cancelProgress };
