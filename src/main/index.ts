@@ -33,8 +33,8 @@ function createWindow(): void {
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
     mainWindow.loadURL(process.env['ELECTRON_RENDERER_URL']);
   } else {
-    // mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
-    mainWindow.loadURL(`file://${join(__dirname, '../renderer/index.html')}`);
+    mainWindow.loadFile(join(__dirname, '../renderer/index.html'));
+    // mainWindow.loadURL(`file://${join(__dirname, '../renderer/index.html')}`);
   }
 
   mainWindow.webContents.openDevTools();

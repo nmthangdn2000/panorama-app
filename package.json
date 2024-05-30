@@ -28,6 +28,8 @@
     "@photo-sphere-viewer/cubemap-tiles-adapter": "^5.7.4",
     "@photo-sphere-viewer/gyroscope-plugin": "^5.7.4",
     "@photo-sphere-viewer/markers-plugin": "^5.7.4",
+    "@types/archiver": "^6.0.2",
+    "archiver": "^7.0.1",
     "electron-updater": "^6.1.7",
     "flowbite": "^2.3.0",
     "imagemagick": "^0.1.3",

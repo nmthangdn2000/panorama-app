@@ -5,9 +5,9 @@ import { itemImagePanorama } from './html';
 const btnRemoveAllPanorama = document.getElementById('btn_remove_all_panorama')! as HTMLButtonElement;
 const imagePanoramaContainer = document.getElementById('image_panorama_container')! as HTMLDivElement;
 
-const openDirectory = () => {
+const openDialogSelectImages = () => {
   document.getElementById('btn-open-dialog')!.addEventListener('click', async () => {
-    const folderPath = await window.api.projectPanorama.selectFolder();
+    const folderPath = await window.api.projectPanorama.selectImages();
 
     if (!folderPath) return;
 
@@ -82,15 +82,18 @@ export const renderListImage = () => {
 
   const btnPreviewPanorama = document.getElementById('btn_preview_panorama')! as HTMLButtonElement;
   const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
+  const btnExportPanorama = document.getElementById('btn_export_panorama')! as HTMLButtonElement;
   if (window.panoramas.length > 0) {
     btnRemoveAllPanorama.classList.remove('hidden');
     btnPreviewPanorama.classList.remove('hidden');
     btnRenderPanorama.classList.remove('hidden');
+    btnExportPanorama.classList.remove('hidden');
     imagePanoramaContainer.parentElement!.querySelector('p')!.classList.add('hidden');
   } else {
     btnRemoveAllPanorama.classList.add('hidden');
     btnPreviewPanorama.classList.add('hidden');
     btnRenderPanorama.classList.add('hidden');
+    btnExportPanorama.classList.add('hidden');
     imagePanoramaContainer.parentElement!.querySelector('p')!.classList.remove('hidden');
   }
 
@@ -193,6 +196,6 @@ const initSortableList = (e: DragEvent) => {
 };
 
 export default () => {
-  openDirectory();
+  openDialogSelectImages();
   handleDragAndDropItem();
 };

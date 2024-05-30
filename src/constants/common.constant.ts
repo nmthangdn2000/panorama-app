@@ -1,6 +1,7 @@
 export enum KEY_IPC {
   // project panorama
-  OPEN_DIALOG = 'dialog:openDirectory',
+  OPEN_DIRECTORY = 'dialog:openDirectory',
+  OPEN_DIALOG_SELECT_IMAGES = 'dialog:openDialogSelectImages',
   NEW_PROJECT = 'project:new',
   GET_PROJECTS = 'project:getProjects',
   GET_PROJECT = 'project:get',

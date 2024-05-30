@@ -1,10 +1,11 @@
 import { spawn } from 'child_process';
 import { BrowserWindow, dialog } from 'electron';
-import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
+import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import sharp from 'sharp';
 import { RenderProject, FileType, NewProject, ProjectPanorama } from './type';
 import { KEY_IPC } from '../../constants/common.constant';
+import archiver from 'archiver';
 
 let CHILD;
 
@@ -23,6 +24,16 @@ export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
 };
 
 export const openDirectory = async () => {
+  const { canceled, filePaths } = await dialog.showOpenDialog({
+    properties: ['openDirectory', 'createDirectory'],
+  });
+
+  if (canceled) return;
+
+  return filePaths ? filePaths[0] : undefined;
+};
+
+export const openDialogSelectImages = async () => {
   const { canceled, filePaths } = await dialog.showOpenDialog({
     properties: ['openFile', 'multiSelections'],
     filters: [{ name: 'Images', extensions: ['jpg', 'jpeg', 'png', 'gif'] }],
@@ -269,4 +280,30 @@ export const cancelProgress = () => {
   }
 
   return true;
+};
+
+export const exportProject = async (name: string, pathFolder: string) => {
+  const path = join(process.cwd(), 'projects', name);
+
+  //  project to zip
+  const zipPath = join(pathFolder, `${name}.zip`);
+
+  await zipDirectory(path, zipPath);
+
+  return true;
+};
+
+const zipDirectory = (sourceDir: string, outPath: string) => {
+  const archive = archiver('zip', { zlib: { level: 9 } });
+  const stream = createWriteStream(outPath);
+
+  return new Promise((resolve, reject) => {
+    archive
+      .directory(sourceDir, false)
+      .on('error', (err) => reject(err))
+      .pipe(stream);
+
+    stream.on('close', () => resolve(true));
+    archive.finalize();
+  });
 };

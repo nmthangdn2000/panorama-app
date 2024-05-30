@@ -2,6 +2,7 @@ import { initFlowbite } from 'flowbite';
 import detailPanorama, { renderListImage } from './detail-panorama/detail-panorama';
 import previewPanorama from './preview-panorama/preview-panorama';
 import renderProject from './render-project/render-project';
+import exportPanorama from './export-panorama/export-panorama';
 
 const preload = async () => {
   const url = new URL(window.location.href);
@@ -31,6 +32,7 @@ const main = async () => {
   detailPanorama();
   previewPanorama();
   renderProject();
+  exportPanorama();
 };
 
 main();

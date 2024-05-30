@@ -3,7 +3,8 @@ import { KEY_IPC } from '../constants/common.constant';
 import { RenderProject, FileType, NewProject, ProjectPanorama } from '../main/project-panorama/type';
 
 export type ProjectPanoramaApi = {
-  selectFolder: () => Promise<FileType[] | undefined>;
+  openDirectory: () => Promise<string | undefined>;
+  selectImages: () => Promise<FileType[] | undefined>;
   newProject: (data: NewProject) => Promise<string>;
   getProjects: () => Promise<ProjectPanorama[]>;
   deleteProject: (name: string) => Promise<boolean>;
@@ -11,9 +12,11 @@ export type ProjectPanoramaApi = {
   processingProject: (cb: (progressPercentage: number) => void) => void;
   cancelProgress: () => Promise<boolean>;
   getProject: (name: string) => Promise<ProjectPanorama | null>;
+  exportProject: (name: string, pathFolder: string) => Promise<boolean>;
 };
 
-const selectFolder = () => ipcRenderer.invoke(KEY_IPC.OPEN_DIALOG);
+const openDirectory = () => ipcRenderer.invoke(KEY_IPC.OPEN_DIRECTORY);
+const selectImages = () => ipcRenderer.invoke(KEY_IPC.OPEN_DIALOG_SELECT_IMAGES);
 const newProject = (data: NewProject) => ipcRenderer.invoke(KEY_IPC.NEW_PROJECT, data);
 const getProjects = () => ipcRenderer.invoke(KEY_IPC.GET_PROJECTS);
 const deleteProject = (name: string) => ipcRenderer.invoke(KEY_IPC.DELETE_PROJECT, name);
@@ -24,5 +27,6 @@ const processingProject = (cb: (progressPercentage: number) => void) =>
   });
 const cancelProgress = () => ipcRenderer.invoke(KEY_IPC.CANCEL_PROCESSING_PROJECT);
 const getProject = (name: string) => ipcRenderer.invoke(KEY_IPC.GET_PROJECT, name);
+const exportProject = (name: string, pathFolder: string) => ipcRenderer.invoke(KEY_IPC.EXPORT_PROJECT, name, pathFolder);
 
-export { selectFolder, newProject, getProjects, deleteProject, renderProject, processingProject, cancelProgress, getProject };
+export { openDirectory, selectImages, newProject, getProjects, deleteProject, renderProject, processingProject, cancelProgress, getProject, exportProject };
