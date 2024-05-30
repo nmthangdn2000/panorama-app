@@ -136,4 +136,6 @@ export type PanoramaDataType = {
     toPanorama?: number;
   })[];
   metadata?: sharp.Metadata;
+  // this field is used to determine if the panorama is new or not
+  isNew?: boolean;
 };

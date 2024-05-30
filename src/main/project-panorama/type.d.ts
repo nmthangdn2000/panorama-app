@@ -27,7 +27,7 @@ export type ProjectPanorama = {
   hasCube?: boolean;
 };
 
-export type ExportProject = {
+export type RenderProject = {
   panoramas: PanoramaDataType[];
   panoramasImport: PanoramaDataType[];
 };

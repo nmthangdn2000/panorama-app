@@ -10,6 +10,7 @@
     /> -->
 
     <link href="/assets/scss/main.scss" type="text/css" rel="stylesheet" />
+    <link href="/pages/project-panorama/detail/scss/index.scss" type="text/css" rel="stylesheet" />
   </head>
 
   <body data-theme="light">
@@ -30,7 +31,9 @@
           ></path>
         </svg>
       </button>
-      <div>Dự Án Panorama ABC</div>
+      <div>
+        <p id="txt_project_name" class="text-4xl font-bold text-gray-900 dark:text-white">Project Name</p>
+      </div>
       <div></div>
     </div>
 
@@ -180,36 +183,100 @@
               />
             </svg>
 
-            Thêm ảnh
+            Add Image
           </button>
           <button
             id="btn_remove_all_panorama"
             type="button"
-            class="hidden focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
+            class="inline-flex hidden justify-center items-center gap-2 focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
           >
-            Xoá tất cả
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+              <path
+                fill-rule="evenodd"
+                clip-rule="evenodd"
+                d="M8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V8C4.44772 8 4 7.55228 4 7C4 6.44772 4.44772 6 5 6H8V4C8 3.46957 8.21071 2.96086 8.58579 2.58579ZM10 6H14V4H10V6ZM11 10C11 9.44772 10.5523 9 10 9C9.44772 9 9 9.44772 9 10V18C9 18.5523 9.44772 19 10 19C10.5523 19 11 18.5523 11 18V10ZM15 10C15 9.44772 14.5523 9 14 9C13.4477 9 13 9.44772 13 10V18C13 18.5523 13.4477 19 14 19C14.5523 19 15 18.5523 15 18V10Z"
+              ></path>
+            </svg>
+            Remove All
           </button>
         </div>
         <div class="flex">
           <button
             id="btn_preview_panorama"
             type="button"
-            class="hidden focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
+            class="inline-flex hidden justify-center items-center gap-2 focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
           >
-            Xem trước
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <g clip-path="url(#clip0_17_17768)">
+                <path
+                  d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"
+                  fill="currentColor"
+                />
+              </g>
+              <defs>
+                <clipPath id="clip0_17_17768">
+                  <rect width="24" height="24" fill="white" />
+                </clipPath>
+              </defs>
+            </svg>
+            Preview
           </button>
           <button
             id="btn_render_panorama"
             type="button"
-            class="hidden text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+            class="inline-flex hidden justify-center items-center gap-2 text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
           >
-            Xuất dự án
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              version="1.1"
+              xmlns:xlink="http://www.w3.org/1999/xlink"
+              x="0"
+              y="0"
+              viewBox="0 0 24 24"
+              style="enable-background: new 0 0 512 512"
+              xml:space="preserve"
+              class=""
+              width="24"
+              height="24"
+            >
+              <g>
+                <path
+                  d="M6.75 14.425V9.566a1.258 1.258 0 0 1 .606-1.072l4-2.4a1.232 1.232 0 0 1 .394-.145V2h-.177a2 2 0 0 0-1.06.304L3.94 6.412A2 2 0 0 0 3 8.108v7.783a1.984 1.984 0 0 0 .19.817l3.589-2.071a1.22 1.22 0 0 1-.029-.212z"
+                  fill="currentColor"
+                  opacity="1"
+                  data-original="currentColor"
+                  class=""
+                ></path>
+                <path
+                  d="M7.25 9.566v4.859a.751.751 0 0 0 .373.648l4 2.326a.717.717 0 0 0 .127.034v-5.38L7.282 9.447a.717.717 0 0 0-.032.12zM12.643 6.094l4 2.4a1.257 1.257 0 0 1 .607 1.072v4.859a1.22 1.22 0 0 1-.028.211l3.588 2.072a1.984 1.984 0 0 0 .19-.816V8.108a2 2 0 0 0-.94-1.697l-6.573-4.108A2 2 0 0 0 12.427 2h-.177v3.95a1.242 1.242 0 0 1 .393.144z"
+                  fill="currentColor"
+                  opacity="1"
+                  data-original="currentColor"
+                  class=""
+                ></path>
+                <path
+                  d="m16.628 15.505-4 2.326a1.253 1.253 0 0 1-1.256 0l-4-2.326a1.239 1.239 0 0 1-.41-.398l-3.511 2.028a1.977 1.977 0 0 0 .489.452l6.574 4.109a2 2 0 0 0 1.06.304h.853a2 2 0 0 0 1.06-.304l6.573-4.109a1.977 1.977 0 0 0 .49-.452l-3.512-2.028a1.239 1.239 0 0 1-.41.398z"
+                  fill="currentColor"
+                  opacity="1"
+                  data-original="currentColor"
+                  class=""
+                ></path>
+                <path
+                  d="M12.25 12.054v5.38a.717.717 0 0 0 .127-.035l4-2.326a.751.751 0 0 0 .373-.648V9.566a.713.713 0 0 0-.032-.118zM16.386 8.923l-4-2.4a.751.751 0 0 0-.772 0l-4 2.4c-.037.022-.055.062-.087.09L12 11.62l4.473-2.609c-.032-.027-.05-.067-.087-.09z"
+                  fill="currentColor"
+                  opacity="1"
+                  data-original="currentColor"
+                  class=""
+                ></path>
+              </g>
+            </svg>
+            Render
           </button>
         </div>
       </div>
 
       <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-        <p class="text-gray-900 dark:text-white text-center">Chưa có ảnh nào được thêm vào.</p>
+        <p class="text-gray-900 dark:text-white text-center">No images have been added yet.</p>
 
         <div class="flex flex-col gap-4" id="image_panorama_container"></div>
       </div>
@@ -238,8 +305,8 @@
         <!-- Modal content -->
         <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
           <div class="p-4 md:p-5 flex flex-col justify-center items-center gap-8">
-            <p class="text-xl text-gray-900 dark:text-white">Đang xuất dự án</p>
-            <div role="status">
+            <p id="txt_processing_export_project" class="text-xl text-gray-900 dark:text-white">Processing export project...</p>
+            <div role="status" id="icon_processing">
               <svg
                 aria-hidden="true"
                 class="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-orange-500"
@@ -258,17 +325,37 @@
               </svg>
               <span class="sr-only">Loading...</span>
             </div>
+            <div id="icon_success" class="hidden">
+              <svg
+                class="w-8 h-8 me-2 text-green-500 dark:text-green-400 flex-shrink-0"
+                aria-hidden="true"
+                xmlns="http://www.w3.org/2000/svg"
+                fill="currentColor"
+                viewBox="0 0 20 20"
+              >
+                <path
+                  d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"
+                />
+              </svg>
+            </div>
             <div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
               <div id="progress_bar" class="bg-orange-500 text-xs font-medium text-orange-100 text-center p-0.5 leading-none rounded-full" style="width: 45%">45%</div>
             </div>
             <!-- Modal footer -->
-            <div class="flex items-center space-x-4 rtl:space-x-reverse">
+            <div class="flex items-center">
               <button
                 id="btn_cancel_progress"
                 type="button"
                 class="py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-orange-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
               >
                 Cancel
+              </button>
+              <button
+                id="btn_ok_progress"
+                type="button"
+                class="hidden focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-700"
+              >
+                Ok
               </button>
             </div>
           </div>

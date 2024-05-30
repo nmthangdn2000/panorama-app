@@ -3,7 +3,7 @@ import { BrowserWindow, dialog } from 'electron';
 import { copyFileSync, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
 import sharp from 'sharp';
-import { ExportProject, FileType, NewProject, ProjectPanorama } from './type';
+import { RenderProject, FileType, NewProject, ProjectPanorama } from './type';
 import { KEY_IPC } from '../../constants/common.constant';
 
 let CHILD;
@@ -135,48 +135,56 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
   calculateProgress(totalProcess, tasks.length);
 };
 
-export const exportProject = async (name: string, exportData: ExportProject) => {
-  const { panoramasImport, panoramas } = exportData;
+export const renderProject = async (name: string, renderData: RenderProject) => {
+  const { panoramasImport, panoramas } = renderData;
 
   const totalProcess = panoramas.length * 3 + 2 + 1;
   const tasks: string[] = [];
 
+  if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas'))) {
+    mkdirSync(join(process.cwd(), 'projects', name, 'panoramas'), { recursive: true });
+  }
+
+  if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas-low'))) {
+    mkdirSync(join(process.cwd(), 'projects', name, 'panoramas-low'), { recursive: true });
+  }
+
   const newPanoramas = await Promise.all(
     panoramas.map(async (panorama) => {
-      if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas'))) {
-        mkdirSync(join(process.cwd(), 'projects', name, 'panoramas'), { recursive: true });
+      let image = panorama.image;
+
+      if (panorama.isNew) {
+        const path = join(process.cwd(), 'projects', name, 'panoramas', `${panorama.title}.jpg`);
+
+        copyFileSync(panorama.image.substring(7), path);
+
+        // create file low quality
+        const buffer = readFileSync(panorama.image.substring(7));
+
+        await sharp(buffer)
+          .resize(2000)
+          .toFormat('jpeg', {
+            quality: 40,
+            progressive: true,
+            force: true,
+            trellisQuantisation: true,
+            overshootDeringing: true,
+            optimizeScans: true,
+            optimizeCoding: true,
+            quantisationTable: 2,
+            chromaSubsampling: '4:4:4',
+            quantizationTable: 2,
+          })
+          .toFile(join(process.cwd(), 'projects', name, 'panoramas-low', `${panorama.title}-low.jpg`));
+
+        image = `file://${path}`;
       }
-
-      if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas-low'))) {
-        mkdirSync(join(process.cwd(), 'projects', name, 'panoramas-low'), { recursive: true });
-      }
-
-      copyFileSync(panorama.image.substring(7), join(process.cwd(), 'projects', name, 'panoramas', `${panorama.title}.jpg`));
-
-      // create file low quality
-      const buffer = readFileSync(panorama.image.substring(7));
-
-      await sharp(buffer)
-        .resize(2000)
-        .toFormat('jpeg', {
-          quality: 40,
-          progressive: true,
-          force: true,
-          trellisQuantisation: true,
-          overshootDeringing: true,
-          optimizeScans: true,
-          optimizeCoding: true,
-          quantisationTable: 2,
-          chromaSubsampling: '4:4:4',
-          quantizationTable: 2,
-        })
-        .toFile(join(process.cwd(), 'projects', name, 'panoramas-low', `${panorama.title}-low.jpg`));
 
       pushTaskProgress(tasks, totalProcess);
 
       return {
         ...panorama,
-        image: `${panorama.title}.jpg`,
+        image,
       };
     }),
   );
@@ -186,6 +194,20 @@ export const exportProject = async (name: string, exportData: ExportProject) => 
 
   writeFileSync(join(process.cwd(), 'projects', name, 'import-panoramas.json'), JSON.stringify(panoramasImport, null, 2));
   pushTaskProgress(tasks, totalProcess);
+
+  // remove panorama
+  const currentPanoramas = readdirSync(join(process.cwd(), 'projects', name, 'panoramas'));
+
+  currentPanoramas.forEach((cp) => {
+    const fileNames = cp.split('.jpg')[0];
+    const isExist = panoramas.find((p) => p.title === fileNames);
+
+    if (!isExist) {
+      rmSync(join(process.cwd(), 'projects', name, 'panoramas', cp));
+      rmSync(join(process.cwd(), 'projects', name, 'panoramas-low', `${fileNames}-low.jpg`));
+      rmSync(join(process.cwd(), 'projects', name, 'cube', fileNames), { recursive: true });
+    }
+  });
 
   // panorama to cube
 
@@ -204,9 +226,7 @@ export const exportProject = async (name: string, exportData: ExportProject) => 
     console.log('spawn child process');
 
     // `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`
-    CHILD = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', '375', '--quality', '80'], {
-      shell: true,
-    });
+    CHILD = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', '375', '--quality', '80']);
 
     CHILD.stderr.on('data', (data) => {
       const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;

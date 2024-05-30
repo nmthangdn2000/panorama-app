@@ -18,5 +18,8 @@ declare global {
     projectRemove: ProjectPanorama;
     onRemovePanorama: (id: number) => void;
     viewerPanorama: Panorama | undefined;
+    onEditTitlePanorama: (element: HTMLButtonElement, id: number) => void;
+    onSaveTitlePanorama: (id: number) => void;
+    onCancelDeleteProject: () => void;
   }
 }

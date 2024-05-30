@@ -5,6 +5,8 @@ import slugify from 'slugify';
 
 initFlowbite();
 
+const modalNotificationRemoveProject = new Modal(document.getElementById('modal_notification_remove_project')!);
+
 const getProjects = async (modalNotificationRemoveProject: Modal) => {
   const listProjectPanoramaElement = document.getElementById('list_project_panorama')! as HTMLDivElement;
 
@@ -49,7 +51,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const inputAvatarProject = document.getElementById('input_avatar_project')! as HTMLInputElement;
   const imgAvatarProject = document.getElementById('img_avatar_project')! as HTMLImageElement;
   const newProjectModal = new Modal(newProjectModalElement);
-  const modalNotificationRemoveProject = new Modal(document.getElementById('modal_notification_remove_project')!);
+
   const btnAgreeRemoveProject = document.getElementById('btn_agree_remove_project')! as HTMLButtonElement;
   const btnAddProjectPanorama = document.getElementById('btn_add_project_panorama')! as HTMLButtonElement;
 
@@ -112,3 +114,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     await getProjects(modalNotificationRemoveProject);
   });
 });
+
+window.onCancelDeleteProject = () => {
+  modalNotificationRemoveProject.hide();
+};
