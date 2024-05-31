@@ -20,12 +20,12 @@ const resetRenderProject = () => {
   progressModal.hide();
   progressBar.style.width = '0%';
   progressBar.innerHTML = '0%';
-  progressBar.classList.remove('bg-green-500');
+  progressBar.classList.remove('!bg-green-500');
   iconSuccess.classList.add('hidden');
   iconProcessing.classList.remove('hidden');
   btnOkProgress.classList.add('hidden');
   btnCancelProgress.classList.remove('hidden');
-  txtProgress.innerHTML = 'Processing render project...';
+  txtProgress.textContent = 'Processing render project...';
 };
 
 const renderProject = () => {
@@ -78,7 +78,7 @@ window.api.projectPanorama.processingProject((percentage: number) => {
           processing = false;
           currentProgress = 0;
           progressPercentage = 0;
-          progressBar.classList.add('bg-green-500');
+          progressBar.classList.add('!bg-green-500');
           progressBar.innerHTML = 'Done';
 
           iconSuccess.classList.remove('hidden');
@@ -87,7 +87,7 @@ window.api.projectPanorama.processingProject((percentage: number) => {
           btnOkProgress.classList.remove('hidden');
           btnCancelProgress.classList.add('hidden');
 
-          txtProgress.innerHTML = 'Render project successfully!';
+          txtProgress.textContent = 'Render project successfully!';
         }
 
         if (i === progressPercentage) {

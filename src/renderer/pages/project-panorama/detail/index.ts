@@ -4,6 +4,9 @@ import previewPanorama from './preview-panorama/preview-panorama';
 import renderProject from './render-project/render-project';
 import exportPanorama from './export-panorama/export-panorama';
 
+import '../../../assets/scss/main.scss';
+import '../../../assets/scss/detail.scss';
+
 const preload = async () => {
   const url = new URL(window.location.href);
   const name = url.searchParams.get('name');

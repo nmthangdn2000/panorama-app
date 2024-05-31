@@ -3,6 +3,8 @@ import { Modal } from 'flowbite';
 import { itemProjectPanorama } from './html';
 import slugify from 'slugify';
 
+import '../../assets/scss/main.scss';
+
 initFlowbite();
 
 const modalNotificationRemoveProject = new Modal(document.getElementById('modal_notification_remove_project')!);

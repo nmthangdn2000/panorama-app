@@ -20,7 +20,7 @@ const selectImages = () => ipcRenderer.invoke(KEY_IPC.OPEN_DIALOG_SELECT_IMAGES)
 const newProject = (data: NewProject) => ipcRenderer.invoke(KEY_IPC.NEW_PROJECT, data);
 const getProjects = () => ipcRenderer.invoke(KEY_IPC.GET_PROJECTS);
 const deleteProject = (name: string) => ipcRenderer.invoke(KEY_IPC.DELETE_PROJECT, name);
-const renderProject = (name: string, data: RenderProject) => ipcRenderer.invoke(KEY_IPC.EXPORT_PROJECT, name, data);
+const renderProject = (name: string, data: RenderProject) => ipcRenderer.invoke(KEY_IPC.RENDER_PROJECT, name, data);
 const processingProject = (cb: (progressPercentage: number) => void) =>
   ipcRenderer.on(KEY_IPC.PROCESSING_PROJECT, (_, progressPercentage: number) => {
     cb(progressPercentage);
