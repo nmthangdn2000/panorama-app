@@ -6,6 +6,7 @@ import sharp from 'sharp';
 import { RenderProject, FileType, NewProject, ProjectPanorama } from './type';
 import { KEY_IPC } from '../../constants/common.constant';
 import archiver from 'archiver';
+import { platform } from 'os';
 
 let CHILD;
 
@@ -15,7 +16,7 @@ export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
       const metadata = await sharp(filePath).metadata();
 
       return {
-        name: filePath.split('/').pop()!,
+        name: filePath.split(/[\\/]/).pop()!,
         path: filePath,
         metadata,
       };
@@ -222,7 +223,17 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
 
   // panorama to cube
 
-  const toolPath = `${process.cwd()}/resources/cubemap-generator-macos`;
+  // check platform
+  const plf = platform();
+
+  const toolName = plf === 'darwin' ? 'cubemap-generator-macos' : 'cubemap-generator-win.exe';
+
+  // check is exist tool
+  const toolPath1 = join(process.cwd(), 'resources', toolName);
+  const toolPath2 = join(process.cwd(), 'resources', 'app.asar.unpacked', toolName);
+  const isExistTool = existsSync(toolPath1);
+
+  const toolPath = isExistTool ? toolPath1 : toolPath2;
   const inputQualityPath = join(process.cwd(), 'projects', name, 'panoramas');
   const inputLowPath = join(process.cwd(), 'projects', name, 'panoramas-low');
   const outputPath = join(process.cwd(), 'projects', name, 'cube');
