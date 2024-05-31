@@ -3,9 +3,11 @@ import { ProjectPanoramaApi } from './project-panorama';
 import { PanoramaDataType } from '../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 import { ProjectPanorama } from '../main/project-panorama/type';
 import { Panorama } from '../renderer/pages/project-panorama/detail/lib-panorama';
+import { SettingApi } from './setting';
 
 export type Api = {
   projectPanorama: ProjectPanoramaApi;
+  setting: SettingApi;
 };
 
 declare global {

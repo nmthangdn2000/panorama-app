@@ -7,8 +7,20 @@ import { RenderProject, FileType, NewProject, ProjectPanorama } from './type';
 import { KEY_IPC } from '../../constants/common.constant';
 import archiver from 'archiver';
 import { platform } from 'os';
+import { getSetting } from '../setting/handle';
 
 let CHILD;
+
+const checkPathProject = async () => {
+  const setting = await getSetting();
+
+  if (!setting || !setting.projectFolderPath) {
+    BrowserWindow.getAllWindows()[0].loadFile(join(__dirname, '../renderer/src/renderer/pages/settings', 'index.html'));
+    throw new Error('Project folder path not found');
+  }
+
+  return setting.projectFolderPath;
+};
 
 export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
   return Promise.all(
@@ -48,28 +60,29 @@ export const openDialogSelectImages = async () => {
 };
 
 export const newProject = async ({ name, description, avatar }: NewProject) => {
-  const path = join(process.cwd(), 'projects', name);
+  const path = await checkPathProject();
+  const pathProject = join(path, name);
 
-  if (!existsSync(path)) {
-    mkdirSync(path, { recursive: true });
+  if (!existsSync(pathProject)) {
+    mkdirSync(pathProject, { recursive: true });
   }
 
   if (avatar && avatar.path) {
     const buffer = readFileSync(avatar.path);
     // convert to jpeg
-    await sharp(buffer).toFile(join(path, `avatar.jpg`));
+    await sharp(buffer).toFile(join(pathProject, `avatar.jpg`));
   }
 
   if (description) {
-    const descriptionPath = join(path, 'description.txt');
+    const descriptionPath = join(pathProject, 'description.txt');
     writeFileSync(descriptionPath, description);
   }
 
-  return path;
+  return pathProject;
 };
 
 export const getProjects = async () => {
-  const path = join(process.cwd(), 'projects');
+  const path = await checkPathProject();
 
   if (!existsSync(path)) {
     return [];
@@ -94,21 +107,22 @@ export const getProjects = async () => {
 };
 
 export const getProject = async (name: string): Promise<ProjectPanorama | null> => {
-  const path = join(process.cwd(), 'projects', name);
+  const path = await checkPathProject();
+  const pathProject = join(path, name);
 
-  if (!existsSync(path)) {
+  if (!existsSync(pathProject)) {
     return null;
   }
 
-  const avatar = `file://${path}/avatar.jpg`;
-  const description = existsSync(join(path, 'description.txt')) ? readFileSync(join(path, 'description.txt'), 'utf-8') : '';
+  const avatar = `file://${pathProject}/avatar.jpg`;
+  const description = existsSync(join(pathProject, 'description.txt')) ? readFileSync(join(pathProject, 'description.txt'), 'utf-8') : '';
 
-  const panoramas = existsSync(join(path, 'panoramas.json')) ? JSON.parse(readFileSync(join(path, 'panoramas.json'), 'utf-8')) : [];
-  const panoramasImport = existsSync(join(path, 'import-panoramas.json')) ? JSON.parse(readFileSync(join(path, 'import-panoramas.json'), 'utf-8')) : [];
+  const panoramas = existsSync(join(pathProject, 'panoramas.json')) ? JSON.parse(readFileSync(join(pathProject, 'panoramas.json'), 'utf-8')) : [];
+  const panoramasImport = existsSync(join(pathProject, 'import-panoramas.json')) ? JSON.parse(readFileSync(join(pathProject, 'import-panoramas.json'), 'utf-8')) : [];
 
-  const imagesQuality = existsSync(join(path, 'panoramas')) ? readdirSync(join(path, 'panoramas')) : [];
-  const imagesLow = existsSync(join(path, 'panoramas-low')) ? readdirSync(join(path, 'panoramas-low')) : [];
-  const listCube = existsSync(join(path, 'cube')) ? readdirSync(join(path, 'cube')) : [];
+  const imagesQuality = existsSync(join(pathProject, 'panoramas')) ? readdirSync(join(pathProject, 'panoramas')) : [];
+  const imagesLow = existsSync(join(pathProject, 'panoramas-low')) ? readdirSync(join(pathProject, 'panoramas-low')) : [];
+  const listCube = existsSync(join(pathProject, 'cube')) ? readdirSync(join(pathProject, 'cube')) : [];
   const hasCube = listCube.length > 0 && listCube.length === imagesQuality.length && listCube.length === imagesLow.length;
 
   return {
@@ -124,13 +138,14 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
 };
 
 export const deleteProject = async (name: string) => {
-  const path = join(process.cwd(), 'projects', name);
+  const path = await checkPathProject();
+  const pathProject = join(path, name);
 
-  if (!existsSync(path)) {
+  if (!existsSync(pathProject)) {
     return false;
   }
 
-  rmSync(path, { recursive: true });
+  rmSync(pathProject, { recursive: true });
 
   return true;
 };
@@ -153,12 +168,14 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
   const totalProcess = panoramas.length * 3 + 2 + 1;
   const tasks: string[] = [];
 
-  if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas'))) {
-    mkdirSync(join(process.cwd(), 'projects', name, 'panoramas'), { recursive: true });
+  const path = await checkPathProject();
+
+  if (!existsSync(join(path, name, 'panoramas'))) {
+    mkdirSync(join(path, name, 'panoramas'), { recursive: true });
   }
 
-  if (!existsSync(join(process.cwd(), 'projects', name, 'panoramas-low'))) {
-    mkdirSync(join(process.cwd(), 'projects', name, 'panoramas-low'), { recursive: true });
+  if (!existsSync(join(path, name, 'panoramas-low'))) {
+    mkdirSync(join(path, name, 'panoramas-low'), { recursive: true });
   }
 
   const newPanoramas = await Promise.all(
@@ -166,9 +183,9 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
       let image = panorama.image;
 
       if (panorama.isNew) {
-        const path = join(process.cwd(), 'projects', name, 'panoramas', `${panorama.title}.jpg`);
+        const pathImage = join(path, name, 'panoramas', `${panorama.title}.jpg`);
 
-        copyFileSync(panorama.image.substring(7), path);
+        copyFileSync(panorama.image.substring(7), pathImage);
 
         // create file low quality
         const buffer = readFileSync(panorama.image.substring(7));
@@ -187,9 +204,9 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
             chromaSubsampling: '4:4:4',
             quantizationTable: 2,
           })
-          .toFile(join(process.cwd(), 'projects', name, 'panoramas-low', `${panorama.title}-low.jpg`));
+          .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
 
-        image = `file://${path}`;
+        image = `file://${pathImage}`;
       }
 
       pushTaskProgress(tasks, totalProcess);
@@ -201,23 +218,23 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
     }),
   );
 
-  writeFileSync(join(process.cwd(), 'projects', name, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+  writeFileSync(join(path, name, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
   pushTaskProgress(tasks, totalProcess);
 
-  writeFileSync(join(process.cwd(), 'projects', name, 'import-panoramas.json'), JSON.stringify(panoramasImport, null, 2));
+  writeFileSync(join(path, name, 'import-panoramas.json'), JSON.stringify(panoramasImport, null, 2));
   pushTaskProgress(tasks, totalProcess);
 
   // remove panorama
-  const currentPanoramas = readdirSync(join(process.cwd(), 'projects', name, 'panoramas'));
+  const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
 
   currentPanoramas.forEach((cp) => {
     const fileNames = cp.split('.jpg')[0];
     const isExist = panoramas.find((p) => p.title === fileNames);
 
     if (!isExist) {
-      rmSync(join(process.cwd(), 'projects', name, 'panoramas', cp));
-      rmSync(join(process.cwd(), 'projects', name, 'panoramas-low', `${fileNames}-low.jpg`));
-      rmSync(join(process.cwd(), 'projects', name, 'cube', fileNames), { recursive: true });
+      rmSync(join(path, name, 'panoramas', cp));
+      rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
+      rmSync(join(path, name, 'cube', fileNames), { recursive: true });
     }
   });
 
@@ -230,13 +247,13 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
 
   // check is exist tool
   const toolPath1 = join(process.cwd(), 'resources', toolName);
-  const toolPath2 = join(process.cwd(), 'resources', 'app.asar.unpacked', toolName);
+  const toolPath2 = join(process.cwd(), 'resources', 'app.asar.unpacked', 'resources', toolName);
   const isExistTool = existsSync(toolPath1);
 
   const toolPath = isExistTool ? toolPath1 : toolPath2;
-  const inputQualityPath = join(process.cwd(), 'projects', name, 'panoramas');
-  const inputLowPath = join(process.cwd(), 'projects', name, 'panoramas-low');
-  const outputPath = join(process.cwd(), 'projects', name, 'cube');
+  const inputQualityPath = join(path, name, 'panoramas');
+  const inputLowPath = join(path, name, 'panoramas-low');
+  const outputPath = join(path, name, 'cube');
 
   await new Promise((resolve, reject) => {
     if (CHILD) {
@@ -294,12 +311,13 @@ export const cancelProgress = () => {
 };
 
 export const exportProject = async (name: string, pathFolder: string) => {
-  const path = join(process.cwd(), 'projects', name);
+  const path = await checkPathProject();
+  const pathProject = join(path, name);
 
   //  project to zip
   const zipPath = join(pathFolder, `${name}.zip`);
 
-  await zipDirectory(path, zipPath);
+  await zipDirectory(pathProject, zipPath);
 
   return true;
 };

@@ -2,10 +2,12 @@ import { contextBridge } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
 import { Api } from './index.d';
 import * as projectPanorama from './project-panorama';
+import * as setting from './setting';
 
 // Custom APIs for renderer
 const api: Api = {
   projectPanorama,
+  setting,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

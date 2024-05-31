@@ -22,6 +22,7 @@ export default defineConfig({
               index: resolve(__dirname, 'src/renderer/index.html'),
               project: resolve(__dirname, 'src/renderer/pages/project-panorama/index.html'),
               detailProject: resolve(__dirname, 'src/renderer/pages/project-panorama/detail/index.html'),
+              settings: resolve(__dirname, 'src/renderer/pages/settings/index.html'),
             },
           },
         },

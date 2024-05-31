@@ -10,4 +10,8 @@ export enum KEY_IPC {
   RENDER_PROJECT = 'project:render',
   PROCESSING_PROJECT = 'project:processing',
   CANCEL_PROCESSING_PROJECT = 'project:cancelProcessing',
+
+  // settings
+  GET_SETTINGS = 'settings:get',
+  SET_SETTINGS = 'settings:set',
 }

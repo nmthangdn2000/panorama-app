@@ -1,3 +1,5 @@
+import { toast } from '../../../../common/toast';
+
 const btnExportPanorama = document.getElementById('btn_export_panorama')! as HTMLButtonElement;
 
 const exportPanorama = () => {
@@ -14,7 +16,12 @@ const exportPanorama = () => {
 
     const exporting = await window.api.projectPanorama.exportProject(name, pathFolder);
 
-    console.log(exporting);
+    if (exporting) {
+      toast({
+        message: 'Project exported',
+        type: 'success',
+      });
+    }
   });
 };
 

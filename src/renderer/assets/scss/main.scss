@@ -1,1 +1,35 @@
 @import './base.scss';
+
+#toast-container {
+  position: fixed;
+  top: 32px;
+  right: 32px;
+  z-index: 999999;
+  pointer-events: none;
+
+  .toast {
+    pointer-events: auto;
+    transition: all linear 0.3s;
+    animation:
+      slideInLeft ease 0.3s,
+      fadeOut ease 0.3s 3s forwards;
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(calc(100% + 32px));
+    opacity: 0;
+  }
+
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOut {
+  to {
+    opacity: 0;
+  }
+}
