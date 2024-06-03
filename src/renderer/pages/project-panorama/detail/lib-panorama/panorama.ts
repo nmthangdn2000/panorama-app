@@ -33,7 +33,6 @@ export class Panorama implements PanoramaType {
   constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], panoramaImport: PanoramaDataType[], options?: PanoramaOptionsType) {
     this.viewer = new Viewer({
       container,
-      panorama: this.__formatPanoramaPath(panoramas[0].image),
       adapter: EquirectangularAdapter,
       plugins: [
         MarkersPlugin,
@@ -247,7 +246,7 @@ export class Panorama implements PanoramaType {
       position: panorama.cameraPosition,
     });
 
-    // this.__setMarkers(panorama);
+    this.__setMarkers(panorama);
   }
 
   private async __handleChangePanorama(textureData: any, panorama: PanoramaDataType, cb?: () => void, isRotate: boolean = true, changeTexture?: boolean) {
@@ -304,9 +303,7 @@ export class Panorama implements PanoramaType {
   }
 
   private __formatPanoramaPath(panorama: string) {
-    console.log('panorama', panorama);
-
-    return 'https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg';
+    return panorama;
     // const path = `./images/panoramas/${panorama.split('.jpg')[0]}`;
 
     // return {
