@@ -13,7 +13,7 @@ const openDialogSelectImages = () => {
 
     folderPath.forEach((path, index) => {
       const d: PanoramaDataType = {
-        id: index + 1,
+        id: window.panoramas.length + index,
         title: path.name.split('.')[0],
         pointPosition: { bottom: '50%', left: '50%' },
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
@@ -35,7 +35,48 @@ const openDialogSelectImages = () => {
 };
 
 export const renderListImage = () => {
+  const sizePanoramas: {
+    size: string;
+    color: string;
+  }[] = [];
+
+  let currentSize = '';
+
+  const isSizeDifference = window.panoramas.some((panorama) => {
+    if (!panorama.metadata) return;
+
+    const size = panorama.metadata.width + 'x' + panorama.metadata.height;
+    if (!currentSize) {
+      currentSize = size;
+      return false;
+    }
+
+    if (currentSize !== size) {
+      return true;
+    }
+
+    return false;
+  });
+
   const html = window.panoramas.map((panorama) => {
+    if (!panorama.metadata) return;
+
+    let color = 'transparent';
+    if (isSizeDifference) {
+      const size = panorama.metadata.width + 'x' + panorama.metadata.height;
+      const isExist = sizePanoramas.findIndex((sizePanorama) => sizePanorama.size === size);
+
+      if (isExist < 0) {
+        color = `#${Math.floor(Math.random() * 16777215).toString(16)}`;
+        sizePanoramas.push({
+          size,
+          color,
+        });
+      } else {
+        color = sizePanoramas[isExist].color;
+      }
+    }
+
     window.onEditTitlePanorama = (element: HTMLButtonElement, id: number) => {
       const title = element.parentElement!.querySelector('h5')!.textContent;
 
@@ -75,7 +116,7 @@ export const renderListImage = () => {
       input.parentElement!.classList.add('hidden');
     };
 
-    return itemImagePanorama(panorama.id, panorama.image, panorama.title, panorama.metadata);
+    return itemImagePanorama(panorama.id, panorama.image, panorama.title, panorama.metadata, color);
   });
 
   imagePanoramaContainer.innerHTML = html.join('');
@@ -83,18 +124,26 @@ export const renderListImage = () => {
   const btnPreviewPanorama = document.getElementById('btn_preview_panorama')! as HTMLButtonElement;
   const btnRenderPanorama = document.getElementById('btn_render_panorama')! as HTMLButtonElement;
   const btnExportPanorama = document.getElementById('btn_export_panorama')! as HTMLButtonElement;
+  const txtNoPanorama = imagePanoramaContainer.parentElement!.querySelector('p')! as HTMLParagraphElement;
   if (window.panoramas.length > 0) {
     btnRemoveAllPanorama.classList.remove('hidden');
-    btnPreviewPanorama.classList.remove('hidden');
-    btnRenderPanorama.classList.remove('hidden');
-    btnExportPanorama.classList.remove('hidden');
-    imagePanoramaContainer.parentElement!.querySelector('p')!.classList.add('hidden');
+    txtNoPanorama.classList.add('hidden');
+
+    if (isSizeDifference) {
+      txtNoPanorama.classList.remove('hidden');
+      txtNoPanorama.textContent = 'Panoramas with different sizes are not supported';
+    } else {
+      btnPreviewPanorama.classList.remove('hidden');
+      btnRenderPanorama.classList.remove('hidden');
+      btnExportPanorama.classList.remove('hidden');
+    }
   } else {
     btnRemoveAllPanorama.classList.add('hidden');
     btnPreviewPanorama.classList.add('hidden');
     btnRenderPanorama.classList.add('hidden');
     btnExportPanorama.classList.add('hidden');
-    imagePanoramaContainer.parentElement!.querySelector('p')!.classList.remove('hidden');
+    txtNoPanorama.classList.remove('hidden');
+    txtNoPanorama.textContent = 'No images have been added yet.';
   }
 
   destroyViewerPanorama();

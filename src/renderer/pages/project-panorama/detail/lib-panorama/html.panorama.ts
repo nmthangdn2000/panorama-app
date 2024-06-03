@@ -59,7 +59,7 @@ export const toolbarDebugHTML = () => {
 };
 
 export const btnHotSpot = (onClick: string, label?: string, _style?: any) => {
-  return `<div class="hotspot arrow"  onclick="${onClick}" ontouchend="${onClick}">
+  return `<div class="hotspot arrow"  onclick="${onClick}">
   <div class="hotspot-arrow" data-animation-path="animation/" data-anim-loop="true" ></div>
   <div class="title-marker">
     <div class="hotspot-label">
@@ -80,10 +80,10 @@ export const formAddHotSpot = (panoramas: PanoramaDataType[]) => {
         ${panoramas.map((panorama) => {
           return `<option value="${panorama.id}">${panorama.title}</option>`;
         })}
-      </select> 
+      </select>
     </div>
 
-      
+
     <div>
       <button type="button" id="submit-new-hotspot">Add</button>
       <button type="button" id="cancel-new-hotspot">Cancel</button>

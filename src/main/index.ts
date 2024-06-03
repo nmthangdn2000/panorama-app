@@ -19,6 +19,8 @@ function createWindow(): void {
     },
   });
 
+  // app.commandLine.appendSwitch('disable-web-security');
+
   mainWindow.on('ready-to-show', () => {
     mainWindow.show();
   });

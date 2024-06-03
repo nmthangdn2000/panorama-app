@@ -5,8 +5,9 @@ import { MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 import Lottie from 'lottie-web';
 import { DebuggerPanorama } from './debugger.panorama';
 import { EventListenerType, PanoramaOptionsType, PanoramaDataType, PanoramaType } from './panorama.type';
+import hotspot from '../../../../../../resources/lottie/hotspot.json';
 
-import './panorama.scss';
+import '../../../../assets/scss/panorama.scss';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/markers-plugin/index.css';
 
@@ -32,6 +33,7 @@ export class Panorama implements PanoramaType {
   constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], panoramaImport: PanoramaDataType[], options?: PanoramaOptionsType) {
     this.viewer = new Viewer({
       container,
+      panorama: this.__formatPanoramaPath(panoramas[0].image),
       adapter: EquirectangularAdapter,
       plugins: [
         MarkersPlugin,
@@ -245,7 +247,7 @@ export class Panorama implements PanoramaType {
       position: panorama.cameraPosition,
     });
 
-    this.__setMarkers(panorama);
+    // this.__setMarkers(panorama);
   }
 
   private async __handleChangePanorama(textureData: any, panorama: PanoramaDataType, cb?: () => void, isRotate: boolean = true, changeTexture?: boolean) {
@@ -288,7 +290,7 @@ export class Panorama implements PanoramaType {
           }
 
           setTimeout(() => {
-            // imgElement.remove();
+            imgElement.remove();
           }, 2000);
         };
 
@@ -302,25 +304,27 @@ export class Panorama implements PanoramaType {
   }
 
   private __formatPanoramaPath(panorama: string) {
-    return panorama;
-    const path = `./images/panoramas/${panorama.split('.jpg')[0]}`;
+    console.log('panorama', panorama);
 
-    return {
-      name: panorama,
-      faceSize: 1500,
-      nbTiles: 4,
-      baseUrl: {
-        left: `${path}/tile_low/left.jpg`,
-        front: `${path}/tile_low/front.jpg`,
-        right: `${path}/tile_low/right.jpg`,
-        back: `${path}/tile_low/back.jpg`,
-        top: `${path}/tile_low/top.jpg`,
-        bottom: `${path}/tile_low/bottom.jpg`,
-      },
-      tileUrl: (face: string, col: string, row: string) => {
-        return `${path}/tile/${face}_${col}_${row}.jpg`;
-      },
-    };
+    return 'https://photo-sphere-viewer-data.netlify.app/assets/sphere.jpg';
+    // const path = `./images/panoramas/${panorama.split('.jpg')[0]}`;
+
+    // return {
+    //   name: panorama,
+    //   faceSize: 1500,
+    //   nbTiles: 4,
+    //   baseUrl: {
+    //     left: `${path}/tile_low/left.jpg`,
+    //     front: `${path}/tile_low/front.jpg`,
+    //     right: `${path}/tile_low/right.jpg`,
+    //     back: `${path}/tile_low/back.jpg`,
+    //     top: `${path}/tile_low/top.jpg`,
+    //     bottom: `${path}/tile_low/bottom.jpg`,
+    //   },
+    //   tileUrl: (face: string, col: string, row: string) => {
+    //     return `${path}/tile/${face}_${col}_${row}.jpg`;
+    //   },
+    // };
   }
 
   /**
@@ -337,8 +341,9 @@ export class Panorama implements PanoramaType {
 
   private async __preloadBtnArrowAnimation() {
     if (this._animationDataBtnArrow) return;
-    const response = await fetch('/assets/lottie/hotspot.json');
-    this._animationDataBtnArrow = await response.json();
+    // const response = await fetch('/assets/lottie/hotspot.json');
+    // this._animationDataBtnArrow = await response.json();
+    this._animationDataBtnArrow = hotspot;
   }
 
   private async __setAnimationToBtnArrow() {
@@ -375,7 +380,6 @@ export class Panorama implements PanoramaType {
   }
 
   private __events() {
-    // onMarkerClick
     window.onMarkerClick = (id: number, markerId: string) => {
       this.swapPanorama(id, markerId);
       this._events.onMarkerClick(id, markerId);

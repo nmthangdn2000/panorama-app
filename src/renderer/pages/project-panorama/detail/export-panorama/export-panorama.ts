@@ -17,11 +17,16 @@ const exportPanorama = () => {
     const exporting = await window.api.projectPanorama.exportProject(name, pathFolder);
 
     if (exporting) {
-      toast({
+      return toast({
         message: 'Project exported',
         type: 'success',
       });
     }
+
+    return toast({
+      message: 'Failed to export project',
+      type: 'error',
+    });
   });
 };
 

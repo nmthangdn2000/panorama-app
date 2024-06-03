@@ -2,12 +2,12 @@ import { spawn } from 'child_process';
 import { BrowserWindow, dialog } from 'electron';
 import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
-import sharp from 'sharp';
 import { RenderProject, FileType, NewProject, ProjectPanorama } from './type';
 import { KEY_IPC } from '../../constants/common.constant';
 import archiver from 'archiver';
 import { platform } from 'os';
 import { getSetting } from '../setting/handle';
+import Jimp from 'jimp';
 
 let CHILD;
 
@@ -25,12 +25,16 @@ const checkPathProject = async () => {
 export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
   return Promise.all(
     filePaths.map(async (filePath) => {
-      const metadata = await sharp(filePath).metadata();
+      const metadata = await Jimp.read(filePath)
+
 
       return {
         name: filePath.split(/[\\/]/).pop()!,
         path: filePath,
-        metadata,
+        metadata : {
+          width: metadata.getWidth(),
+          height: metadata.getHeight()
+        },
       };
     }),
   );
@@ -70,7 +74,7 @@ export const newProject = async ({ name, description, avatar }: NewProject) => {
   if (avatar && avatar.path) {
     const buffer = readFileSync(avatar.path);
     // convert to jpeg
-    await sharp(buffer).toFile(join(pathProject, `avatar.jpg`));
+   await (await Jimp.read(buffer)).resize(400, Jimp.AUTO).quality(80).writeAsync(join(pathProject, 'avatar.jpg'))
   }
 
   if (description) {
@@ -190,21 +194,23 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
         // create file low quality
         const buffer = readFileSync(panorama.image.substring(7));
 
-        await sharp(buffer)
-          .resize(2000)
-          .toFormat('jpeg', {
-            quality: 40,
-            progressive: true,
-            force: true,
-            trellisQuantisation: true,
-            overshootDeringing: true,
-            optimizeScans: true,
-            optimizeCoding: true,
-            quantisationTable: 2,
-            chromaSubsampling: '4:4:4',
-            quantizationTable: 2,
-          })
-          .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+        await (await Jimp.read(buffer)).resize(2000, Jimp.AUTO)
+          .quality(40)
+          .greyscale()
+          .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+          // .toFormat('jpeg', {
+          //   quality: 40,
+          //   progressive: true,
+          //   force: true,
+          //   trellisQuantisation: true,
+          //   overshootDeringing: true,
+          //   optimizeScans: true,
+          //   optimizeCoding: true,
+          //   quantisationTable: 2,
+          //   chromaSubsampling: '4:4:4',
+          //   quantizationTable: 2,
+          // })
+          // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
 
         image = `file://${pathImage}`;
       }

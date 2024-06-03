@@ -3,8 +3,6 @@ import { resolve } from 'path';
 
 const isDev = process.env.NODE_ENV === 'development';
 
-console.log('isDev', isDev);
-
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()],

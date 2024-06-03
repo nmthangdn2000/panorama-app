@@ -70,31 +70,34 @@ window.api.projectPanorama.processingProject((percentage: number) => {
   if (!processing || currentProgress < progressPercentage) {
     processing = true;
     for (let i = currentProgress; i <= progressPercentage; i++) {
-      setTimeout(() => {
-        progressBar.style.width = `${i}%`;
-        progressBar.innerHTML = `${i}%`;
+      setTimeout(
+        () => {
+          progressBar.style.width = `${i}%`;
+          progressBar.innerHTML = `${i}%`;
 
-        if (i === 100) {
-          processing = false;
-          currentProgress = 0;
-          progressPercentage = 0;
-          progressBar.classList.add('!bg-green-500');
-          progressBar.innerHTML = 'Done';
+          if (i === 100) {
+            processing = false;
+            currentProgress = 0;
+            progressPercentage = 0;
+            progressBar.classList.add('!bg-green-500');
+            progressBar.innerHTML = 'Done';
 
-          iconSuccess.classList.remove('hidden');
-          iconProcessing.classList.add('hidden');
+            iconSuccess.classList.remove('hidden');
+            iconProcessing.classList.add('hidden');
 
-          btnOkProgress.classList.remove('hidden');
-          btnCancelProgress.classList.add('hidden');
+            btnOkProgress.classList.remove('hidden');
+            btnCancelProgress.classList.add('hidden');
 
-          txtProgress.textContent = 'Render project successfully!';
-        }
+            txtProgress.textContent = 'Render project successfully!';
+          }
 
-        if (i === progressPercentage) {
-          processing = false;
-          currentProgress = percentage;
-        }
-      }, 50 * i);
+          if (i === progressPercentage) {
+            processing = false;
+            currentProgress = percentage;
+          }
+        },
+        50 * (i - currentProgress),
+      );
     }
   }
 });

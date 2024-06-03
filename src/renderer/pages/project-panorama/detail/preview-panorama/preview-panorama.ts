@@ -20,10 +20,14 @@ const previewPanorama = () => {
     return;
   }
 
+  console.log('window.panoramas', window.panoramas);
+  console.log('window.panoramasImport', window.panoramasImport);
+
   window.viewerPanorama = new Panorama(viewerElement, window.panoramas, window.panoramasImport, {
     debug: true,
   });
-  window.viewerPanorama.setPanorama(window.panoramas[0].image);
+
+  // window.viewerPanorama.setPanorama(window.panoramas[0].image);
 };
 
 export const destroyViewerPanorama = () => {

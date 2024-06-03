@@ -1,6 +1,6 @@
 import { contextBridge } from 'electron';
 import { electronAPI } from '@electron-toolkit/preload';
-import { Api } from './index.d';
+import { Api } from './type';
 import * as projectPanorama from './project-panorama';
 import * as setting from './setting';
 

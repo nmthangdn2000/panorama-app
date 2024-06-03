@@ -1,10 +1,12 @@
-import sharp = require('sharp');
 import { PanoramaDataType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 
 export type FileType = {
   name: string;
   path: string;
-  metadata: sharp.Metadata;
+  metadata: {
+    width: number;
+    height: number;
+  }
 };
 
 export type NewProject = {

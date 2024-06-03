@@ -1,7 +1,8 @@
-export const itemImagePanorama = (id: number, src: string, name: string, metadata: any) => {
+export const itemImagePanorama = (id: number, src: string, name: string, metadata: any, borderColor: string) => {
   return ` <div
   draggable="true"
   data-id="${id}"
+  style="border-color: ${borderColor}"
   class="item_panorama flex flex-col items-center justify-between bg-white border border-gray-200 rounded-md shadow md:flex-row  hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-700"
 >
   <div class="flex">
