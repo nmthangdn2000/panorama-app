@@ -2,6 +2,7 @@ import { ClickData, Viewer } from '@photo-sphere-viewer/core';
 import { Marker, MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
 import { btnHotSpot, formAddHotSpot, toolbarDebugHTML } from './html.panorama';
 import { PanoramaDataType } from './panorama.type';
+import { saveProjectPanorama } from '../detail-panorama/detail-panorama';
 
 const INFO_OPTION_DEFAULT = 'Debug mode reserved for development teams';
 
@@ -149,6 +150,8 @@ export class DebuggerPanorama {
       setTimeout(() => {
         this.viewer.container.style.transition = 'none';
       }, 600);
+
+      saveProjectPanorama();
     }
   }
   // handle keydown
@@ -269,6 +272,8 @@ export class DebuggerPanorama {
       this.panoramas[panorama].markers.push(marker);
 
       document.getElementById('section-new-hotspot')?.remove();
+
+      saveProjectPanorama();
     });
   }
 
@@ -309,5 +314,7 @@ export class DebuggerPanorama {
 
       this.setMarkers(currentPanorama);
     };
+
+    saveProjectPanorama();
   }
 }

@@ -43,10 +43,22 @@ const renderProject = () => {
 
     const result = await window.api.projectPanorama.renderProject(name!, {
       panoramas: window.panoramas,
-      panoramasImport: window.panoramasImport,
     });
 
-    if (result) {
+    if (!result) {
+      processing = false;
+      currentProgress = 0;
+      progressPercentage = 0;
+      progressBar.classList.add('!bg-red-500');
+      progressBar.innerHTML = 'Failed';
+
+      iconSuccess.classList.remove('hidden');
+      iconProcessing.classList.add('hidden');
+
+      btnOkProgress.classList.remove('hidden');
+      btnCancelProgress.classList.add('hidden');
+
+      txtProgress.textContent = 'Render project failed!';
     }
   });
 

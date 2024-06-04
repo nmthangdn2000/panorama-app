@@ -22,7 +22,7 @@ const checkPathProject = async () => {
       await BrowserWindow.getAllWindows()[0].loadFile(join(__dirname, '../renderer/src/renderer/pages/settings/index.html'));
     }
 
-     throw new Error('Project folder path is not set');
+    throw new Error('Project folder path is not set');
   }
 
   return setting.projectFolderPath;
@@ -31,15 +31,14 @@ const checkPathProject = async () => {
 export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
   return Promise.all(
     filePaths.map(async (filePath) => {
-      const metadata = await Jimp.read(filePath)
-
+      const metadata = await Jimp.read(filePath);
 
       return {
         name: filePath.split(/[\\/]/).pop()!,
         path: filePath,
-        metadata : {
+        metadata: {
           width: metadata.getWidth(),
-          height: metadata.getHeight()
+          height: metadata.getHeight(),
         },
       };
     }),
@@ -80,7 +79,7 @@ export const newProject = async ({ name, description, avatar }: NewProject) => {
   if (avatar && avatar.path) {
     const buffer = readFileSync(avatar.path);
     // convert to jpeg
-   await (await Jimp.read(buffer)).resize(400, Jimp.AUTO).quality(80).writeAsync(join(pathProject, 'avatar.jpg'))
+    await (await Jimp.read(buffer)).resize(400, Jimp.AUTO).quality(80).writeAsync(join(pathProject, 'avatar.jpg'));
   }
 
   if (description) {
@@ -173,143 +172,82 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
 };
 
 export const renderProject = async (name: string, renderData: RenderProject) => {
-  const { panoramasImport, panoramas } = renderData;
+  try {
+    cancelProgress();
 
-  const totalProcess = panoramas.length * 3 + 2 + 1;
-  const tasks: string[] = [];
+    const { panoramas } = renderData;
 
-  const path = await checkPathProject();
+    const totalProcess = panoramas.length + 1;
+    const tasks: string[] = [];
 
-  if (!existsSync(join(path, name, 'panoramas'))) {
-    mkdirSync(join(path, name, 'panoramas'), { recursive: true });
-  }
+    const path = await checkPathProject();
 
-  if (!existsSync(join(path, name, 'panoramas-low'))) {
-    mkdirSync(join(path, name, 'panoramas-low'), { recursive: true });
-  }
+    await saveProject(name, renderData, true);
+    pushTaskProgress(tasks, totalProcess);
 
-  const newPanoramas = await Promise.all(
-    panoramas.map(async (panorama) => {
-      let image = panorama.image;
+    // panorama to cube
 
-      if (panorama.isNew) {
-        const pathImage = join(path, name, 'panoramas', `${panorama.title}.jpg`);
+    // check platform
+    const plf = platform();
 
-        copyFileSync(panorama.image.substring(7), pathImage);
+    const toolName = plf === 'darwin' ? 'cubemap-generator-macos' : 'cubemap-generator-win.exe';
 
-        // create file low quality
-        const buffer = readFileSync(panorama.image.substring(7));
+    // check is exist tool
+    const toolPath1 = join(process.cwd(), 'resources', toolName);
+    const toolPath2 = join(process.cwd(), 'resources', 'app.asar.unpacked', 'resources', toolName);
+    const isExistTool = existsSync(toolPath1);
 
-        await (await Jimp.read(buffer)).resize(2000, Jimp.AUTO)
-          .quality(40)
-          .greyscale()
-          .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
-          // .toFormat('jpeg', {
-          //   quality: 40,
-          //   progressive: true,
-          //   force: true,
-          //   trellisQuantisation: true,
-          //   overshootDeringing: true,
-          //   optimizeScans: true,
-          //   optimizeCoding: true,
-          //   quantisationTable: 2,
-          //   chromaSubsampling: '4:4:4',
-          //   quantizationTable: 2,
-          // })
-          // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+    const toolPath = isExistTool ? toolPath1 : toolPath2;
+    const inputQualityPath = join(path, name, 'panoramas');
+    const inputLowPath = join(path, name, 'panoramas-low');
+    const outputPath = join(path, name, 'cube3');
 
-        image = `file://${pathImage}`;
+    await new Promise((resolve, reject) => {
+      if (CHILD) {
+        console.log('kill child process');
+
+        CHILD.kill();
       }
 
-      pushTaskProgress(tasks, totalProcess);
+      console.log('spawn child process');
 
-      return {
-        ...panorama,
-        image,
-      };
-    }),
-  );
+      // `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`
+      CHILD = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', '375', '--quality', '80']);
 
-  writeFileSync(join(path, name, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
-  pushTaskProgress(tasks, totalProcess);
+      CHILD.stderr.on('data', (data) => {
+        const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
 
-  writeFileSync(join(path, name, 'import-panoramas.json'), JSON.stringify(panoramasImport, null, 2));
-  pushTaskProgress(tasks, totalProcess);
+        const match = data.toString().match(regex);
 
-  // remove panorama
-  const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
-
-  currentPanoramas.forEach((cp) => {
-    const fileNames = cp.split('.jpg')[0];
-    const isExist = panoramas.find((p) => p.title === fileNames);
-
-    if (!isExist) {
-      rmSync(join(path, name, 'panoramas', cp));
-      rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
-      rmSync(join(path, name, 'cube', fileNames), { recursive: true });
-    }
-  });
-
-  // panorama to cube
-
-  // check platform
-  const plf = platform();
-
-  const toolName = plf === 'darwin' ? 'cubemap-generator-macos' : 'cubemap-generator-win.exe';
-
-  // check is exist tool
-  const toolPath1 = join(process.cwd(), 'resources', toolName);
-  const toolPath2 = join(process.cwd(), 'resources', 'app.asar.unpacked', 'resources', toolName);
-  const isExistTool = existsSync(toolPath1);
-
-  const toolPath = isExistTool ? toolPath1 : toolPath2;
-  const inputQualityPath = join(path, name, 'panoramas');
-  const inputLowPath = join(path, name, 'panoramas-low');
-  const outputPath = join(path, name, 'cube');
-
-  await new Promise((resolve, reject) => {
-    if (CHILD) {
-      console.log('kill child process');
-
-      CHILD.kill();
-    }
-
-    console.log('spawn child process');
-
-    // `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`
-    CHILD = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', '375', '--quality', '80']);
-
-    CHILD.stderr.on('data', (data) => {
-      const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
-
-      const match = data.toString().match(regex);
-
-      if (match) {
-        if (match[1]) {
-          pushTaskProgress(tasks, totalProcess);
-          pushTaskProgress(tasks, totalProcess);
+        if (match) {
+          if (match[1]) {
+            pushTaskProgress(tasks, totalProcess);
+          }
         }
+      });
+
+      CHILD.on('error', (err) => {
+        console.log(`error: ${err.message}`);
+        reject(err);
+      });
+
+      CHILD.on('close', (code) => {
+        console.log(`child process exited with code ${code}`);
+        resolve(true);
+      });
+    });
+
+    if (tasks.length < totalProcess) {
+      for (let i = tasks.length; i < totalProcess; i++) {
+        pushTaskProgress(tasks, totalProcess);
       }
-    });
-
-    CHILD.on('error', (err) => {
-      console.log(`error: ${err.message}`);
-      reject(err);
-    });
-
-    CHILD.on('close', (code) => {
-      console.log(`child process exited with code ${code}`);
-      resolve(true);
-    });
-  });
-
-  if (tasks.length < totalProcess) {
-    for (let i = tasks.length; i < totalProcess; i++) {
-      pushTaskProgress(tasks, totalProcess);
     }
-  }
 
-  return true;
+    return true;
+  } catch (error) {
+    console.log('renderProject', error);
+    return false;
+  }
 };
 
 export const cancelProgress = () => {
@@ -347,4 +285,82 @@ const zipDirectory = (sourceDir: string, outPath: string) => {
     stream.on('close', () => resolve(true));
     archive.finalize();
   });
+};
+
+export const saveProject = async (name: string, project: RenderProject, isRender?: boolean) => {
+  const path = await checkPathProject();
+  const pathProject = join(path, name);
+
+  if (!existsSync(join(path, name, 'panoramas'))) {
+    mkdirSync(join(path, name, 'panoramas'), { recursive: true });
+  }
+
+  if (!existsSync(join(path, name, 'panoramas-low'))) {
+    mkdirSync(join(path, name, 'panoramas-low'), { recursive: true });
+  }
+
+  const newPanoramas = await Promise.all(
+    project.panoramas.map(async (panorama) => {
+      let image = panorama.image;
+
+      if (panorama.isNew) {
+        const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
+
+        copyFileSync(panorama.image.substring(7), pathImage);
+
+        if (isRender) {
+          // create file low quality
+          const buffer = readFileSync(panorama.image.substring(7));
+
+          await (
+            await Jimp.read(buffer)
+          )
+            .resize(2000, Jimp.AUTO)
+            .quality(40)
+            .greyscale()
+            .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+          // .toFormat('jpeg', {
+          //   quality: 40,
+          //   progressive: true,
+          //   force: true,
+          //   trellisQuantisation: true,
+          //   overshootDeringing: true,
+          //   optimizeScans: true,
+          //   optimizeCoding: true,
+          //   quantisationTable: 2,
+          //   chromaSubsampling: '4:4:4',
+          //   quantizationTable: 2,
+          // })
+          // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+        }
+
+        image = `file://${pathImage}`;
+      }
+
+      return {
+        ...panorama,
+        image,
+      };
+    }),
+  );
+
+  writeFileSync(join(pathProject, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+
+  // remove panorama
+  const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
+
+  currentPanoramas.forEach((cp) => {
+    const fileNames = cp.split('.jpg')[0];
+    const isExist = project.panoramas.find((p) => p.title === fileNames);
+
+    if (!isExist) {
+      rmSync(join(path, name, 'panoramas', cp));
+      if (isRender) {
+        rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
+        rmSync(join(path, name, 'cube', fileNames), { recursive: true });
+      }
+    }
+  });
+
+  return true;
 };

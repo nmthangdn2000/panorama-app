@@ -13,6 +13,7 @@ export type ProjectPanoramaApi = {
   cancelProgress: () => Promise<boolean>;
   getProject: (name: string) => Promise<ProjectPanorama | null>;
   exportProject: (name: string, pathFolder: string) => Promise<boolean>;
+  saveProject: (name: string, data: RenderProject) => void;
 };
 
 const openDirectory = () => ipcRenderer.invoke(KEY_IPC.OPEN_DIRECTORY);
@@ -28,5 +29,6 @@ const processingProject = (cb: (progressPercentage: number) => void) =>
 const cancelProgress = () => ipcRenderer.invoke(KEY_IPC.CANCEL_PROCESSING_PROJECT);
 const getProject = (name: string) => ipcRenderer.invoke(KEY_IPC.GET_PROJECT, name);
 const exportProject = (name: string, pathFolder: string) => ipcRenderer.invoke(KEY_IPC.EXPORT_PROJECT, name, pathFolder);
+const saveProject = (name: string, data: RenderProject) => ipcRenderer.send(KEY_IPC.SAVE_PROJECT, name, data);
 
-export { openDirectory, selectImages, newProject, getProjects, deleteProject, renderProject, processingProject, cancelProgress, getProject, exportProject };
+export { openDirectory, selectImages, newProject, getProjects, deleteProject, renderProject, processingProject, cancelProgress, getProject, exportProject, saveProject };

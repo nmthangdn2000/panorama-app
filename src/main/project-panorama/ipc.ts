@@ -1,5 +1,5 @@
 import { ipcMain } from 'electron';
-import { cancelProgress, deleteProject, renderProject, getProject, getProjects, newProject, openDialogSelectImages, openDirectory, exportProject } from './handle';
+import { cancelProgress, deleteProject, renderProject, getProject, getProjects, newProject, openDialogSelectImages, openDirectory, exportProject, saveProject } from './handle';
 import { KEY_IPC } from '../../constants/common.constant';
 import { RenderProject, NewProject } from './type';
 
@@ -13,4 +13,5 @@ export const register = () => {
   ipcMain.handle(KEY_IPC.CANCEL_PROCESSING_PROJECT, cancelProgress);
   ipcMain.handle(KEY_IPC.GET_PROJECT, (_, name: string) => getProject(name));
   ipcMain.handle(KEY_IPC.EXPORT_PROJECT, (_, name: string, pathFolder: string) => exportProject(name, pathFolder));
+  ipcMain.on(KEY_IPC.SAVE_PROJECT, (_, name: string, data: RenderProject) => saveProject(name, data));
 };

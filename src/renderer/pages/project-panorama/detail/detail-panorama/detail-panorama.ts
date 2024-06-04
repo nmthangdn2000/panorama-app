@@ -148,6 +148,7 @@ export const renderListImage = () => {
 
   destroyViewerPanorama();
   handleDragAndDropItem();
+  saveProjectPanorama();
 };
 
 window.onRemovePanorama = (id: number) => {
@@ -222,6 +223,7 @@ const handleDragAndDropItem = () => {
       });
 
       destroyViewerPanorama();
+      saveProjectPanorama();
     });
   });
 
@@ -242,6 +244,25 @@ const initSortableList = (e: DragEvent) => {
 
   // Inserting the dragging item before the found sibling
   imagePanoramaContainer.insertBefore(draggingItem, nextSibling!);
+};
+
+/**
+ * Save project after working operation
+ * @returns {Promise<void>}
+ */
+export const saveProjectPanorama = () => {
+  const url = new URL(window.location.href);
+  const name = url.searchParams.get('name');
+
+  if (!name) {
+    return;
+  }
+
+  window.api.projectPanorama.saveProject(name, {
+    panoramas: window.panoramas,
+  });
+
+  return;
 };
 
 export default () => {

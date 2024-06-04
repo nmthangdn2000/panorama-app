@@ -6,7 +6,7 @@ export type FileType = {
   metadata: {
     width: number;
     height: number;
-  }
+  };
 };
 
 export type NewProject = {
@@ -31,5 +31,4 @@ export type ProjectPanorama = {
 
 export type RenderProject = {
   panoramas: PanoramaDataType[];
-  panoramasImport: PanoramaDataType[];
 };
