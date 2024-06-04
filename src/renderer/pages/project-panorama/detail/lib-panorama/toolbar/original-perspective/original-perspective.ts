@@ -1,7 +1,8 @@
 import { Viewer } from '@photo-sphere-viewer/core';
-import { saveProjectPanorama } from '../../detail-panorama/detail-panorama';
-import { PanoramaDataType, ToolbarDebugHTML } from '../panorama.type';
-import { EVENT_KEY } from '../event.panorama';
+import { saveProjectPanorama } from '../../../detail-panorama/detail-panorama';
+import { PanoramaDataType, ToolbarDebugHTML } from '../../panorama.type';
+import { EVENT_KEY } from '../../event.panorama';
+import { btnOriginalPerspectiveHTML } from './html';
 
 export class OriginalPerspective implements ToolbarDebugHTML {
   private viewer: Viewer;
@@ -18,6 +19,7 @@ export class OriginalPerspective implements ToolbarDebugHTML {
   }
 
   initialize() {
+    this.createToolbarOriginalPerspective();
     this.handleBtnOriginalPerspective();
   }
 
@@ -30,7 +32,6 @@ export class OriginalPerspective implements ToolbarDebugHTML {
     const centerElement = document.createElement('div');
     centerElement.id = 'debug_screen_center_viewer';
     this.isOriginalPerspective = true;
-    document.getElementById('debug_info_option')!.textContent = 'Press "space" to save the current perspective';
     document.addEventListener('keydown', this.functionSpaceKey);
 
     this.viewer.container.appendChild(centerElement);
@@ -40,13 +41,22 @@ export class OriginalPerspective implements ToolbarDebugHTML {
     const btnOriginalPerspective = document.getElementById('btn_original_perspective')!;
     document.getElementById('debug_screen_center_viewer')?.remove();
     btnOriginalPerspective.classList.remove('active');
-    document.getElementById('debug_info_option')!.textContent = 'Debug mode reserved for development teams';
     this.isOriginalPerspective = false;
   }
 
   destroy() {
     this.inactive();
     document.removeEventListener('keydown', this.functionSpaceKey);
+  }
+
+  private createToolbarOriginalPerspective() {
+    const toolbar = document.getElementById('toolbar_debug')! as HTMLElement;
+    const btnOriginalPerspective = document.createElement('div');
+    btnOriginalPerspective.id = 'btn_original_perspective';
+    btnOriginalPerspective.classList.add('btn_option_toolbar');
+    btnOriginalPerspective.innerHTML = btnOriginalPerspectiveHTML();
+
+    toolbar.appendChild(btnOriginalPerspective);
   }
 
   private handleBtnOriginalPerspective() {

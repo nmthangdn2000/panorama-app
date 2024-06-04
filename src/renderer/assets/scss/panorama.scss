@@ -113,20 +113,9 @@
   z-index: 999;
   background-color: rgba(0, 0, 0, 0.4);
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  gap: 8px;
   padding: 8px;
-
-  & > div:first-child {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-
-    & > div {
-      width: 30px;
-      height: 30px;
-    }
-  }
 
   & > div:nth-child(2) {
     color: #fff;
@@ -140,6 +129,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    width: 30px;
+    height: 30px;
 
     &:hover {
       cursor: pointer;

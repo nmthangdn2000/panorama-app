@@ -1,10 +1,13 @@
 import { Viewer } from '@photo-sphere-viewer/core';
-import { toolbarDebugHTML } from './html.panorama';
 import { PanoramaDataType } from './panorama.type';
-import { NewHotSpot } from './toolbar/new-hotspot';
-import { OriginalPerspective } from './toolbar/original-perspective';
+import { OriginalPerspective } from './toolbar/original-perspective/original-perspective';
 import { Marker } from '@photo-sphere-viewer/markers-plugin';
 import { EVENT_KEY } from './event.panorama';
+import { NewHotSpot } from './toolbar/new-hotspot/new-hotspot';
+import { MapLocation } from './toolbar/map-location/map-location';
+import { initFlowbite } from 'flowbite';
+
+initFlowbite();
 
 export class DebuggerPanorama {
   private debugMode: boolean = false;
@@ -15,6 +18,7 @@ export class DebuggerPanorama {
   // toolbar debug
   private newHotSpot: NewHotSpot | undefined;
   private originalPerspective: OriginalPerspective | undefined;
+  private mapLocation: MapLocation | undefined;
 
   constructor(
     viewer: Viewer,
@@ -31,6 +35,7 @@ export class DebuggerPanorama {
 
     this.newHotSpot = new NewHotSpot(viewer, panorama, getCurrentPanorama, setMarkers, setAnimationToBtnArrow);
     this.originalPerspective = new OriginalPerspective(viewer, panorama, getCurrentPanorama);
+    this.mapLocation = new MapLocation(viewer);
 
     this.toggleDebugMode();
     this.openAndCloseDebugModeWithKey();
@@ -68,6 +73,7 @@ export class DebuggerPanorama {
 
     this.newHotSpot?.initialize();
     this.originalPerspective?.initialize();
+    this.mapLocation?.initialize();
   }
 
   destroy() {
@@ -75,6 +81,7 @@ export class DebuggerPanorama {
 
     this.newHotSpot?.destroy();
     this.originalPerspective?.destroy();
+    this.mapLocation?.destroy();
 
     document.getElementById('toolbar_debug')?.remove();
   }
@@ -83,21 +90,18 @@ export class DebuggerPanorama {
     const toolbarDebugElement = document.createElement('div');
     toolbarDebugElement.id = 'toolbar_debug';
 
-    toolbarDebugElement.innerHTML = toolbarDebugHTML();
-
     this.viewer.container.parentElement!.appendChild(toolbarDebugElement);
   }
 
   private removeActiveButtonOptionToolbar() {
     this.viewer.container.addEventListener(EVENT_KEY.REMOVE_ACTIVE_BUTTON_TOOLBAR, () => {
-      console.log(EVENT_KEY.REMOVE_ACTIVE_BUTTON_TOOLBAR);
-
       document.querySelectorAll('#toolbar_debug .btn_option_toolbar').forEach((element) => {
         element.classList.remove('active');
       });
 
       this.newHotSpot?.inactive();
       this.originalPerspective?.inactive();
+      this.mapLocation?.inactive();
     });
   }
 

@@ -10,7 +10,7 @@ import hotspot from '../../../../../../resources/lottie/hotspot.json';
 import '../../../../assets/scss/panorama.scss';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/markers-plugin/index.css';
-import { btnHotSpot } from './html.panorama';
+import { btnHotSpot } from './toolbar/new-hotspot/html';
 
 export const CURRENT_TIME_MS = '1710909225459';
 

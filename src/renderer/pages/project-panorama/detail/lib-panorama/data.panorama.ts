@@ -1,5 +1,5 @@
-import { btnHotSpot } from './html.panorama';
 import { PanoramaDataType } from './panorama.type';
+import { btnHotSpot } from './toolbar/new-hotspot/html';
 
 export const PANORAMA: PanoramaDataType[] = [
   {

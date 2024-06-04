@@ -1,11 +1,9 @@
 import { ClickData, Viewer } from '@photo-sphere-viewer/core';
-import { PanoramaDataType, ToolbarDebugHTML } from '../panorama.type';
-import { btnHotSpot, formAddHotSpot } from '../html.panorama';
 import { Marker, MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
-import { saveProjectPanorama } from '../../detail-panorama/detail-panorama';
-import { EVENT_KEY } from '../event.panorama';
-
-const INFO_OPTION_DEFAULT = 'Debug mode reserved for development teams';
+import { PanoramaDataType, ToolbarDebugHTML } from '../../panorama.type';
+import { EVENT_KEY } from '../../event.panorama';
+import { btnAddHotSpotHtml, btnHotSpot, formAddHotSpot } from './html';
+import { saveProjectPanorama } from '../../../detail-panorama/detail-panorama';
 
 export class NewHotSpot implements ToolbarDebugHTML {
   private viewer: Viewer;
@@ -33,8 +31,9 @@ export class NewHotSpot implements ToolbarDebugHTML {
   }
 
   initialize() {
-    this.handleBtnAddHotSpot();
+    this.createToolbarAddHotSpot();
     this.viewer.addEventListener('click', this.functionClick);
+    this.handleBtnAddHotSpot();
   }
 
   active() {
@@ -44,8 +43,6 @@ export class NewHotSpot implements ToolbarDebugHTML {
     btnAddHotSpot.classList.add('active');
     this.viewer.setCursor('crosshair');
     this.isAddHotSpot = true;
-    document.getElementById('debug_info_option')!.textContent = 'Click on the panorama to add a new hotspot';
-    this.viewer.addEventListener('click', this.functionClick);
   }
 
   inactive() {
@@ -53,7 +50,6 @@ export class NewHotSpot implements ToolbarDebugHTML {
     btnAddHotSpot.classList.remove('active');
     this.viewer.setCursor('all-scroll');
     this.isAddHotSpot = false;
-    document.getElementById('debug_info_option')!.textContent = INFO_OPTION_DEFAULT;
   }
 
   destroy() {
@@ -61,8 +57,18 @@ export class NewHotSpot implements ToolbarDebugHTML {
     this.viewer.removeEventListener('click', this.functionClick);
   }
 
+  private createToolbarAddHotSpot() {
+    const toolbar = document.getElementById('toolbar_debug')! as HTMLElement;
+    const btnAddHotSpot = document.createElement('div');
+    btnAddHotSpot.id = 'btn_add_hotspot';
+    btnAddHotSpot.className = 'btn_option_toolbar';
+    btnAddHotSpot.innerHTML = btnAddHotSpotHtml();
+    toolbar.appendChild(btnAddHotSpot);
+  }
+
   private handleBtnAddHotSpot() {
     const btnAddHotSpot = document.getElementById('btn_add_hotspot')!;
+
     btnAddHotSpot.addEventListener('click', () => {
       if (btnAddHotSpot.classList.contains('active')) {
         this.inactive();
