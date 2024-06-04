@@ -1,26 +1,20 @@
-import { ClickData, Viewer } from '@photo-sphere-viewer/core';
-import { Marker, MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
-import { btnHotSpot, formAddHotSpot, toolbarDebugHTML } from './html.panorama';
+import { Viewer } from '@photo-sphere-viewer/core';
+import { toolbarDebugHTML } from './html.panorama';
 import { PanoramaDataType } from './panorama.type';
-import { saveProjectPanorama } from '../detail-panorama/detail-panorama';
-
-const INFO_OPTION_DEFAULT = 'Debug mode reserved for development teams';
+import { NewHotSpot } from './toolbar/new-hotspot';
+import { OriginalPerspective } from './toolbar/original-perspective';
+import { Marker } from '@photo-sphere-viewer/markers-plugin';
+import { EVENT_KEY } from './event.panorama';
 
 export class DebuggerPanorama {
-  private panoramas: PanoramaDataType[];
   private debugMode: boolean = false;
   private getCurrentPanorama: () => PanoramaDataType | undefined;
   private setMarkers: (panorama: PanoramaDataType) => void;
   private viewer: Viewer;
-  private setAnimationToBtnArrow: () => void;
 
-  private isAddHotSpot: boolean = false;
-  private isOriginalPerspective: boolean = false;
-
-  // function to remove event listener
-  private functionClick: any = (e: any) => this.handleClickViewer(e);
-  private functionEscKey: any = (e: any) => this.escKey(e);
-  private functionSpaceKey: any = (e: any) => this.handleSpaceKey(e);
+  // toolbar debug
+  private newHotSpot: NewHotSpot | undefined;
+  private originalPerspective: OriginalPerspective | undefined;
 
   constructor(
     viewer: Viewer,
@@ -31,14 +25,16 @@ export class DebuggerPanorama {
     setAnimationToBtnArrow: () => void,
   ) {
     this.viewer = viewer;
-    this.panoramas = panorama;
     this.debugMode = debugMode;
     this.getCurrentPanorama = getCurrentPanorama;
     this.setMarkers = setMarkers;
-    this.setAnimationToBtnArrow = setAnimationToBtnArrow;
+
+    this.newHotSpot = new NewHotSpot(viewer, panorama, getCurrentPanorama, setMarkers, setAnimationToBtnArrow);
+    this.originalPerspective = new OriginalPerspective(viewer, panorama, getCurrentPanorama);
 
     this.toggleDebugMode();
     this.openAndCloseDebugModeWithKey();
+    this.removeActiveButtonOptionToolbar();
   }
 
   getDebugMode() {
@@ -61,38 +57,26 @@ export class DebuggerPanorama {
     if (currentPanorama) this.setMarkers(currentPanorama);
 
     if (this.debugMode) {
-      this.createToolbarDebug();
-      this.registerEvents();
-    } else {
-      document.getElementById('toolbar_debug')?.remove();
-      this.viewer.setCursor('all-scroll');
-      this.unregisterEvents();
+      return this.init();
     }
+
+    return this.destroy();
   }
 
-  private registerEvents() {
-    this.viewer.addEventListener('click', this.functionClick);
-    document.addEventListener('keydown', this.functionEscKey);
+  init() {
+    this.createToolbarDebug();
+
+    this.newHotSpot?.initialize();
+    this.originalPerspective?.initialize();
   }
 
-  private unregisterEvents() {
-    this.viewer.removeEventListener('click', this.functionClick);
-    document.removeEventListener('keydown', this.functionEscKey);
-    document.removeEventListener('keydown', this.functionSpaceKey);
-  }
+  destroy() {
+    this.viewer.setCursor('all-scroll');
 
-  private handleClickViewer({ data }: any) {
-    if (!data) return;
+    this.newHotSpot?.destroy();
+    this.originalPerspective?.destroy();
 
-    console.log(`${data.rightclick ? 'right ' : ''}clicked at yaw: ${data.yaw} pitch: ${data.pitch}`);
-    console.log({
-      yaw: data.yaw,
-      pitch: data.pitch,
-    });
-
-    if (this.isAddHotSpot) {
-      this.createFormAddHotSpot(data);
-    }
+    document.getElementById('toolbar_debug')?.remove();
   }
 
   private createToolbarDebug() {
@@ -102,219 +86,22 @@ export class DebuggerPanorama {
     toolbarDebugElement.innerHTML = toolbarDebugHTML();
 
     this.viewer.container.parentElement!.appendChild(toolbarDebugElement);
-
-    this.handleBtnAddHotSpot();
-    this.handleBtnOriginalPerspective();
-    this.handleButtonExport();
   }
 
   private removeActiveButtonOptionToolbar() {
-    document.querySelectorAll('#toolbar_debug .btn_option_toolbar').forEach((element) => {
-      element.classList.remove('active');
-    });
+    this.viewer.container.addEventListener(EVENT_KEY.REMOVE_ACTIVE_BUTTON_TOOLBAR, () => {
+      console.log(EVENT_KEY.REMOVE_ACTIVE_BUTTON_TOOLBAR);
 
-    document.getElementById('debug_screen_center_viewer')?.remove();
-    this.isAddHotSpot = false;
-    this.viewer.setCursor('all-scroll');
-    document.getElementById('debug_info_option')!.textContent = INFO_OPTION_DEFAULT;
-
-    this.unregisterEvents();
-  }
-
-  // handle keydown
-  private escKey(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
-      this.removeActiveButtonOptionToolbar();
-    }
-  }
-
-  private handleSpaceKey(e: KeyboardEvent) {
-    if (this.isOriginalPerspective && e.key === ' ') {
-      const currentPanorama = this.getCurrentPanorama();
-      if (!currentPanorama) return;
-
-      const positionCenter = this.viewer.getPosition();
-
-      const index = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-      if (index < 0) return;
-
-      this.panoramas[index].cameraPosition = positionCenter;
-
-      // opacity 1 to 0.5 to 1
-      this.viewer.container.style.transition = 'opacity 0.3s ease-in-out';
-      this.viewer.container.style.opacity = '0.5';
-      setTimeout(() => {
-        this.viewer.container.style.opacity = '1';
-      }, 300);
-
-      setTimeout(() => {
-        this.viewer.container.style.transition = 'none';
-      }, 600);
-
-      saveProjectPanorama();
-    }
-  }
-  // handle keydown
-
-  // handle button option toolbar
-  private handleBtnAddHotSpot() {
-    const btnAddHotSpot = document.getElementById('btn_add_hotspot')!;
-    btnAddHotSpot.addEventListener('click', () => {
-      if (btnAddHotSpot.classList.contains('active')) {
-        btnAddHotSpot.classList.remove('active');
-        this.viewer.setCursor('all-scroll');
-        this.isAddHotSpot = false;
-        document.getElementById('debug_info_option')!.textContent = INFO_OPTION_DEFAULT;
-        return;
-      }
-
-      this.removeActiveButtonOptionToolbar();
-      btnAddHotSpot.classList.add('active');
-      this.viewer.setCursor('crosshair');
-      this.isAddHotSpot = true;
-      document.getElementById('debug_info_option')!.textContent = 'Click on the panorama to add a new hotspot';
-      this.viewer.addEventListener('click', this.functionClick);
-    });
-  }
-
-  private handleBtnOriginalPerspective() {
-    const btnOriginalPerspective = document.getElementById('btn_original_perspective')!;
-
-    btnOriginalPerspective.addEventListener('click', () => {
-      if (btnOriginalPerspective.classList.contains('active')) {
-        document.getElementById('debug_screen_center_viewer')?.remove();
-        btnOriginalPerspective.classList.remove('active');
-        document.getElementById('debug_info_option')!.textContent = INFO_OPTION_DEFAULT;
-        this.isOriginalPerspective = false;
-        return;
-      }
-
-      this.removeActiveButtonOptionToolbar();
-      btnOriginalPerspective.classList.add('active');
-      const centerElement = document.createElement('div');
-      centerElement.id = 'debug_screen_center_viewer';
-      this.isOriginalPerspective = true;
-      document.getElementById('debug_info_option')!.textContent = 'Press "space" to save the current perspective';
-      document.removeEventListener('keydown', this.functionEscKey);
-      document.addEventListener('keydown', this.functionSpaceKey);
-
-      this.viewer.container.appendChild(centerElement);
-    });
-  }
-
-  private handleButtonExport() {
-    document.getElementById('btn_export_data_panorama')!.addEventListener('click', () => {
-      // create download link json file
-      const a = document.createElement('a');
-      const file = new Blob([JSON.stringify(this.panoramas)], { type: 'application/json' });
-      a.href = URL.createObjectURL(file);
-      a.download = `panoramas-${Date.now()}.json`;
-      a.click();
-    });
-  }
-  // handle button option toolbar
-
-  private createFormAddHotSpot(data: ClickData) {
-    const section = document.createElement('section');
-    section.id = 'section-new-hotspot';
-
-    section.innerHTML += formAddHotSpot(this.panoramas);
-
-    this.viewer.container.parentElement!.appendChild(section);
-
-    this.handleSubmitFormAddHotSpot(data);
-    this.handleCancelFormAddHotSpot();
-  }
-
-  private handleSubmitFormAddHotSpot(data: ClickData) {
-    document.getElementById('submit-new-hotspot')?.addEventListener('click', () => {
-      const currentPanorama = this.getCurrentPanorama();
-
-      if (!currentPanorama) return;
-
-      const selectPanorama = document.getElementById('select-panorama') as HTMLSelectElement;
-      const panoramaId = parseInt(selectPanorama.value);
-
-      const toPanorama = this.panoramas.find((panorama) => panorama.id === panoramaId);
-
-      if (!toPanorama) return;
-
-      const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
-
-      const markerId = `marker${currentPanorama?.id}-${(currentPanorama?.markers.length || 0) + 1}`;
-
-      const marker = {
-        id: markerId,
-        zoomLvl: 90,
-        position: {
-          yaw: data.yaw,
-          pitch: data.pitch,
-        },
-        toPanorama: toPanorama.id,
-        toPanoramaTitle: toPanorama.title,
-        style: {
-          cursor: 'pointer',
-          zIndex: '100',
-        },
-      };
-
-      markersPlugin.addMarker({
-        ...marker,
-        html: btnHotSpot(`onMarkerClick(${toPanorama.id}, '${markerId}')`, toPanorama.title),
+      document.querySelectorAll('#toolbar_debug .btn_option_toolbar').forEach((element) => {
+        element.classList.remove('active');
       });
 
-      this.createButtonRemoveMarker(markersPlugin.getMarker(marker.id));
-      this.setAnimationToBtnArrow();
-
-      const panorama = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-      if (panorama < 0) return;
-
-      this.panoramas[panorama].markers.push(marker);
-
-      document.getElementById('section-new-hotspot')?.remove();
-
-      saveProjectPanorama();
-    });
-  }
-
-  private handleCancelFormAddHotSpot() {
-    document.getElementById('cancel-new-hotspot')?.addEventListener('click', () => {
-      document.getElementById('section-new-hotspot')?.remove();
+      this.newHotSpot?.inactive();
+      this.originalPerspective?.inactive();
     });
   }
 
   createButtonRemoveMarker(marker: Marker) {
-    const currentPanorama = this.getCurrentPanorama();
-
-    if (!currentPanorama) return;
-
-    const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
-
-    const btnRemove = document.createElement('button');
-    btnRemove.innerText = '×';
-    btnRemove.className = 'btn-remove-marker';
-    marker.domElement.appendChild(btnRemove);
-
-    btnRemove.onclick = () => {
-      markersPlugin.clearMarkers();
-
-      const markerIndex = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-      if (markerIndex < 0) return;
-
-      const markerIndexRemove = this.panoramas[markerIndex].markers.findIndex((m) => m.id === marker.id);
-      if (markerIndexRemove < 0) return;
-
-      this.panoramas[markerIndex].markers.splice(markerIndexRemove, 1);
-      this.panoramas[markerIndex].markers = this.panoramas[markerIndex].markers.map((marker, index) => {
-        return {
-          ...marker,
-          id: `marker${currentPanorama.id}-${index + 1}`,
-        };
-      });
-
-      this.setMarkers(currentPanorama);
-    };
-
-    saveProjectPanorama();
+    this.newHotSpot?.createButtonRemoveMarker(marker);
   }
 }

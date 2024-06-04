@@ -140,3 +140,29 @@ export type PanoramaDataType = {
   // this field is used to determine if the panorama is new or not
   isNew?: boolean;
 };
+
+export type ToolbarDebugHTML = {
+  /**
+   * Create button toolbar debug
+   * @description Create button toolbar debug
+   */
+  initialize: () => void;
+
+  /**
+   * Tool active
+   * @description Tool active
+   */
+  active: () => void;
+
+  /**
+   * Tool inactive
+   * @description Tool inactive
+   */
+  inactive: () => void;
+
+  /**
+   * Destroy
+   * @description Destroy
+   */
+  destroy: () => void;
+};

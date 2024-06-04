@@ -247,7 +247,7 @@ export class Panorama implements PanoramaType {
 
     await this.viewer.setPanorama(this.__formatPanoramaPath(panoramaUrl), {
       speed: 0,
-      zoom: 45,
+      zoom: panorama.cameraPosition.fov || 45,
       showLoader: false,
       transition: false,
       position: panorama.cameraPosition,
@@ -278,7 +278,7 @@ export class Panorama implements PanoramaType {
           await this.viewer.setPanorama(textureData.panorama, {
             panoData: textureData.panoData,
             speed: 0,
-            zoom: !changeTexture ? 45 : undefined,
+            zoom: !changeTexture ? panorama.cameraPosition.fov || 45 : undefined,
             showLoader: false,
             transition: false,
           });
