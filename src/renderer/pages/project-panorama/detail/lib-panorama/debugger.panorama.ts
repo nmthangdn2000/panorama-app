@@ -6,7 +6,6 @@ import { PanoramaDataType } from './panorama.type';
 const INFO_OPTION_DEFAULT = 'Debug mode reserved for development teams';
 
 export class DebuggerPanorama {
-  private panoramaExport: PanoramaDataType[];
   private panoramas: PanoramaDataType[];
   private debugMode: boolean = false;
   private getCurrentPanorama: () => PanoramaDataType | undefined;
@@ -25,7 +24,6 @@ export class DebuggerPanorama {
   constructor(
     viewer: Viewer,
     panorama: PanoramaDataType[],
-    panoramaExport: PanoramaDataType[],
     debugMode: boolean,
     getCurrentPanorama: () => PanoramaDataType | undefined,
     setMarkers: (panorama: PanoramaDataType) => void,
@@ -33,7 +31,6 @@ export class DebuggerPanorama {
   ) {
     this.viewer = viewer;
     this.panoramas = panorama;
-    this.panoramaExport = panoramaExport;
     this.debugMode = debugMode;
     this.getCurrentPanorama = getCurrentPanorama;
     this.setMarkers = setMarkers;
@@ -141,7 +138,6 @@ export class DebuggerPanorama {
       if (index < 0) return;
 
       this.panoramas[index].cameraPosition = positionCenter;
-      this.panoramaExport[index].cameraPosition = positionCenter;
 
       // opacity 1 to 0.5 to 1
       this.viewer.container.style.transition = 'opacity 0.3s ease-in-out';
@@ -207,7 +203,7 @@ export class DebuggerPanorama {
     document.getElementById('btn_export_data_panorama')!.addEventListener('click', () => {
       // create download link json file
       const a = document.createElement('a');
-      const file = new Blob([JSON.stringify(this.panoramaExport)], { type: 'application/json' });
+      const file = new Blob([JSON.stringify(this.panoramas)], { type: 'application/json' });
       a.href = URL.createObjectURL(file);
       a.download = `panoramas-${Date.now()}.json`;
       a.click();
@@ -245,21 +241,24 @@ export class DebuggerPanorama {
       const markerId = `marker${currentPanorama?.id}-${(currentPanorama?.markers.length || 0) + 1}`;
 
       const marker = {
-        id: `marker${currentPanorama?.id}-${(currentPanorama?.markers.length || 0) + 1}`,
+        id: markerId,
         zoomLvl: 90,
         position: {
           yaw: data.yaw,
           pitch: data.pitch,
         },
         toPanorama: toPanorama.id,
-        html: btnHotSpot(`onMarkerClick(${toPanorama.id}, '${markerId}')`, `${toPanorama.title}`),
+        toPanoramaTitle: toPanorama.title,
         style: {
           cursor: 'pointer',
           zIndex: '100',
         },
       };
 
-      markersPlugin.addMarker(marker);
+      markersPlugin.addMarker({
+        ...marker,
+        html: btnHotSpot(`onMarkerClick(${toPanorama.id}, '${markerId}')`, toPanorama.title),
+      });
 
       this.createButtonRemoveMarker(markersPlugin.getMarker(marker.id));
       this.setAnimationToBtnArrow();
@@ -268,13 +267,6 @@ export class DebuggerPanorama {
       if (panorama < 0) return;
 
       this.panoramas[panorama].markers.push(marker);
-
-      const markerExport = JSON.parse(JSON.stringify(marker));
-      markerExport.html = `btnHotSpot("onMarkerClick(${toPanorama.id}, '${markerId}')", "${toPanorama.title}")`;
-
-      this.panoramaExport[panorama].markers.push(markerExport);
-
-      navigator.clipboard?.writeText(JSON.stringify(this.panoramaExport));
 
       document.getElementById('section-new-hotspot')?.remove();
     });
@@ -312,20 +304,8 @@ export class DebuggerPanorama {
         return {
           ...marker,
           id: `marker${currentPanorama.id}-${index + 1}`,
-          html: marker.html?.replace(/marker\d+-\d+/g, `marker${currentPanorama.id}-${index + 1}`),
         };
       });
-
-      this.panoramaExport[markerIndex].markers.splice(markerIndexRemove, 1);
-      this.panoramaExport[markerIndex].markers = this.panoramaExport[markerIndex].markers.map((marker, index) => {
-        return {
-          ...marker,
-          id: `marker${currentPanorama.id}-${index + 1}`,
-          html: marker.html?.replace(/marker\d+-\d+/g, `marker${currentPanorama.id}-${index + 1}`),
-        };
-      });
-
-      navigator.clipboard?.writeText(JSON.stringify(this.panoramas));
 
       this.setMarkers(currentPanorama);
     };

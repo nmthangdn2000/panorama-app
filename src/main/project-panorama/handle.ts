@@ -8,6 +8,7 @@ import archiver from 'archiver';
 import { platform } from 'os';
 import { getSetting } from '../setting/handle';
 import Jimp from 'jimp';
+import { is } from '@electron-toolkit/utils';
 
 let CHILD;
 
@@ -15,8 +16,13 @@ const checkPathProject = async () => {
   const setting = await getSetting();
 
   if (!setting || !setting.projectFolderPath) {
-    BrowserWindow.getAllWindows()[0].loadFile(join(__dirname, '../renderer/src/renderer/pages/settings', 'index.html'));
-    throw new Error('Project folder path not found');
+    if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
+      await BrowserWindow.getAllWindows()[0].loadURL(`${process.env['ELECTRON_RENDERER_URL']}/pages/settings/index.html`);
+    } else {
+      await BrowserWindow.getAllWindows()[0].loadFile(join(__dirname, '../renderer/src/renderer/pages/settings/index.html'));
+    }
+
+     throw new Error('Project folder path is not set');
   }
 
   return setting.projectFolderPath;

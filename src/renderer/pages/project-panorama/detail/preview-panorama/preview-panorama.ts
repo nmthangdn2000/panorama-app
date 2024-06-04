@@ -20,7 +20,7 @@ const previewPanorama = () => {
     return;
   }
 
-  window.viewerPanorama = new Panorama(viewerElement, window.panoramas, window.panoramasImport, {
+  window.viewerPanorama = new Panorama(viewerElement, window.panoramas, {
     debug: true,
   });
 

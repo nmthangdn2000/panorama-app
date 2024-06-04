@@ -9,7 +9,7 @@ initFlowbite();
 
 const modalNotificationRemoveProject = new Modal(document.getElementById('modal_notification_remove_project')!);
 
-const getProjects = async (modalNotificationRemoveProject: Modal) => {
+const getProjects = async () => {
   const listProjectPanoramaElement = document.getElementById('list_project_panorama')! as HTMLDivElement;
 
   const projects = await window.api.projectPanorama.getProjects();
@@ -57,7 +57,7 @@ window.addEventListener('DOMContentLoaded', async () => {
   const btnAgreeRemoveProject = document.getElementById('btn_agree_remove_project')! as HTMLButtonElement;
   const btnAddProjectPanorama = document.getElementById('btn_add_project_panorama')! as HTMLButtonElement;
 
-  await getProjects(modalNotificationRemoveProject);
+  await getProjects();
 
   btnAddProjectPanorama.addEventListener('click', () => {
     newProjectModal.show();
@@ -81,8 +81,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     const isDelete = await window.api.projectPanorama.deleteProject(window.projectRemove.name);
 
     if (isDelete) {
-      console.log('Deleted');
-      await getProjects(modalNotificationRemoveProject);
+      await getProjects();
+      modalNotificationRemoveProject.hide();
     }
   });
 
@@ -113,7 +113,7 @@ window.addEventListener('DOMContentLoaded', async () => {
       newProjectModal.hide();
     }
 
-    await getProjects(modalNotificationRemoveProject);
+    await getProjects();
   });
 });
 

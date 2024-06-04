@@ -10,6 +10,7 @@ import hotspot from '../../../../../../resources/lottie/hotspot.json';
 import '../../../../assets/scss/panorama.scss';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/markers-plugin/index.css';
+import { btnHotSpot } from './html.panorama';
 
 export const CURRENT_TIME_MS = '1710909225459';
 
@@ -30,7 +31,7 @@ export class Panorama implements PanoramaType {
    * const panorama = new Panorama(document.querySelector('#viewer')! as any, PANORAMA);
    * panorama.swapPanorama(1);
    */
-  constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], panoramaImport: PanoramaDataType[], options?: PanoramaOptionsType) {
+  constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], options?: PanoramaOptionsType) {
     this.viewer = new Viewer({
       container,
       adapter: EquirectangularAdapter,
@@ -62,7 +63,6 @@ export class Panorama implements PanoramaType {
     this._debuggerPanorama = new DebuggerPanorama(
       this.viewer,
       this._panoramas,
-      panoramaImport,
       options?.debug || false,
       this.getCurrentPanorama.bind(this),
       this.__setMarkers.bind(this),
@@ -120,7 +120,14 @@ export class Panorama implements PanoramaType {
   private async __setMarkers(panorama: PanoramaDataType) {
     const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
     markersPlugin.clearMarkers();
-    markersPlugin.setMarkers(panorama.markers);
+    markersPlugin.setMarkers(
+      panorama.markers.map((marker) => {
+        return {
+          ...marker,
+          html: btnHotSpot(`onMarkerClick(${marker.toPanorama}, '${marker.id}')`, `${marker.toPanoramaTitle}`),
+        };
+      }),
+    );
 
     this.__setAnimationToBtnArrow();
 

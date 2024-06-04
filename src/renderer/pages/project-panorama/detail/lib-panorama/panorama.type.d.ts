@@ -134,6 +134,7 @@ export type PanoramaDataType = {
   thumbnail: string;
   markers: (MarkerConfig & {
     toPanorama?: number;
+    toPanoramaTitle?: string;
   })[];
   metadata?: sharp.Metadata;
   // this field is used to determine if the panorama is new or not
