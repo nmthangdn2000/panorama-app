@@ -87,6 +87,7 @@ export const renderListImage = () => {
 
       element.parentElement!.classList.add('hidden');
       input.parentElement!.classList.remove('hidden');
+      input.focus({});
     };
 
     window.onSaveTitlePanorama = (id: string) => {
@@ -166,9 +167,25 @@ btnRemoveAllPanorama.addEventListener('click', () => {
 });
 
 const handleDragAndDropItem = () => {
-  const items = document.querySelectorAll('.item_panorama');
+  const items = document.querySelectorAll('.item_panorama') as NodeListOf<HTMLElement>;
 
   items.forEach((item) => {
+    const grabItem = item.querySelector('.grab_item_image_panorama')! as HTMLElement;
+
+    // hover
+    grabItem.addEventListener('mouseover', () => {
+      item.setAttribute('draggable', 'true');
+    });
+
+    grabItem.addEventListener('mouseout', () => {
+      item.setAttribute('draggable', 'false');
+    });
+
+    // grabing
+    // grabItem.addEventListener('mousedown', () => {
+    //   document.body.style.cursor = 'grabbing';
+    // });
+
     item.addEventListener('dragstart', () => {
       setTimeout(() => {
         item.classList.add('dragging');

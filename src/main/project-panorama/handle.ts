@@ -245,7 +245,7 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
       }
     }
 
-    return true;
+    return `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`;
   } catch (error) {
     console.log('renderProject', error);
     return false;
@@ -322,7 +322,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
               await Jimp.read(buffer)
             )
               .resize(2000, Jimp.AUTO)
-              .quality(40)
+              .quality(60)
               .greyscale()
               .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
             // .toFormat('jpeg', {
