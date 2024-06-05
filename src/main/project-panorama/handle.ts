@@ -322,8 +322,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
               await Jimp.read(buffer)
             )
               .resize(2000, Jimp.AUTO)
-              .quality(60)
-              .greyscale()
+              .quality(40)
               .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
             // .toFormat('jpeg', {
             //   quality: 40,
