@@ -118,7 +118,7 @@ export class NewHotSpot implements ToolbarDebugHTML {
       if (!currentPanorama) return;
 
       const selectPanorama = document.getElementById('select-panorama') as HTMLSelectElement;
-      const panoramaId = parseInt(selectPanorama.value);
+      const panoramaId = selectPanorama.value;
 
       const toPanorama = this.panoramas.find((panorama) => panorama.id === panoramaId);
 
@@ -145,7 +145,7 @@ export class NewHotSpot implements ToolbarDebugHTML {
 
       markersPlugin.addMarker({
         ...marker,
-        html: btnHotSpot(`onMarkerClick(${toPanorama.id}, '${markerId}')`, toPanorama.title),
+        html: btnHotSpot(`onMarkerClick('${toPanorama.id}', '${markerId}')`, toPanorama.title),
       });
 
       this.createButtonRemoveMarker(markersPlugin.getMarker(marker.id));

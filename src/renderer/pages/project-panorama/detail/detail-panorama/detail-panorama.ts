@@ -1,3 +1,4 @@
+import { nanoid } from 'nanoid';
 import { PanoramaDataType } from '../lib-panorama/panorama.type';
 import { destroyViewerPanorama } from '../preview-panorama/preview-panorama';
 import { itemImagePanorama } from './html';
@@ -11,9 +12,9 @@ const openDialogSelectImages = () => {
 
     if (!folderPath) return;
 
-    folderPath.forEach((path, index) => {
+    folderPath.forEach((path) => {
       const d: PanoramaDataType = {
-        id: window.panoramas.length + index,
+        id: nanoid(),
         title: path.name.split('.')[0],
         pointPosition: { bottom: '50%', left: '50%' },
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
@@ -27,7 +28,6 @@ const openDialogSelectImages = () => {
       };
 
       window.panoramas.push(d);
-      window.panoramasImport.push(JSON.parse(JSON.stringify(d)));
     });
 
     renderListImage();
@@ -77,7 +77,7 @@ export const renderListImage = () => {
       }
     }
 
-    window.onEditTitlePanorama = (element: HTMLButtonElement, id: number) => {
+    window.onEditTitlePanorama = (element: HTMLButtonElement, id: string) => {
       const title = element.parentElement!.querySelector('h5')!.textContent;
 
       if (!title) return;
@@ -89,7 +89,7 @@ export const renderListImage = () => {
       input.parentElement!.classList.remove('hidden');
     };
 
-    window.onSaveTitlePanorama = (id: number) => {
+    window.onSaveTitlePanorama = (id: string) => {
       const input = document.getElementById(`input_title_panorama_${id}`)! as HTMLInputElement;
       const title = input.value.trim();
 
@@ -102,18 +102,13 @@ export const renderListImage = () => {
         return panorama;
       });
 
-      window.panoramasImport = window.panoramasImport.map((panorama) => {
-        if (panorama.id === id) {
-          panorama.title = title;
-        }
-        return panorama;
-      });
-
       const h5 = input.parentElement!.parentElement!.querySelector('h5')!;
 
       h5.textContent = title;
       h5.parentElement!.classList.remove('hidden');
       input.parentElement!.classList.add('hidden');
+
+      saveProjectPanorama();
     };
 
     return itemImagePanorama(panorama.id, panorama.image, panorama.title, panorama.metadata, color);
@@ -151,18 +146,9 @@ export const renderListImage = () => {
   saveProjectPanorama();
 };
 
-window.onRemovePanorama = (id: number) => {
+window.onRemovePanorama = (id: string) => {
   const newPanoramas = window.panoramas.filter((panorama) => panorama.id !== id);
   window.panoramas = newPanoramas.map((panorama) => {
-    const markers = panorama.markers.filter((marker) => marker.toPanorama !== id);
-    return {
-      ...panorama,
-      markers,
-    };
-  });
-
-  const newPanoramasImport = window.panoramasImport.filter((panorama) => panorama.id !== id);
-  window.panoramasImport = newPanoramasImport.map((panorama) => {
     const markers = panorama.markers.filter((marker) => marker.toPanorama !== id);
     return {
       ...panorama,
@@ -175,7 +161,6 @@ window.onRemovePanorama = (id: number) => {
 
 btnRemoveAllPanorama.addEventListener('click', () => {
   window.panoramas = [];
-  window.panoramasImport = [];
 
   renderListImage();
 });
@@ -197,30 +182,15 @@ const handleDragAndDropItem = () => {
       const items = document.querySelectorAll('.item_panorama');
 
       const newPanoramas: PanoramaDataType[] = [];
-      items.forEach((item, index) => {
-        const id = parseInt(item.getAttribute('data-id')!, 10);
+      items.forEach((item) => {
+        const id = item.getAttribute('data-id')!;
         const panorama = window.panoramas.find((panorama) => panorama.id === id);
         if (panorama) {
-          newPanoramas.push({
-            ...panorama,
-            id: index,
-          });
+          newPanoramas.push(panorama);
         }
       });
 
       window.panoramas = newPanoramas;
-
-      const newPanoramasImport: PanoramaDataType[] = [];
-      items.forEach((item, index) => {
-        const id = parseInt(item.getAttribute('data-id')!, 10);
-        const panorama = window.panoramasImport.find((panorama) => panorama.id === id);
-        if (panorama) {
-          newPanoramasImport.push({
-            ...panorama,
-            id: index,
-          });
-        }
-      });
 
       destroyViewerPanorama();
       saveProjectPanorama();

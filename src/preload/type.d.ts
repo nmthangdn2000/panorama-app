@@ -14,14 +14,14 @@ declare global {
   interface Window {
     electron: ElectronAPI;
     api: Api;
-    onMarkerClick: (id: number, markerId: string) => void;
+    pathProject: string;
+    onMarkerClick: (id: string, markerId: string) => void;
     panoramas: PanoramaDataType[];
-    panoramasImport: PanoramaDataType[];
     projectRemove: ProjectPanorama;
-    onRemovePanorama: (id: number) => void;
+    onRemovePanorama: (id: string) => void;
     viewerPanorama: Panorama | undefined;
-    onEditTitlePanorama: (element: HTMLButtonElement, id: number) => void;
-    onSaveTitlePanorama: (id: number) => void;
+    onEditTitlePanorama: (element: HTMLButtonElement, id: string) => void;
+    onSaveTitlePanorama: (id: string) => void;
     onCancelDeleteProject: () => void;
   }
 }

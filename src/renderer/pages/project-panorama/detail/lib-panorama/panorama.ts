@@ -124,7 +124,7 @@ export class Panorama implements PanoramaType {
       panorama.markers.map((marker) => {
         return {
           ...marker,
-          html: btnHotSpot(`onMarkerClick(${marker.toPanorama}, '${marker.id}')`, `${marker.toPanoramaTitle}`),
+          html: btnHotSpot(`onMarkerClick('${marker.toPanorama}', '${marker.id}')`, `${marker.toPanoramaTitle}`),
         };
       }),
     );
@@ -189,7 +189,7 @@ export class Panorama implements PanoramaType {
    * @example
    * panorama.swapPanorama(1, 'marker-1', () => {});
    * */
-  async swapPanorama(id: number, markerId?: string, cb?: () => void) {
+  async swapPanorama(id: string, markerId?: string, cb?: () => void) {
     const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
 
     if (markerId) {
@@ -310,8 +310,12 @@ export class Panorama implements PanoramaType {
   }
 
   private __formatPanoramaPath(panorama: string) {
-    return panorama;
-    // const path = `./images/panoramas/${panorama.split('.jpg')[0]}`;
+    const regex = /[\/\\]/;
+    if (regex.test(panorama)) return panorama;
+
+    const path = `${window.pathProject}/panoramas/${panorama}`;
+
+    return path;
 
     // return {
     //   name: panorama,
@@ -384,7 +388,7 @@ export class Panorama implements PanoramaType {
   }
 
   private __events() {
-    window.onMarkerClick = (id: number, markerId: string) => {
+    window.onMarkerClick = (id: string, markerId: string) => {
       this.swapPanorama(id, markerId);
       this._events.onMarkerClick(id, markerId);
     };

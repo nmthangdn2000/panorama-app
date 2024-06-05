@@ -109,6 +109,7 @@ export const getProjects = async () => {
       name: dir,
       avatar: `file://${path}/${dir}/avatar.jpg`,
       description: existsSync(join(path, dir, 'description.txt')) ? readFileSync(join(path, dir, 'description.txt'), 'utf-8') : '',
+      pathFolder: join(path, dir),
     });
   });
 
@@ -143,6 +144,7 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
     imagesQuality,
     imagesLow,
     hasCube,
+    pathFolder: pathProject,
   };
 };
 
@@ -200,7 +202,7 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
     const toolPath = isExistTool ? toolPath1 : toolPath2;
     const inputQualityPath = join(path, name, 'panoramas');
     const inputLowPath = join(path, name, 'panoramas-low');
-    const outputPath = join(path, name, 'cube3');
+    const outputPath = join(path, name, 'cube');
 
     await new Promise((resolve, reject) => {
       if (CHILD) {
@@ -306,35 +308,40 @@ export const saveProject = async (name: string, project: RenderProject, isRender
       if (panorama.isNew) {
         const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
 
-        copyFileSync(panorama.image.substring(7), pathImage);
+        let imagePanoram = panorama.image;
 
-        if (isRender) {
-          // create file low quality
-          const buffer = readFileSync(panorama.image.substring(7));
+        const regex = /[\/\\]/;
+        if (regex.test(imagePanoram)) {
+          copyFileSync(panorama.image.substring(7), pathImage);
 
-          await (
-            await Jimp.read(buffer)
-          )
-            .resize(2000, Jimp.AUTO)
-            .quality(40)
-            .greyscale()
-            .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
-          // .toFormat('jpeg', {
-          //   quality: 40,
-          //   progressive: true,
-          //   force: true,
-          //   trellisQuantisation: true,
-          //   overshootDeringing: true,
-          //   optimizeScans: true,
-          //   optimizeCoding: true,
-          //   quantisationTable: 2,
-          //   chromaSubsampling: '4:4:4',
-          //   quantizationTable: 2,
-          // })
-          // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+          if (isRender) {
+            // create file low quality
+            const buffer = readFileSync(panorama.image.substring(7));
+
+            await (
+              await Jimp.read(buffer)
+            )
+              .resize(2000, Jimp.AUTO)
+              .quality(40)
+              .greyscale()
+              .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+            // .toFormat('jpeg', {
+            //   quality: 40,
+            //   progressive: true,
+            //   force: true,
+            //   trellisQuantisation: true,
+            //   overshootDeringing: true,
+            //   optimizeScans: true,
+            //   optimizeCoding: true,
+            //   quantisationTable: 2,
+            //   chromaSubsampling: '4:4:4',
+            //   quantizationTable: 2,
+            // })
+            // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+          }
+
+          image = `${panorama.title}.jpg`;
         }
-
-        image = `file://${pathImage}`;
       }
 
       return {
@@ -356,8 +363,13 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     if (!isExist) {
       rmSync(join(path, name, 'panoramas', cp));
       if (isRender) {
-        rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
-        rmSync(join(path, name, 'cube', fileNames), { recursive: true });
+        if (existsSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`))) {
+          rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
+        }
+
+        if (existsSync(join(path, name, 'cube', fileNames))) {
+          rmSync(join(path, name, 'cube', fileNames), { recursive: true });
+        }
       }
     }
   });

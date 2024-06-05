@@ -1,10 +1,12 @@
 import { Viewer } from '@photo-sphere-viewer/core';
 import { ToolbarDebugHTML } from '../../panorama.type';
-import { btnMapHTML } from './html';
+import { btnMapHTML, modalMapLocationHTML } from './html';
 import { EVENT_KEY } from '../../event.panorama';
+import { initModals, Modal } from 'flowbite';
 
 export class MapLocation implements ToolbarDebugHTML {
   private viewer: Viewer;
+  private modalMapLocation: Modal | null = null;
 
   constructor(viewer: Viewer) {
     this.viewer = viewer;
@@ -21,12 +23,16 @@ export class MapLocation implements ToolbarDebugHTML {
 
     btnAddHotSpot.classList.add('active');
     this.viewer.setCursor('crosshair');
+
+    initModals();
+    this.modalMapLocation?.show();
   }
 
   inactive() {
     const btnAddHotSpot = document.getElementById('btn_map_location')!;
     btnAddHotSpot.classList.remove('active');
     this.viewer.setCursor('all-scroll');
+    this.modalMapLocation?.hide();
   }
 
   destroy() {
@@ -39,6 +45,12 @@ export class MapLocation implements ToolbarDebugHTML {
     btnMap.id = 'btn_map_location';
     btnMap.classList.add('btn_option_toolbar');
     btnMap.innerHTML = btnMapHTML();
+
+    const divModal = document.createElement('div');
+    divModal.innerHTML = modalMapLocationHTML();
+    document.body.appendChild(divModal);
+
+    this.modalMapLocation = new Modal(document.getElementById('modal_map_location')!, {});
 
     toolbar.appendChild(btnMap);
   }

@@ -33,7 +33,7 @@ export type PanoramaType = {
    * viewerPanorama.swapPanorama(1);
    * ```
    */
-  swapPanorama: (id: number, markerId?: string, cb?: () => void) => void;
+  swapPanorama: (id: string, markerId?: string, cb?: () => void) => void;
 
   /**
    * Get current panorama
@@ -112,11 +112,11 @@ export type EventListenerType = {
    * @param id Panorama ID
    * @param markerId Marker ID
    */
-  onMarkerClick: (id: number, markerId: string) => void;
+  onMarkerClick: (id: string, markerId: string) => void;
 };
 
 export type PanoramaDataType = {
-  id: number;
+  id: string;
   title: string;
   subtitle: string;
   pointPosition: {
@@ -133,7 +133,7 @@ export type PanoramaDataType = {
   image: string;
   thumbnail: string;
   markers: (MarkerConfig & {
-    toPanorama?: number;
+    toPanorama?: string;
     toPanoramaTitle?: string;
   })[];
   metadata?: sharp.Metadata;

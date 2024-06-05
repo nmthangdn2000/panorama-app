@@ -27,6 +27,7 @@ export type ProjectPanorama = {
   imagesQuality?: string[];
   imagesLow?: string[];
   hasCube?: boolean;
+  pathFolder: string;
 };
 
 export type RenderProject = {

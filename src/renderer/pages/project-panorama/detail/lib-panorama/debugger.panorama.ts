@@ -5,7 +5,8 @@ import { Marker } from '@photo-sphere-viewer/markers-plugin';
 import { EVENT_KEY } from './event.panorama';
 import { NewHotSpot } from './toolbar/new-hotspot/new-hotspot';
 import { MapLocation } from './toolbar/map-location/map-location';
-import { initFlowbite } from 'flowbite';
+import { initFlowbite, Modal } from 'flowbite';
+import { closeToolbarDebugHTML } from './html.panorama';
 
 initFlowbite();
 
@@ -89,6 +90,13 @@ export class DebuggerPanorama {
   private createToolbarDebug() {
     const toolbarDebugElement = document.createElement('div');
     toolbarDebugElement.id = 'toolbar_debug';
+    toolbarDebugElement.innerHTML = closeToolbarDebugHTML();
+
+    const btnCloseModalPreview = toolbarDebugElement.querySelector('#btn_close_modal_preview')!;
+    btnCloseModalPreview.addEventListener('click', () => {
+      const modal = new Modal(document.getElementById('modal_viewer')!, {});
+      modal.hide();
+    });
 
     this.viewer.container.parentElement!.appendChild(toolbarDebugElement);
   }

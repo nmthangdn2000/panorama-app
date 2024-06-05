@@ -2,7 +2,10 @@ import { Modal } from 'flowbite';
 import { Panorama } from '../lib-panorama';
 
 const viewerElement = document.getElementById('viewer')! as HTMLElement;
-const modalViewer = new Modal(document.getElementById('modal_viewer')!);
+const modalViewer = new Modal(document.getElementById('modal_viewer')!, {
+  backdrop: 'static',
+  closable: false,
+});
 
 const onClickPreviewPanorama = () => {
   const btnPreviewPanorama = document.getElementById('btn_preview_panorama')! as HTMLButtonElement;

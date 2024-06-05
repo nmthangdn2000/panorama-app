@@ -24,7 +24,7 @@ const preload = async () => {
   }
 
   window.panoramas = project.panoramas || [];
-  window.panoramasImport = project.panoramasImport || [];
+  window.pathProject = project.pathFolder;
 
   renderListImage();
 };
