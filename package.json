@@ -36,7 +36,8 @@
     "lottie-web": "^5.12.2",
     "nanoid": "^5.0.7",
     "sass": "^1.77.2",
-    "slugify": "^1.6.6"
+    "slugify": "^1.6.6",
+    "swiper": "^11.1.4"
   },
   "devDependencies": {
     "@electron-toolkit/eslint-config-prettier": "^2.0.0",

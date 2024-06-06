@@ -144,7 +144,7 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
     imagesQuality,
     imagesLow,
     hasCube,
-    pathFolder: pathProject,
+    pathFolder: `file://${pathProject}`,
   };
 };
 
@@ -323,7 +323,6 @@ export const saveProject = async (name: string, project: RenderProject, isRender
             )
               .resize(2000, Jimp.AUTO)
               .quality(60)
-              .greyscale()
               .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
             // .toFormat('jpeg', {
             //   quality: 40,
@@ -343,6 +342,8 @@ export const saveProject = async (name: string, project: RenderProject, isRender
           image = `${panorama.title}.jpg`;
         }
       }
+
+      delete panorama.isNew;
 
       return {
         ...panorama,

@@ -1,6 +1,6 @@
 export const itemImagePanorama = (id: string, src: string, name: string, metadata: any, borderColor: string) => {
   const regex = /[\/\\]/;
-  if (!regex.test(src)) src = `file://${window.pathProject}/panoramas/${src}`;
+  if (!regex.test(src)) src = `${window.pathProject}/panoramas/${src}`;
 
   return ` <div
   draggable="false"

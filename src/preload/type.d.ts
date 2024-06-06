@@ -23,5 +23,7 @@ declare global {
     onEditTitlePanorama: (element: HTMLButtonElement, id: string) => void;
     onSaveTitlePanorama: (id: string) => void;
     onCancelDeleteProject: () => void;
+    removeMarkerLocationHTML: (element: HTMLElement) => void;
+    clickMarkerLocation: (element: HTMLElement) => void;
   }
 }
