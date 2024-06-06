@@ -76,7 +76,7 @@ export const markerLocationHTML = (x: number, y: number) => {
   return `
         <div class="marker_location_map isActive group relative border-2 border-transparent [&.isActive]:border-red-100 border-dashed  pointer-events-none [&.isActive]:pointer-events-auto">
           <svg width="80" height="80" style="left: -1px; top: -1px;" class="opacity-0 pointer-events-none group-[&.isActive]:opacity-100 group-[&.isActive]:pointer-events-auto group-[&.isActive]:cursor-grab">
-            <path stroke="rgb(252,89,56)" stroke-width="0" stroke-opacity="0.3" fill="rgb(252,89,56)" fill-opacity="0.5" d="M 39.7725,39.7725 L 60.28417779204103,6.943418249282229 A 38.55,38.55 0 0 1 60.28417779204103,71.60158175071777 Z" style="pointer-events: none; cursor: pointer; transform: scale(1, 1);"></path>
+            <path data-previous-radian="0" stroke="rgb(252,89,56)" stroke-width="2" stroke-opacity="1" d="M 39.7725,39.7725 L 60.28417779204103,6.943418249282229 A 38.55,38.55 0 0 1 60.28417779204103,71.60158175071777 Z" style="pointer-events: none; cursor: pointer; transform: scale(1, 1);"></path>
           </svg>
           <div onclick="clickMarkerLocation(this)" class="absolute cursor-pointer bg-red-500 w-4 h-4 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-auto"></div>
           <div class="absolute bg-white w-2 h-2 top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"></div>

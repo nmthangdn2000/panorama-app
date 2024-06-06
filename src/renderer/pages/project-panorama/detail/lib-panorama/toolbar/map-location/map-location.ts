@@ -139,70 +139,78 @@ export class MapLocation implements ToolbarDebugHTML {
       });
 
       const rect = image.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
+      const xCenter = event.clientX - rect.left;
+      const yCenter = event.clientY - rect.top;
 
-      const top = y;
-      const left = x;
-      const bottom = rect.height - y;
-      const right = rect.width - x;
+      const top = yCenter;
+      const left = xCenter;
+      const bottom = rect.height - yCenter;
+      const right = rect.width - xCenter;
 
-      const centerX = left - 80 / 2;
-      const centerY = top - 80 / 2;
-
-      const centerXPercent = (centerX / rect.width) * 100;
-      const centerYPercent = (centerY / rect.height) * 100;
+      const xCenterPercent = (xCenter / rect.width) * 100;
+      const yCenterPercent = (yCenter / rect.height) * 100;
 
       const divMarker = document.createElement('div');
       divMarker.classList.add('absolute');
-      divMarker.style.left = `${centerXPercent}%`;
-      divMarker.style.top = `${centerYPercent}%`;
+      divMarker.style.left = `${xCenterPercent}%`;
+      divMarker.style.top = `${yCenterPercent}%`;
+      divMarker.style.transform = 'translate(-50%, -50%)';
       divImage.style.zIndex = '20';
-      divMarker.innerHTML = markerLocationHTML(centerXPercent, centerYPercent);
+      divMarker.innerHTML = markerLocationHTML(xCenterPercent, yCenterPercent);
 
       divImage.appendChild(divMarker);
+
+      const calculateRadian = (x: number, y: number) => {
+        const deltaX = xCenter - x;
+        const deltaY = yCenter - y;
+
+        return Math.atan2(deltaY, deltaX);
+      };
 
       divMarker.addEventListener('mousedown', (event) => {
         const marker = event.target as HTMLElement;
         marker.style.zIndex = '30';
         marker.style.cursor = 'grabbing';
 
+        const path = marker.querySelector('path')!;
+
+        const xStart = 40;
+        const yStart = 2;
+        const radius = 38;
+
+        const startRadian = calculateRadian(event.clientX - rect.left, event.clientY - rect.top);
+
+        let previousRadian = parseFloat(path.dataset.previousRadian!);
+        let radian = 0;
+
         const onMouseMove = (event: MouseEvent) => {
-          const x = event.clientX - rect.left;
-          const y = event.clientY - rect.top;
+          const moveRadian = calculateRadian(event.clientX - rect.left, event.clientY - rect.top);
 
-          const deltaX = centerX - x;
-          const deltaY = centerY - y;
+          radian = moveRadian - startRadian;
 
-          const rad = Math.atan2(deltaY, deltaX);
+          const [xA, yA] = this.calculateEndPosition(xStart, yStart, previousRadian + radian, radius);
+          const [xB, yB] = this.calculateEndPosition(xStart, yStart, previousRadian + radian + 130 * (Math.PI / 180), radius);
 
-          // const d = "M 39.7725,39.7725 L 60.28417779204103,6.943418249282229 A 38.55,38.55 0 0 1 60.28417779204103,71.60158175071777 Z";
+          const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
 
-          const lxDefault = 60;
-          const lyDefault = 7;
-          const rxDefault = 60;
-          const ryDefault = 70;
-
-          const lx = lxDefault + Math.cos(rad) * 20;
-          const ly = lyDefault + Math.sin(rad) * 20;
-          const rx = rxDefault + Math.cos(rad) * 20;
-          const ry = ryDefault + Math.sin(rad) * 20;
-
-          const d = `M 39.7725,39.7725 L ${lx},${ly} A 38.55,38.55 0 0 1 ${rx},${ry} Z`;
-
-          const path = marker.querySelector('path')!;
           path.setAttribute('d', d);
+
+          // xStart = xA;
+          // yStart = yA;
         };
 
         const onMouseUp = () => {
           marker.style.zIndex = '20';
           marker.style.cursor = 'grab';
-          divImage.removeEventListener('mousemove', onMouseMove);
-          divImage.removeEventListener('mouseup', onMouseUp);
+          if (path) path.dataset.previousRadian = (previousRadian + radian).toString();
+          document.removeEventListener('mousemove', onMouseMove);
+          document.removeEventListener('mouseup', onMouseUp);
         };
 
-        divImage.addEventListener('mousemove', onMouseMove);
-        divImage.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+
+        document.addEventListener('mouseleave', onMouseUp);
       });
     });
 
@@ -223,5 +231,58 @@ export class MapLocation implements ToolbarDebugHTML {
   private createBodyMapMain() {
     const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
     modalBodyMapLocation.innerHTML = bodyMapMainHTML();
+  }
+
+  private calculateEndPosition(xA: number, yA: number, radian: number, radius: number) {
+    const xO = 40;
+    const yO = 40;
+
+    const xVectorOA = xA - xO;
+    const yVectorOA = yA - yO;
+
+    // xVectorOA * xVectorOB + yVectorOA * yVectorOB = 20 * 20 * Math.cos(radian);
+
+    // yVectorOB = (20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB) / yVectorOA;
+
+    // xVectorOB^2 + yVectorOB^2 = 20^2
+
+    // xVectorOB^2 + ((20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB) / yVectorOA)^2 = 20^2
+
+    // yVectorOA^2 * xVectorOB^2 + (20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB)^2 - 20^2 * yVectorOA^2 = 0
+
+    // yVectorOA^2 * xVectorOB^2 + xVectorOA^2 * xVectorOB^2 - 2 * 20 * 20 * Math.cos(radian) * xVectorOA * xVectorOB + 20^2 * 20^2 * Math.cos(radian)^2 - 20^2 * yVectorOA^2 = 0
+
+    // (yVectorOA^2 + xVectorOA^2) * xVectorOB^2 - 2 * 20 * 20 * Math.cos(radian) * xVectorOA * xVectorOB + 20^2 * 20^2 * Math.cos(radian)^2 - 20^2 * yVectorOA^2 = 0
+
+    // a = yVectorOA^2 + xVectorOA^2
+    // b = -2 * 20 * 20 * Math.cos(radian) * xVectorOA
+    // c = 20^2 * 20^2 * Math.cos(radian)^2 - 20^2 * yVectorOA^2
+
+    // delta = b^2 - 4 * a * c
+
+    // xVectorOB = (-b + Math.sqrt(delta)) / (2 * a)
+    // yVectorOB = (20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB) / yVectorOA;
+
+    // xB = xO + xVectorOB;
+    // yB = yO + yVectorOB;
+
+    const finalRadian = radian - Math.floor(radian / (Math.PI * 2)) * Math.PI * 2;
+
+    const a = yVectorOA ** 2 + xVectorOA ** 2;
+    const b = -2 * radius * radius * Math.cos(finalRadian) * xVectorOA;
+    const c = radius ** 2 * radius ** 2 * Math.cos(finalRadian) ** 2 - radius ** 2 * yVectorOA ** 2;
+
+    const delta = b ** 2 - 4 * a * c;
+
+    let modifierDelta = -1;
+    if (finalRadian < Math.PI) modifierDelta = 1;
+
+    const xVectorOB = (-b + modifierDelta * Math.sqrt(delta)) / (2 * a);
+    const yVectorOB = (radius * radius * Math.cos(finalRadian) - xVectorOA * xVectorOB) / yVectorOA;
+
+    const xB = xO + xVectorOB;
+    const yB = yO + yVectorOB;
+
+    return [xB, yB];
   }
 }
