@@ -344,7 +344,7 @@ export class Panorama implements PanoramaType {
   getCurrentPanorama(): PanoramaDataType | undefined {
     if (!this.viewer.config.panorama) return;
 
-    return this._panoramas.find((panorama) => panorama.image === this.viewer.config.panorama);
+    return this._panoramas.find((panorama) => panorama.image === this.viewer.config.panorama.split('/').pop());
   }
 
   private async __preloadBtnArrowAnimation() {

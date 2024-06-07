@@ -1,4 +1,5 @@
 import { Modal } from 'flowbite';
+import { itemRadioTileSize } from './html';
 
 let currentProgress = 0;
 let progressPercentage = 0;
@@ -15,17 +16,11 @@ const progressModal = new Modal(document.getElementById('progress_modal')!, {
   backdrop: 'static',
   closable: false,
 });
+const settingModalPanorama = new Modal(document.getElementById('modal_setting_render_panorama')!);
+const formSettingRenderPanorama = document.getElementById('form_setting_render_panorama')! as HTMLFormElement;
 
 const resetRenderProject = () => {
-  progressModal.hide();
-  progressBar.style.width = '0%';
-  progressBar.innerHTML = '0%';
-  progressBar.classList.remove('!bg-green-500');
-  iconSuccess.classList.add('hidden');
-  iconProcessing.classList.remove('hidden');
-  btnOkProgress.classList.add('hidden');
-  btnCancelProgress.classList.remove('hidden');
-  txtProgress.textContent = 'Processing render project...';
+  window.location.reload();
 };
 
 const renderProject = () => {
@@ -34,32 +29,46 @@ const renderProject = () => {
   processing = false;
 
   btnRenderPanorama.addEventListener('click', async () => {
-    const url = new URL(window.location.href);
-    const name = url.searchParams.get('name');
+    settingModalPanorama.show();
 
-    setTimeout(() => {
-      progressModal.show();
-    }, 500);
+    const widthPanorama = window.panoramas[0].metadata.width;
 
-    const result = await window.api.projectPanorama.renderProject(name!, {
-      panoramas: window.panoramas,
-    });
+    const faceSize = widthPanorama / 4;
+    const tileSizes: number[] = [];
+    const tileSizesOptions = [2, 4, 8, 16];
 
-    if (!result) {
-      processing = false;
-      currentProgress = 0;
-      progressPercentage = 0;
-      progressBar.classList.add('!bg-red-500');
-      progressBar.innerHTML = 'Failed';
-
-      iconSuccess.classList.remove('hidden');
-      iconProcessing.classList.add('hidden');
-
-      btnOkProgress.classList.remove('hidden');
-      btnCancelProgress.classList.add('hidden');
-
-      txtProgress.textContent = 'Render project failed!';
+    for (let i = 0; i < tileSizesOptions.length; i++) {
+      if (faceSize % tileSizesOptions[i] === 0) {
+        tileSizes.push(faceSize / tileSizesOptions[i]);
+      }
     }
+
+    formSettingRenderPanorama.querySelector('div')!.innerHTML = tileSizes
+      .sort((a, b) => a - b)
+      .map((size, index) => itemRadioTileSize(size, index))
+      .join('');
+
+    // get data from form
+    formSettingRenderPanorama.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      settingModalPanorama.hide();
+
+      const data = new FormData(formSettingRenderPanorama);
+
+      const size = data.get('item_size_radio') as number | null;
+
+      if (!size) return;
+
+      handleRenderProject(size);
+    });
+  });
+
+  settingModalPanorama.updateOnHide(() => {
+    console.log('Hide setting modal');
+  });
+
+  document.getElementById('btn_close_modal_setting_render_panorama')!.addEventListener('click', () => {
+    settingModalPanorama.hide();
   });
 
   btnCancelProgress.addEventListener('click', async () => {
@@ -113,6 +122,35 @@ window.api.projectPanorama.processingProject((percentage: number) => {
     }
   }
 });
+
+const handleRenderProject = async (size: number) => {
+  const url = new URL(window.location.href);
+  const name = url.searchParams.get('name');
+
+  setTimeout(() => {
+    progressModal.show();
+  }, 500);
+
+  const result = await window.api.projectPanorama.renderProject(name!, size, {
+    panoramas: window.panoramas,
+  });
+
+  if (!result) {
+    processing = false;
+    currentProgress = 0;
+    progressPercentage = 0;
+    progressBar.classList.add('!bg-red-500');
+    progressBar.innerHTML = 'Failed';
+
+    iconSuccess.classList.remove('hidden');
+    iconProcessing.classList.add('hidden');
+
+    btnOkProgress.classList.remove('hidden');
+    btnCancelProgress.classList.add('hidden');
+
+    txtProgress.textContent = 'Render project failed!';
+  }
+};
 
 export default () => {
   renderProject();

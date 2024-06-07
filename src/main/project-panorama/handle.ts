@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { BrowserWindow, dialog } from 'electron';
 import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
@@ -9,8 +9,9 @@ import { platform } from 'os';
 import { getSetting } from '../setting/handle';
 import Jimp from 'jimp';
 import { is } from '@electron-toolkit/utils';
+import { isBase64Image } from '../utils/util';
 
-let CHILD;
+let CHILD: ChildProcessWithoutNullStreams | undefined;
 
 const checkPathProject = async () => {
   const setting = await getSetting();
@@ -173,9 +174,9 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
   calculateProgress(totalProcess, tasks.length);
 };
 
-export const renderProject = async (name: string, renderData: RenderProject) => {
+export const renderProject = async (name: string, size: number, renderData: RenderProject) => {
   try {
-    cancelProgress();
+    await cancelProgress();
 
     const { panoramas } = renderData;
 
@@ -205,18 +206,12 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
     const outputPath = join(path, name, 'cube');
 
     await new Promise((resolve, reject) => {
-      if (CHILD) {
-        console.log('kill child process');
-
-        CHILD.kill();
-      }
-
-      console.log('spawn child process');
-
       // `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`
-      CHILD = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', '375', '--quality', '80']);
+      const child = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', `${size}`, '--quality', '80']);
 
-      CHILD.stderr.on('data', (data) => {
+      CHILD = child;
+
+      child.stderr.on('data', (data) => {
         const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
 
         const match = data.toString().match(regex);
@@ -228,14 +223,22 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
         }
       });
 
-      CHILD.on('error', (err) => {
+      child.on('error', (err) => {
         console.log(`error: ${err.message}`);
+        CHILD = undefined;
         reject(err);
       });
 
-      CHILD.on('close', (code) => {
+      child.on('close', (code) => {
         console.log(`child process exited with code ${code}`);
-        resolve(true);
+
+        if (code === 0) {
+          return resolve(true);
+        }
+
+        if (child.killed) {
+          child.kill();
+        }
       });
     });
 
@@ -253,10 +256,9 @@ export const renderProject = async (name: string, renderData: RenderProject) => 
 };
 
 export const cancelProgress = () => {
-  if (CHILD) {
-    console.log('kill child process');
-
+  if (CHILD && !CHILD.killed) {
     CHILD.kill();
+    CHILD = undefined;
   }
 
   return true;
@@ -293,12 +295,16 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   const path = await checkPathProject();
   const pathProject = join(path, name);
 
-  if (!existsSync(join(path, name, 'panoramas'))) {
-    mkdirSync(join(path, name, 'panoramas'), { recursive: true });
+  if (!existsSync(join(pathProject, 'panoramas'))) {
+    mkdirSync(join(pathProject, 'panoramas'), { recursive: true });
   }
 
-  if (!existsSync(join(path, name, 'panoramas-low'))) {
-    mkdirSync(join(path, name, 'panoramas-low'), { recursive: true });
+  if (!existsSync(join(pathProject, 'panoramas-low'))) {
+    mkdirSync(join(pathProject, 'panoramas-low'), { recursive: true });
+  }
+
+  if (!existsSync(join(pathProject, 'thumbnails'))) {
+    mkdirSync(join(pathProject, 'thumbnails'), { recursive: true });
   }
 
   const newPanoramas = await Promise.all(
@@ -341,6 +347,18 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
           image = `${panorama.title}.jpg`;
         }
+      }
+
+      if (isBase64Image(panorama.thumbnail)) {
+        const base64Data = panorama.thumbnail.replace(/^data:image\/\w+;base64,/, '');
+        const bufferThumbnail = Buffer.from(base64Data, 'base64');
+
+        await (
+          await Jimp.read(bufferThumbnail)
+        )
+          .resize(300, Jimp.AUTO)
+          .quality(80)
+          .writeAsync(join(pathProject, 'thumbnails', `${panorama.title}.jpg`));
       }
 
       delete panorama.isNew;

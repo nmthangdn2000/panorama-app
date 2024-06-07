@@ -87,5 +87,4 @@ app.on('window-all-closed', () => {
 process.on('uncaughtException', function (error) {
   // Handle the error
   console.log('uncaughtException', error);
-
 });

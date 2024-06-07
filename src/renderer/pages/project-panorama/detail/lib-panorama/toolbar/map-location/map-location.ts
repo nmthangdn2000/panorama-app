@@ -80,7 +80,7 @@ export class MapLocation implements ToolbarDebugHTML {
   }
 
   private handleBtnGroupMapLocation() {
-    const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
+    // const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
     const btnGroupMapLocations = document.getElementById('btn_group_map_location')!.querySelectorAll('button')!;
 
     this.createBodyMapMini();
@@ -155,10 +155,10 @@ export class MapLocation implements ToolbarDebugHTML {
       const xCenter = event.clientX - rect.left;
       const yCenter = event.clientY - rect.top;
 
-      const top = yCenter;
-      const left = xCenter;
-      const bottom = rect.height - yCenter;
-      const right = rect.width - xCenter;
+      // const top = yCenter;
+      // const left = xCenter;
+      // const bottom = rect.height - yCenter;
+      // const right = rect.width - xCenter;
 
       const xCenterPercent = (xCenter / rect.width) * 100;
       const yCenterPercent = (yCenter / rect.height) * 100;
@@ -182,7 +182,6 @@ export class MapLocation implements ToolbarDebugHTML {
 
       divMarker.addEventListener('mousedown', (event) => {
         const marker = event.target as HTMLElement;
-        marker.style.zIndex = '30';
         marker.style.cursor = 'grabbing';
         document.body.style.cursor = 'grabbing';
 
@@ -211,8 +210,7 @@ export class MapLocation implements ToolbarDebugHTML {
         };
 
         const onMouseUp = () => {
-          marker.style.zIndex = '20';
-          marker.style.cursor = 'grab';
+          marker.style.cursor = null as any;
           document.body.style.cursor = 'default';
           if (path) path.dataset.previousRadian = (previousRadian + radian).toString();
           document.removeEventListener('mousemove', onMouseMove);

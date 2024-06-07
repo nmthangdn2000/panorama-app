@@ -148,14 +148,10 @@ export const renderListImage = () => {
 };
 
 window.onRemovePanorama = (id: string) => {
-  const newPanoramas = window.panoramas.filter((panorama) => panorama.id !== id);
-  window.panoramas = newPanoramas.map((panorama) => {
-    const markers = panorama.markers.filter((marker) => marker.toPanorama !== id);
-    return {
-      ...panorama,
-      markers,
-    };
-  });
+  const index = window.panoramas.findIndex((panorama) => panorama.id === id);
+  if (index < 0) return;
+
+  window.panoramas.splice(index, 1);
 
   renderListImage();
 };

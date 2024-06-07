@@ -72,29 +72,51 @@ export class OriginalPerspective implements ToolbarDebugHTML {
     });
   }
 
-  private handleSpaceKey(e: KeyboardEvent) {
+  private async handleSpaceKey(e: KeyboardEvent) {
     if (this.isOriginalPerspective && e.key === ' ') {
-      const currentPanorama = this.getCurrentPanorama();
-      if (!currentPanorama) return;
+      this.viewer.addEventListener(
+        'render',
+        async () => {
+          const currentPanorama = this.getCurrentPanorama();
 
-      const index = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-      if (index < 0) return;
+          if (!currentPanorama) return;
 
-      this.panoramas[index].cameraPosition = this.viewer.getPosition();
-      this.panoramas[index].cameraPosition.fov = this.viewer.getZoomLevel();
+          const index = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
+          if (index < 0) return;
 
-      // opacity 1 to 0.5 to 1
-      this.viewer.container.style.transition = 'opacity 0.3s ease-in-out';
-      this.viewer.container.style.opacity = '0.5';
-      setTimeout(() => {
-        this.viewer.container.style.opacity = '1';
-      }, 300);
+          this.panoramas[index].cameraPosition = this.viewer.getPosition();
+          this.panoramas[index].cameraPosition.fov = this.viewer.getZoomLevel();
+          this.panoramas[index].thumbnail = await new Promise((resolve) => {
+            (document.querySelector('.psv-container canvas')! as HTMLCanvasElement).toBlob((blob) => {
+              if (!blob) {
+                resolve(this.panoramas[index].thumbnail);
+                return;
+              }
 
-      setTimeout(() => {
-        this.viewer.container.style.transition = 'none';
-      }, 600);
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result! as string);
+              reader.readAsDataURL(blob);
+            });
+          });
 
-      saveProjectPanorama();
+          console.log('save panorama', this.panoramas[index]);
+
+          // opacity 1 to 0.5 to 1
+          this.viewer.container.style.transition = 'opacity 0.3s ease-in-out';
+          this.viewer.container.style.opacity = '0.5';
+          setTimeout(() => {
+            this.viewer.container.style.opacity = '1';
+          }, 300);
+
+          setTimeout(() => {
+            this.viewer.container.style.transition = 'none';
+          }, 600);
+
+          saveProjectPanorama();
+        },
+        { once: true },
+      );
+      this.viewer.needsUpdate();
     }
   }
 }
