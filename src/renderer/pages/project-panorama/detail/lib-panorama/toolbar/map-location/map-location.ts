@@ -5,9 +5,9 @@ import { EVENT_KEY } from '../../event.panorama';
 import { initModals, Modal } from 'flowbite';
 import Swiper from 'swiper';
 import { Manipulation } from 'swiper/modules';
+import { loadImageBackground } from '../../../../../../utils/util';
 
 import 'swiper/css';
-import { loadImageBackground } from '../../../../../../utils/util';
 
 export class MapLocation implements ToolbarDebugHTML {
   private viewer: Viewer;
@@ -109,9 +109,22 @@ export class MapLocation implements ToolbarDebugHTML {
   }
 
   private createBodyMapMini() {
-    const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
+    const bodyMapMainLocation = document.getElementById('body_map_main_location');
+    if (bodyMapMainLocation) {
+      bodyMapMainLocation.style.display = 'none';
+    }
 
-    modalBodyMapLocation.innerHTML = bodyMapMiniHTML();
+    const bodyMapMiniLocation = document.getElementById('body_map_mini_location');
+    if (bodyMapMiniLocation) {
+      bodyMapMiniLocation.style.display = 'block';
+      return;
+    }
+
+    const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
+    const divBodyMapMini = document.createElement('div');
+    divBodyMapMini.id = 'body_map_mini_location';
+    divBodyMapMini.innerHTML = bodyMapMiniHTML();
+    modalBodyMapLocation.appendChild(divBodyMapMini);
 
     const imageMapLocationContainer = document.getElementById('image_map_location_container')!;
 
@@ -171,6 +184,7 @@ export class MapLocation implements ToolbarDebugHTML {
         const marker = event.target as HTMLElement;
         marker.style.zIndex = '30';
         marker.style.cursor = 'grabbing';
+        document.body.style.cursor = 'grabbing';
 
         const path = marker.querySelector('path')!;
 
@@ -180,7 +194,7 @@ export class MapLocation implements ToolbarDebugHTML {
 
         const startRadian = calculateRadian(event.clientX - rect.left, event.clientY - rect.top);
 
-        let previousRadian = parseFloat(path.dataset.previousRadian!);
+        let previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
         let radian = 0;
 
         const onMouseMove = (event: MouseEvent) => {
@@ -193,15 +207,13 @@ export class MapLocation implements ToolbarDebugHTML {
 
           const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
 
-          path.setAttribute('d', d);
-
-          // xStart = xA;
-          // yStart = yA;
+          path?.setAttribute('d', d);
         };
 
         const onMouseUp = () => {
           marker.style.zIndex = '20';
           marker.style.cursor = 'grab';
+          document.body.style.cursor = 'default';
           if (path) path.dataset.previousRadian = (previousRadian + radian).toString();
           document.removeEventListener('mousemove', onMouseMove);
           document.removeEventListener('mouseup', onMouseUp);
@@ -229,8 +241,23 @@ export class MapLocation implements ToolbarDebugHTML {
   }
 
   private createBodyMapMain() {
+    const bodyMapMiniLocation = document.getElementById('body_map_mini_location');
+    if (bodyMapMiniLocation) {
+      bodyMapMiniLocation.style.display = 'none';
+    }
+
+    const bodyMapMainLocation = document.getElementById('body_map_main_location');
+    if (bodyMapMainLocation) {
+      bodyMapMainLocation.style.display = 'block';
+      return;
+    }
+
     const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
-    modalBodyMapLocation.innerHTML = bodyMapMainHTML();
+    const divBodyMapMain = document.createElement('div');
+    divBodyMapMain.id = 'body_map_main_location';
+    divBodyMapMain.innerHTML = bodyMapMainHTML();
+
+    modalBodyMapLocation.appendChild(divBodyMapMain);
   }
 
   private calculateEndPosition(xA: number, yA: number, radian: number, radius: number) {
