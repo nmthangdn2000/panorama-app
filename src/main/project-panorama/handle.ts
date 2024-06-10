@@ -307,6 +307,10 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     mkdirSync(join(pathProject, 'thumbnails'), { recursive: true });
   }
 
+  if (!existsSync(join(pathProject, 'mini-map'))) {
+    mkdirSync(join(pathProject, 'mini-map'), { recursive: true });
+  }
+
   const newPanoramas = await Promise.all(
     project.panoramas.map(async (panorama) => {
       let image = panorama.image;
@@ -314,10 +318,10 @@ export const saveProject = async (name: string, project: RenderProject, isRender
       if (panorama.isNew) {
         const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
 
-        let imagePanoram = panorama.image;
+        let imagePanorama = panorama.image;
 
         const regex = /[\/\\]/;
-        if (regex.test(imagePanoram)) {
+        if (regex.test(imagePanorama)) {
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {

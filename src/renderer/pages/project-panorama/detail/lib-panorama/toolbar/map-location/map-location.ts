@@ -1,6 +1,6 @@
 import { Viewer } from '@photo-sphere-viewer/core';
-import { ToolbarDebugHTML } from '../../panorama.type';
-import { bodyMapMainHTML, bodyMapMiniHTML, btnMapHTML, itemMapMiniHTML, markerLocationHTML, modalMapLocationHTML } from './html';
+import { PanoramaDataType, ToolbarDebugHTML } from '../../panorama.type';
+import { bodyMapMainHTML, bodyMapMiniHTML, btnMapHTML, itemMapMiniHTML, markerLocationHTML, modalMapLocationHTML, modalSelectPanoramaWithMapHTML } from './html';
 import { EVENT_KEY } from '../../event.panorama';
 import { initModals, Modal } from 'flowbite';
 import Swiper from 'swiper';
@@ -8,13 +8,29 @@ import { Manipulation } from 'swiper/modules';
 import { loadImageBackground } from '../../../../../../utils/util';
 
 import 'swiper/css';
+import { saveProjectPanorama } from '../../../detail-panorama/detail-panorama';
+import { calculateEndPosition } from '../../util';
 
 export class MapLocation implements ToolbarDebugHTML {
   private viewer: Viewer;
   private modalMapLocation: Modal | null = null;
+  private modalSelectPanoramaWithMap: Modal | null = null;
+  private panoramas: PanoramaDataType[];
 
-  constructor(viewer: Viewer) {
+  private miniMaps: string[] = [];
+
+  constructor(viewer: Viewer, panorama: PanoramaDataType[]) {
     this.viewer = viewer;
+    this.panoramas = panorama;
+
+    this.panoramas.forEach((panorama) => {
+      if (panorama.minimap && panorama.minimap.src) {
+        const isExist = this.miniMaps.find((src) => src === panorama.minimap?.src);
+        if (!isExist) {
+          this.miniMaps.push(panorama.minimap.src);
+        }
+      }
+    });
   }
 
   initialize() {
@@ -53,7 +69,8 @@ export class MapLocation implements ToolbarDebugHTML {
     btnMap.innerHTML = btnMapHTML();
 
     const divModal = document.createElement('div');
-    divModal.innerHTML = modalMapLocationHTML();
+    divModal.innerHTML += modalMapLocationHTML();
+    divModal.innerHTML += modalSelectPanoramaWithMapHTML();
     document.body.appendChild(divModal);
 
     const modalMapLocation = document.getElementById('modal_map_location')!;
@@ -62,6 +79,10 @@ export class MapLocation implements ToolbarDebugHTML {
       onHide: () => {
         this.inactive();
       },
+    });
+
+    this.modalSelectPanoramaWithMap = new Modal(document.getElementById('modal_select_panorama_with_map')!, {
+      closable: false,
     });
 
     toolbar.appendChild(btnMap);
@@ -80,7 +101,6 @@ export class MapLocation implements ToolbarDebugHTML {
   }
 
   private handleBtnGroupMapLocation() {
-    // const modalBodyMapLocation = document.getElementById('modal_body_map_location')!;
     const btnGroupMapLocations = document.getElementById('btn_group_map_location')!.querySelectorAll('button')!;
 
     this.createBodyMapMini();
@@ -129,36 +149,142 @@ export class MapLocation implements ToolbarDebugHTML {
     const imageMapLocationContainer = document.getElementById('image_map_location_container')!;
 
     const mySwiper = new Swiper('.swiper', {
-      spaceBetween: 20,
-      slidesPerView: 5,
+      spaceBetween: 40,
+      slidesPerView: 3,
       modules: [Manipulation],
     });
 
-    mySwiper.appendSlide(
-      Array.from({ length: 3 }).map(() => {
-        return itemMapMiniHTML();
-      }),
-    );
+    this.miniMaps.forEach((src) => {
+      mySwiper.appendSlide(itemMapMiniHTML(src));
+    });
+
+    document.getElementById('input_mini_map')!.addEventListener('change', (e) => {
+      const input = e.target as HTMLInputElement;
+      const files = input.files!;
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        mySwiper.appendSlide(itemMapMiniHTML(`file://${file.path}`));
+      }
+    });
+
+    window.removeItemMiniMap = (element: Element, src: string) => {
+      this.panoramas.forEach((panorama) => {
+        if (panorama.minimap && panorama.minimap.src === src) {
+          delete panorama.minimap;
+        }
+      });
+
+      element.parentElement?.parentElement?.remove();
+
+      const imageMapLocationContainer = document.getElementById('image_map_location_container')!;
+      const divImage = imageMapLocationContainer.querySelector('div')!;
+      const image = divImage.querySelector('img')!;
+
+      if (image.src === src) {
+        const markers = divImage.querySelectorAll('.marker_location_map')! as NodeListOf<HTMLElement>;
+        markers.forEach((marker) => {
+          marker.remove();
+        });
+
+        image.src = '';
+
+        if (mySwiper.slides.length > 0) mySwiper.slides[0].classList.add('swiper-slide-active');
+      }
+    };
+
+    window.onClickItemMapMini = (src: string) => {
+      const divImage = imageMapLocationContainer.querySelector('div')!;
+      const image = divImage.querySelector('img')!;
+
+      image.src = src;
+      loadImageBackground(divImage, imageMapLocationContainer);
+
+      this.renderMarkerMiniMapLocation();
+    };
 
     const divImage = imageMapLocationContainer.querySelector('div')!;
-    const image = divImage.querySelector('img')!;
+
+    this.handleClickMiniMap();
 
     loadImageBackground(divImage, imageMapLocationContainer);
 
-    image.addEventListener('click', (event) => {
+    window.removeMarkerLocationHTML = (element: HTMLElement) => {
+      element.parentElement?.parentElement?.remove();
+    };
+
+    window.clickMarkerLocation = (element: HTMLElement) => {
+      const markers = divImage.querySelectorAll('.marker_location_map')! as NodeListOf<HTMLElement>;
+      markers.forEach((marker) => {
+        marker.classList.remove('isActive');
+      });
+
+      element.parentElement!.classList.add('isActive');
+    };
+  }
+
+  private renderMarkerMiniMapLocation() {
+    const imageMapLocationContainer = document.getElementById('image_map_location_container')!;
+    const divImage = imageMapLocationContainer.querySelector('div')!;
+    const image = divImage.querySelector('img')!;
+
+    const markers = divImage.querySelectorAll('.marker_location_map')! as NodeListOf<HTMLElement>;
+    markers.forEach((marker) => {
+      marker.remove();
+    });
+
+    if (!image.src) return;
+
+    const panoramasMiniMap = this.panoramas.filter((panorama) => panorama.minimap && panorama.minimap.src === image.src);
+
+    panoramasMiniMap.forEach((panorama) => {
+      if (!panorama.minimap) return;
+
+      const divMarker = document.createElement('div');
+      divMarker.classList.add('absolute');
+      divMarker.style.left = `${panorama.minimap.position.x}%`;
+      divMarker.style.top = `${panorama.minimap.position.y}%`;
+      divMarker.style.transform = 'translate(-50%, -50%)';
+      divImage.style.zIndex = '20';
+      divMarker.innerHTML = markerLocationHTML();
+
+      divImage.appendChild(divMarker);
+
+      const path = divMarker.querySelector('path')!;
+
+      path.dataset.previousRadian = panorama.minimap.radian.toString();
+      path.setAttribute('d', panorama.minimap.d);
+    });
+  }
+
+  private handleClickMiniMap() {
+    const imageMapLocationContainer = document.getElementById('image_map_location_container')!;
+    const divImage = imageMapLocationContainer.querySelector('div')!;
+    const image = divImage.querySelector('img')!;
+
+    let clientX = 0;
+    let clientY = 0;
+
+    const functionSubmitAddSelectPanoramaWithMap = (event: Event) => {
+      event.preventDefault();
+
+      const data = new FormData(event.target as HTMLFormElement);
+      const panoramaId = data.get('select_panorama_with_map') as string;
+
+      if (!panoramaId) return;
+
+      const panoramaIndex = this.panoramas.findIndex((panorama) => panorama.id === panoramaId);
+
+      if (panoramaIndex < 0) return;
+
       const markers = divImage.querySelectorAll('.marker_location_map')! as NodeListOf<HTMLElement>;
       markers.forEach((marker) => {
         marker.classList.remove('isActive');
       });
 
       const rect = image.getBoundingClientRect();
-      const xCenter = event.clientX - rect.left;
-      const yCenter = event.clientY - rect.top;
-
-      // const top = yCenter;
-      // const left = xCenter;
-      // const bottom = rect.height - yCenter;
-      // const right = rect.width - xCenter;
+      const xCenter = clientX - rect.left;
+      const yCenter = clientY - rect.top;
 
       const xCenterPercent = (xCenter / rect.width) * 100;
       const yCenterPercent = (yCenter / rect.height) * 100;
@@ -169,7 +295,7 @@ export class MapLocation implements ToolbarDebugHTML {
       divMarker.style.top = `${yCenterPercent}%`;
       divMarker.style.transform = 'translate(-50%, -50%)';
       divImage.style.zIndex = '20';
-      divMarker.innerHTML = markerLocationHTML(xCenterPercent, yCenterPercent);
+      divMarker.innerHTML = markerLocationHTML();
 
       divImage.appendChild(divMarker);
 
@@ -180,29 +306,34 @@ export class MapLocation implements ToolbarDebugHTML {
         return Math.atan2(deltaY, deltaX);
       };
 
+      const path = divMarker.querySelector('path')!;
+
+      let previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
+      let radian = 0;
+
+      this.updatePanoramaMiniMap(panoramaIndex, image, previousRadian, radian, path?.getAttribute('d') || '', xCenterPercent, yCenterPercent);
+
       divMarker.addEventListener('mousedown', (event) => {
         const marker = event.target as HTMLElement;
         marker.style.cursor = 'grabbing';
         document.body.style.cursor = 'grabbing';
 
-        const path = marker.querySelector('path')!;
-
         const xStart = 40;
         const yStart = 2;
         const radius = 38;
 
-        const startRadian = calculateRadian(event.clientX - rect.left, event.clientY - rect.top);
+        previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
+        radian = 0;
 
-        let previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
-        let radian = 0;
+        const startRadian = calculateRadian(event.clientX - rect.left, event.clientY - rect.top);
 
         const onMouseMove = (event: MouseEvent) => {
           const moveRadian = calculateRadian(event.clientX - rect.left, event.clientY - rect.top);
 
           radian = moveRadian - startRadian;
 
-          const [xA, yA] = this.calculateEndPosition(xStart, yStart, previousRadian + radian, radius);
-          const [xB, yB] = this.calculateEndPosition(xStart, yStart, previousRadian + radian + 130 * (Math.PI / 180), radius);
+          const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + radian, radius);
+          const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + radian + 130 * (Math.PI / 180), radius);
 
           const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
 
@@ -218,24 +349,29 @@ export class MapLocation implements ToolbarDebugHTML {
         };
 
         document.addEventListener('mousemove', onMouseMove);
-        document.addEventListener('mouseup', onMouseUp);
+        document.addEventListener('mouseup', () => {
+          onMouseUp();
+          this.updatePanoramaMiniMap(panoramaIndex, image, previousRadian, radian, path?.getAttribute('d') || '', xCenterPercent, yCenterPercent);
+        });
 
         document.addEventListener('mouseleave', onMouseUp);
       });
+
+      document.getElementById('form_select_panorama_with_map')!.removeEventListener('submit', functionSubmitAddSelectPanoramaWithMap);
+    };
+
+    image.addEventListener('click', (imageEvent) => {
+      clientX = imageEvent.clientX;
+      clientY = imageEvent.clientY;
+
+      this.modalSelectPanoramaWithMap?.show();
+
+      document.getElementById('form_select_panorama_with_map')!.addEventListener('submit', functionSubmitAddSelectPanoramaWithMap);
     });
 
-    window.removeMarkerLocationHTML = (element: HTMLElement) => {
-      element.parentElement?.parentElement?.remove();
-    };
-
-    window.clickMarkerLocation = (element: HTMLElement) => {
-      const markers = divImage.querySelectorAll('.marker_location_map')! as NodeListOf<HTMLElement>;
-      markers.forEach((marker) => {
-        marker.classList.remove('isActive');
-      });
-
-      element.parentElement!.classList.add('isActive');
-    };
+    document.getElementById('cancel_select_panorama_with_map')!.addEventListener('click', () => {
+      document.getElementById('form_select_panorama_with_map')!.removeEventListener('submit', functionSubmitAddSelectPanoramaWithMap);
+    });
   }
 
   private createBodyMapMain() {
@@ -258,56 +394,27 @@ export class MapLocation implements ToolbarDebugHTML {
     modalBodyMapLocation.appendChild(divBodyMapMain);
   }
 
-  private calculateEndPosition(xA: number, yA: number, radian: number, radius: number) {
-    const xO = 40;
-    const yO = 40;
+  private updatePanoramaMiniMap(panoramaIndex: number, image: HTMLImageElement, previousRadian: number, radian: number, d: string, xCenterPercent: number, yCenterPercent: number) {
+    if (!this.panoramas[panoramaIndex].minimap) {
+      this.panoramas[panoramaIndex].minimap = {
+        src: '',
+        position: {
+          x: 0,
+          y: 0,
+        },
+        radian: 0,
+        d: '',
+      };
+    }
 
-    const xVectorOA = xA - xO;
-    const yVectorOA = yA - yO;
+    this.panoramas[panoramaIndex].minimap!.radian = previousRadian + radian;
+    this.panoramas[panoramaIndex].minimap!.d = d;
+    this.panoramas[panoramaIndex].minimap!.position = {
+      x: xCenterPercent,
+      y: yCenterPercent,
+    };
+    this.panoramas[panoramaIndex].minimap!.src = image.src;
 
-    // xVectorOA * xVectorOB + yVectorOA * yVectorOB = 20 * 20 * Math.cos(radian);
-
-    // yVectorOB = (20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB) / yVectorOA;
-
-    // xVectorOB^2 + yVectorOB^2 = 20^2
-
-    // xVectorOB^2 + ((20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB) / yVectorOA)^2 = 20^2
-
-    // yVectorOA^2 * xVectorOB^2 + (20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB)^2 - 20^2 * yVectorOA^2 = 0
-
-    // yVectorOA^2 * xVectorOB^2 + xVectorOA^2 * xVectorOB^2 - 2 * 20 * 20 * Math.cos(radian) * xVectorOA * xVectorOB + 20^2 * 20^2 * Math.cos(radian)^2 - 20^2 * yVectorOA^2 = 0
-
-    // (yVectorOA^2 + xVectorOA^2) * xVectorOB^2 - 2 * 20 * 20 * Math.cos(radian) * xVectorOA * xVectorOB + 20^2 * 20^2 * Math.cos(radian)^2 - 20^2 * yVectorOA^2 = 0
-
-    // a = yVectorOA^2 + xVectorOA^2
-    // b = -2 * 20 * 20 * Math.cos(radian) * xVectorOA
-    // c = 20^2 * 20^2 * Math.cos(radian)^2 - 20^2 * yVectorOA^2
-
-    // delta = b^2 - 4 * a * c
-
-    // xVectorOB = (-b + Math.sqrt(delta)) / (2 * a)
-    // yVectorOB = (20 * 20 * Math.cos(radian) - xVectorOA * xVectorOB) / yVectorOA;
-
-    // xB = xO + xVectorOB;
-    // yB = yO + yVectorOB;
-
-    const finalRadian = radian - Math.floor(radian / (Math.PI * 2)) * Math.PI * 2;
-
-    const a = yVectorOA ** 2 + xVectorOA ** 2;
-    const b = -2 * radius * radius * Math.cos(finalRadian) * xVectorOA;
-    const c = radius ** 2 * radius ** 2 * Math.cos(finalRadian) ** 2 - radius ** 2 * yVectorOA ** 2;
-
-    const delta = b ** 2 - 4 * a * c;
-
-    let modifierDelta = -1;
-    if (finalRadian < Math.PI) modifierDelta = 1;
-
-    const xVectorOB = (-b + modifierDelta * Math.sqrt(delta)) / (2 * a);
-    const yVectorOB = (radius * radius * Math.cos(finalRadian) - xVectorOA * xVectorOB) / yVectorOA;
-
-    const xB = xO + xVectorOB;
-    const yB = yO + yVectorOB;
-
-    return [xB, yB];
+    saveProjectPanorama();
   }
 }

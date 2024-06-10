@@ -1,5 +1,9 @@
 @import './base.scss';
 
+body {
+  overflow: hidden;
+}
+
 #toast-container {
   position: fixed;
   top: 32px;

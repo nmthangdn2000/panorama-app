@@ -36,7 +36,7 @@ export class DebuggerPanorama {
 
     this.newHotSpot = new NewHotSpot(viewer, panorama, getCurrentPanorama, setMarkers, setAnimationToBtnArrow);
     this.originalPerspective = new OriginalPerspective(viewer, panorama, getCurrentPanorama);
-    this.mapLocation = new MapLocation(viewer);
+    this.mapLocation = new MapLocation(viewer, panorama);
 
     this.toggleDebugMode();
     this.openAndCloseDebugModeWithKey();

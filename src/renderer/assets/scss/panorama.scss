@@ -5,6 +5,14 @@
   right: 0;
   bottom: 0;
 
+  #minimap {
+    position: fixed;
+    top: 16px;
+    left: 16px;
+    max-width: 390px;
+    z-index: 10;
+  }
+
   .psv-navbar,
   .psv-loader-container {
     display: none;

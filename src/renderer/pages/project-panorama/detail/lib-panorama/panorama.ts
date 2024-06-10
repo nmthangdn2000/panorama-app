@@ -11,6 +11,8 @@ import '../../../../assets/scss/panorama.scss';
 import '@photo-sphere-viewer/core/index.css';
 import '@photo-sphere-viewer/markers-plugin/index.css';
 import { btnHotSpot } from './toolbar/new-hotspot/html';
+import { markerMiniMapLocationHTML, miniMapHTML } from './html.panorama';
+import { calculateEndPosition } from './util';
 
 export const CURRENT_TIME_MS = '1710909225459';
 
@@ -254,6 +256,8 @@ export class Panorama implements PanoramaType {
     });
 
     this.__setMarkers(panorama);
+
+    this.renderMiniMap(panorama);
   }
 
   private async __handleChangePanorama(textureData: any, panorama: PanoramaDataType, cb?: () => void, isRotate: boolean = true, changeTexture?: boolean) {
@@ -283,6 +287,7 @@ export class Panorama implements PanoramaType {
             transition: false,
           });
 
+          this.renderMiniMap(panorama);
           this.__setMarkers(panorama);
 
           if (panorama && isRotate) this.viewer.rotate(panorama.cameraPosition);
@@ -392,5 +397,69 @@ export class Panorama implements PanoramaType {
       this.swapPanorama(id, markerId);
       this._events.onMarkerClick(id, markerId);
     };
+  }
+
+  private renderMiniMap(panorama: PanoramaDataType) {
+    if (!panorama.minimap || !panorama.minimap.src) return;
+
+    let miniMap = document.getElementById('minimap');
+
+    if (!miniMap) {
+      miniMap = document.createElement('div');
+      miniMap.id = 'minimap';
+      miniMap.innerHTML = miniMapHTML(panorama.minimap.src);
+      this.viewer.container.appendChild(miniMap);
+    }
+
+    const imageMap = miniMap.querySelector('img')!;
+
+    if (imageMap.src !== panorama.minimap.src) {
+      imageMap.src = panorama.minimap.src;
+    }
+
+    const panoramasMiniMap = this._panoramas.filter((pano) => pano.minimap && pano.minimap.src);
+
+    miniMap.querySelectorAll('.marker-location-mini-map').forEach((element) => element.remove());
+
+    panoramasMiniMap.forEach((pano) => {
+      const divMarker = document.createElement('div');
+      divMarker.classList.add('absolute');
+      divMarker.classList.add('marker-location-mini-map');
+      divMarker.style.left = `${pano.minimap!.position.x}%`;
+      divMarker.style.top = `${pano.minimap!.position.y}%`;
+      divMarker.style.transform = 'translate(-50%, -50%)';
+      divMarker.innerHTML = markerMiniMapLocationHTML(panorama.image === pano.image);
+      miniMap.firstElementChild!.appendChild(divMarker);
+
+      if (panorama.image !== pano.image) {
+        divMarker.querySelector('#point_marker_location_mini_map')!.addEventListener('click', () => {
+          this.setPanorama(pano.image);
+        });
+        return;
+      }
+
+      const xStart = 40;
+      const yStart = 2;
+      const radius = 38;
+
+      const path = divMarker.querySelector('path');
+      const previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
+
+      const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian, radius);
+      const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian + 130 * (Math.PI / 180), radius);
+
+      const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
+
+      path?.setAttribute('d', d);
+
+      this.viewer.addEventListener('position-updated', ({ position }) => {
+        const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian + position.yaw - pano.cameraPosition.yaw, radius);
+        const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian + position.yaw - pano.cameraPosition.yaw + 130 * (Math.PI / 180), radius);
+
+        const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
+
+        path?.setAttribute('d', d);
+      });
+    });
   }
 }

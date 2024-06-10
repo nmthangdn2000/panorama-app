@@ -129,6 +129,15 @@ export type PanoramaDataType = {
     pitch: number;
     fov?: number;
   };
+  minimap?: {
+    src: string;
+    position: {
+      x: number;
+      y: number;
+    };
+    radian: number;
+    d: string;
+  };
   description: string;
   image: string;
   thumbnail: string;

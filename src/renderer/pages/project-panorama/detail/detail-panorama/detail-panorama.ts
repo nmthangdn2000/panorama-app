@@ -2,6 +2,7 @@ import { nanoid } from 'nanoid';
 import { PanoramaDataType } from '../lib-panorama/panorama.type';
 import { destroyViewerPanorama } from '../preview-panorama/preview-panorama';
 import { itemImagePanorama } from './html';
+import { debounce } from '../../../../common/util';
 
 const btnRemoveAllPanorama = document.getElementById('btn_remove_all_panorama')! as HTMLButtonElement;
 const imagePanoramaContainer = document.getElementById('image_panorama_container')! as HTMLDivElement;
@@ -234,18 +235,20 @@ const initSortableList = (e: DragEvent) => {
  * @returns {Promise<void>}
  */
 export const saveProjectPanorama = () => {
-  const url = new URL(window.location.href);
-  const name = url.searchParams.get('name');
+  debounce(() => {
+    const url = new URL(window.location.href);
+    const name = url.searchParams.get('name');
 
-  if (!name) {
+    if (!name) {
+      return;
+    }
+
+    window.api.projectPanorama.saveProject(name, {
+      panoramas: window.panoramas,
+    });
+
     return;
-  }
-
-  window.api.projectPanorama.saveProject(name, {
-    panoramas: window.panoramas,
-  });
-
-  return;
+  }, 1000);
 };
 
 export default () => {

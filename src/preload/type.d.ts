@@ -25,5 +25,7 @@ declare global {
     onCancelDeleteProject: () => void;
     removeMarkerLocationHTML: (element: HTMLElement) => void;
     clickMarkerLocation: (element: HTMLElement) => void;
+    onClickItemMapMini: (src: string) => void;
+    removeItemMiniMap: (element: Element, src: string) => void;
   }
 }
