@@ -28,6 +28,7 @@ export class DebuggerPanorama {
     getCurrentPanorama: () => PanoramaDataType | undefined,
     setMarkers: (panorama: PanoramaDataType) => void,
     setAnimationToBtnArrow: () => void,
+    setPanorama: (panoramaUrl: string) => void,
   ) {
     this.viewer = viewer;
     this.debugMode = debugMode;
@@ -36,7 +37,7 @@ export class DebuggerPanorama {
 
     this.newHotSpot = new NewHotSpot(viewer, panorama, getCurrentPanorama, setMarkers, setAnimationToBtnArrow);
     this.originalPerspective = new OriginalPerspective(viewer, panorama, getCurrentPanorama);
-    this.mapLocation = new MapLocation(viewer, panorama);
+    this.mapLocation = new MapLocation(viewer, panorama, setPanorama, getCurrentPanorama);
 
     this.toggleDebugMode();
     this.openAndCloseDebugModeWithKey();

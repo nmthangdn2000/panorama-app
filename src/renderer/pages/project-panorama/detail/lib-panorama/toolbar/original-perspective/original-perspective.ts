@@ -77,6 +77,8 @@ export class OriginalPerspective implements ToolbarDebugHTML {
       this.viewer.addEventListener(
         'render',
         async () => {
+          console.log('render');
+
           const currentPanorama = this.getCurrentPanorama();
 
           if (!currentPanorama) return;
@@ -98,8 +100,6 @@ export class OriginalPerspective implements ToolbarDebugHTML {
               reader.readAsDataURL(blob);
             });
           });
-
-          console.log('save panorama', this.panoramas[index]);
 
           // opacity 1 to 0.5 to 1
           this.viewer.container.style.transition = 'opacity 0.3s ease-in-out';

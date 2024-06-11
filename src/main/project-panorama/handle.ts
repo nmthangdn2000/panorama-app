@@ -10,10 +10,12 @@ import { getSetting } from '../setting/handle';
 import Jimp from 'jimp';
 import { is } from '@electron-toolkit/utils';
 import { isBase64Image } from '../utils/util';
+import { Worker } from 'worker_threads';
 
 let CHILD: ChildProcessWithoutNullStreams | undefined;
+const regexPath = /[\/\\]/;
 
-const checkPathProject = async () => {
+export const checkPathProject = async () => {
   const setting = await getSetting();
 
   if (!setting || !setting.projectFolderPath) {
@@ -293,6 +295,13 @@ const zipDirectory = (sourceDir: string, outPath: string) => {
 
 export const saveProject = async (name: string, project: RenderProject, isRender?: boolean) => {
   const path = await checkPathProject();
+
+  if (!isRender) {
+    const workerSaveProject = new Worker(`${__dirname}/worker.js`, {});
+    workerSaveProject.postMessage({ path, name, project });
+    return;
+  }
+
   const pathProject = join(path, name);
 
   if (!existsSync(join(pathProject, 'panoramas'))) {
@@ -307,9 +316,14 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     mkdirSync(join(pathProject, 'thumbnails'), { recursive: true });
   }
 
-  if (!existsSync(join(pathProject, 'mini-map'))) {
-    mkdirSync(join(pathProject, 'mini-map'), { recursive: true });
+  if (!existsSync(join(pathProject, 'minimap'))) {
+    mkdirSync(join(pathProject, 'minimap'), { recursive: true });
   }
+
+  const listMinimap: {
+    path: string;
+    name: string;
+  }[] = [];
 
   const newPanoramas = await Promise.all(
     project.panoramas.map(async (panorama) => {
@@ -320,8 +334,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
         let imagePanorama = panorama.image;
 
-        const regex = /[\/\\]/;
-        if (regex.test(imagePanorama)) {
+        if (regexPath.test(imagePanorama)) {
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {
@@ -353,6 +366,19 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         }
       }
 
+      if (panorama.minimap && panorama.minimap.src) {
+        const isExist = listMinimap.find((m) => m.path === panorama.minimap?.src);
+        if (!isExist && regexPath.test(panorama.minimap.src)) {
+          const name = panorama.minimap.src.split(/[\\/]/).pop()!.split('.')[0];
+          listMinimap.push({
+            path: panorama.minimap.src,
+            name: `${name}.jpg`,
+          });
+
+          panorama.minimap.src = `${name}.jpg`;
+        }
+      }
+
       if (isBase64Image(panorama.thumbnail)) {
         const base64Data = panorama.thumbnail.replace(/^data:image\/\w+;base64,/, '');
         const bufferThumbnail = Buffer.from(base64Data, 'base64');
@@ -374,10 +400,20 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     }),
   );
 
+  await Promise.all(
+    listMinimap.map(async (minimap) => {
+      const pathMiniMap = join(pathProject, 'minimap', minimap.name);
+      const bufferMiniMap = readFileSync(minimap.path.substring(7));
+
+      await (await Jimp.read(bufferMiniMap)).resize(400, Jimp.AUTO).writeAsync(pathMiniMap);
+    }),
+  );
+
   writeFileSync(join(pathProject, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
 
   // remove panorama
   const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
+  console.log('currentPanoramas', currentPanoramas);
 
   currentPanoramas.forEach((cp) => {
     const fileNames = cp.split('.jpg')[0];
@@ -385,15 +421,39 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
     if (!isExist) {
       rmSync(join(path, name, 'panoramas', cp));
-      if (isRender) {
-        if (existsSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`))) {
-          rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
-        }
+      console.log('remove panorama', fileNames, isRender);
 
-        if (existsSync(join(path, name, 'cube', fileNames))) {
-          rmSync(join(path, name, 'cube', fileNames), { recursive: true });
-        }
+      if (existsSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`))) {
+        rmSync(join(path, name, 'panoramas-low', `${fileNames}-low.jpg`));
       }
+
+      console.log('remove cube', fileNames, existsSync(join(path, name, 'cube', fileNames)));
+
+      if (existsSync(join(path, name, 'cube', fileNames))) {
+        rmSync(join(path, name, 'cube', fileNames), { recursive: true });
+      }
+    }
+  });
+
+  const currentThumbnails = readdirSync(join(path, name, 'thumbnails'));
+
+  currentThumbnails.forEach((ct) => {
+    const isExist = project.panoramas.find((p) => p.thumbnail === ct);
+
+    if (!isExist) {
+      rmSync(join(path, name, 'thumbnails', ct));
+    }
+  });
+
+  const currentMinimap = readdirSync(join(path, name, 'minimap'));
+
+  currentMinimap.forEach((cm) => {
+    const isExist = project.panoramas.find((p) => {
+      return p.minimap && p.minimap.src && p.minimap.src === cm;
+    });
+
+    if (!isExist) {
+      rmSync(join(path, name, 'minimap', cm));
     }
   });
 

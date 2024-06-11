@@ -16,6 +16,8 @@ import { calculateEndPosition } from './util';
 
 export const CURRENT_TIME_MS = '1710909225459';
 
+const regexPath = /[\/\\]/;
+
 export class Panorama implements PanoramaType {
   public viewer: Viewer;
   private _events: EventListenerType;
@@ -69,6 +71,7 @@ export class Panorama implements PanoramaType {
       this.getCurrentPanorama.bind(this),
       this.__setMarkers.bind(this),
       this.__setAnimationToBtnArrow.bind(this),
+      this.setPanorama.bind(this),
     );
   }
 
@@ -315,8 +318,7 @@ export class Panorama implements PanoramaType {
   }
 
   private __formatPanoramaPath(panorama: string) {
-    const regex = /[\/\\]/;
-    if (regex.test(panorama)) return panorama;
+    if (regexPath.test(panorama)) return panorama;
 
     const path = `${window.pathProject}/panoramas/${panorama}`;
 
@@ -349,7 +351,7 @@ export class Panorama implements PanoramaType {
   getCurrentPanorama(): PanoramaDataType | undefined {
     if (!this.viewer.config.panorama) return;
 
-    return this._panoramas.find((panorama) => panorama.image === this.viewer.config.panorama.split('/').pop());
+    return this._panoramas.find((panorama) => panorama.image.split('/').pop() === this.viewer.config.panorama.split('/').pop());
   }
 
   private async __preloadBtnArrowAnimation() {
@@ -414,7 +416,8 @@ export class Panorama implements PanoramaType {
     const imageMap = miniMap.querySelector('img')!;
 
     if (imageMap.src !== panorama.minimap.src) {
-      imageMap.src = panorama.minimap.src;
+      if (regexPath.test(panorama.minimap.src)) imageMap.src = panorama.minimap.src;
+      else imageMap.src = `${window.pathProject}/minimap/${panorama.minimap.src}`;
     }
 
     const panoramasMiniMap = this._panoramas.filter((pano) => pano.minimap && pano.minimap.src);

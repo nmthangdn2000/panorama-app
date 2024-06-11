@@ -1,6 +1,6 @@
-export const debounce = (func: () => void, delay: number) => {
-  let timeoutId: ReturnType<typeof setTimeout> | undefined;
+let timeoutId: ReturnType<typeof setTimeout> | undefined;
 
+export const debounce = (func: () => void, delay: number) => {
   if (timeoutId) {
     clearTimeout(timeoutId);
   }

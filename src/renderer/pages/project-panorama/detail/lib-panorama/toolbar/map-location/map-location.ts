@@ -11,23 +11,33 @@ import 'swiper/css';
 import { saveProjectPanorama } from '../../../detail-panorama/detail-panorama';
 import { calculateEndPosition } from '../../util';
 
+const regexPath = /[\/\\]/;
+
 export class MapLocation implements ToolbarDebugHTML {
   private viewer: Viewer;
   private modalMapLocation: Modal | null = null;
   private modalSelectPanoramaWithMap: Modal | null = null;
   private panoramas: PanoramaDataType[];
+  private setPanorama: (panoramaUrl: string) => void;
+  private getCurrentPanorama: () => PanoramaDataType | undefined;
 
   private miniMaps: string[] = [];
 
-  constructor(viewer: Viewer, panorama: PanoramaDataType[]) {
+  constructor(viewer: Viewer, panorama: PanoramaDataType[], setPanorama: (panoramaUrl: string) => void, getCurrentPanorama: () => PanoramaDataType | undefined) {
     this.viewer = viewer;
     this.panoramas = panorama;
+    this.setPanorama = setPanorama;
+    this.getCurrentPanorama = getCurrentPanorama;
 
     this.panoramas.forEach((panorama) => {
       if (panorama.minimap && panorama.minimap.src) {
-        const isExist = this.miniMaps.find((src) => src === panorama.minimap?.src);
+        const isExist = this.miniMaps.find((src) => src.split('/').pop() === panorama.minimap?.src);
+
         if (!isExist) {
-          this.miniMaps.push(panorama.minimap.src);
+          let src = '';
+          if (regexPath.test(panorama.minimap.src)) src = panorama.minimap.src;
+          else src = `${window.pathProject}/minimap/${panorama.minimap.src}`;
+          this.miniMaps.push(src);
         }
       }
     });
@@ -55,6 +65,11 @@ export class MapLocation implements ToolbarDebugHTML {
     const btnAddHotSpot = document.getElementById('btn_map_location')!;
     btnAddHotSpot.classList.remove('active');
     this.viewer.setCursor('all-scroll');
+    const currentPanorama = this.getCurrentPanorama();
+
+    if (currentPanorama) {
+      this.setPanorama(currentPanorama.image);
+    }
   }
 
   destroy() {
@@ -170,7 +185,7 @@ export class MapLocation implements ToolbarDebugHTML {
 
     window.removeItemMiniMap = (element: Element, src: string) => {
       this.panoramas.forEach((panorama) => {
-        if (panorama.minimap && panorama.minimap.src === src) {
+        if (panorama.minimap && panorama.minimap.src.split('/').pop() === (regexPath.test(src) ? src.split('/').pop() : src)) {
           delete panorama.minimap;
         }
       });
@@ -191,6 +206,8 @@ export class MapLocation implements ToolbarDebugHTML {
 
         if (mySwiper.slides.length > 0) mySwiper.slides[0].classList.add('swiper-slide-active');
       }
+
+      saveProjectPanorama();
     };
 
     window.onClickItemMapMini = (src: string) => {
@@ -235,7 +252,7 @@ export class MapLocation implements ToolbarDebugHTML {
 
     if (!image.src) return;
 
-    const panoramasMiniMap = this.panoramas.filter((panorama) => panorama.minimap && panorama.minimap.src === image.src);
+    const panoramasMiniMap = this.panoramas.filter((panorama) => panorama.minimap && panorama.minimap.src === image.src.split('/').pop());
 
     panoramasMiniMap.forEach((panorama) => {
       if (!panorama.minimap) return;
