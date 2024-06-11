@@ -389,6 +389,8 @@ export const saveProject = async (name: string, project: RenderProject, isRender
           .resize(300, Jimp.AUTO)
           .quality(80)
           .writeAsync(join(pathProject, 'thumbnails', `${panorama.title}.jpg`));
+
+        panorama.thumbnail = `${panorama.title}.jpg`;
       }
 
       delete panorama.isNew;
