@@ -61,7 +61,7 @@ export const bodyMapMiniHTML = () => {
         </div>
       </div>
    </div>
-  <div class="mt-4 max-w-[80%] flex-1 flex justify-center items-center rounded-lgw-full" id="image_map_location_container">
+  <div class="mt-4 max-w-[80%] w-full flex-1 flex justify-center items-center rounded-lgw-full" id="image_map_location_container">
       <div class="relative">
         <img class="h-auto max-w-full rounded-lg" src="" alt=""  draggable="false">
       </div>
