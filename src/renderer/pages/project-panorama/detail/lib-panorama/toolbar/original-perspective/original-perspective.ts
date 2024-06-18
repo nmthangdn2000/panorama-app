@@ -21,6 +21,16 @@ export class OriginalPerspective implements ToolbarDebugHTML {
   initialize() {
     this.createToolbarOriginalPerspective();
     this.handleBtnOriginalPerspective();
+
+    document.addEventListener('keydown', (e) => {
+      // press "v" to active add hot spot
+      if (e.key.toLowerCase() === 'v') {
+        if (this.isOriginalPerspective) {
+          return this.inactive();
+        }
+        return this.active();
+      }
+    });
   }
 
   active() {

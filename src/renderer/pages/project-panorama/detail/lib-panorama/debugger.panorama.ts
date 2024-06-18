@@ -56,6 +56,13 @@ export class DebuggerPanorama {
 
         this.toggleDebugMode();
       }
+
+      // keystrokes to close debug mode (esc)
+      if (e.key.toLowerCase() === 'escape') {
+        this.newHotSpot?.inactive();
+        this.originalPerspective?.inactive();
+        this.mapLocation?.inactive();
+      }
     });
   }
 

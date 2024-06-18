@@ -34,6 +34,16 @@ export class NewHotSpot implements ToolbarDebugHTML {
     this.createToolbarAddHotSpot();
     this.viewer.addEventListener('click', this.functionClick);
     this.handleBtnAddHotSpot();
+
+    document.addEventListener('keydown', (e) => {
+      // press "v" to active add hot spot
+      if (e.key.toLowerCase() === 'h') {
+        if (this.isAddHotSpot) {
+          return this.inactive();
+        }
+        return this.active();
+      }
+    });
   }
 
   active() {

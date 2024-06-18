@@ -46,6 +46,16 @@ export class MapLocation implements ToolbarDebugHTML {
   initialize() {
     this.createToolbarMap();
     this.handleClickBtnMap();
+
+    document.addEventListener('keydown', (e) => {
+      // press "v" to active add hot spot
+      if (e.key.toLowerCase() === 'm') {
+        if (this.modalMapLocation?.isVisible()) {
+          return this.inactive();
+        }
+        return this.active();
+      }
+    });
   }
 
   active() {
