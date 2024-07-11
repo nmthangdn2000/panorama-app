@@ -178,7 +178,7 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
 
 export const renderProject = async (name: string, size: number, renderData: RenderProject) => {
   try {
-    await cancelProgress();
+    cancelProgress();
 
     const { panoramas } = renderData;
 
