@@ -13,6 +13,10 @@ A minimal Electron application with TypeScript
 
 ## Project Setup
 
+### Requirements
+
+- [ImageMagick](https://imagemagick.org/index.php)
+
 ### Install
 
 ```bash
