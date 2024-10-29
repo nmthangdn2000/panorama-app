@@ -28,4 +28,7 @@ declare global {
     onClickItemMapMini: (src: string) => void;
     removeItemMiniMap: (element: Element, src: string) => void;
   }
+  interface HTMLElementEventMap {
+    'panorama-changed': CustomEvent<{ panorama: PanoramaDataType; action: 'change-texture' | 'change-panorama' }>;
+  }
 }

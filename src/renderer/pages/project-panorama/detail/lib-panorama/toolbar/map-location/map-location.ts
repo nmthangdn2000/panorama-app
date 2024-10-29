@@ -173,7 +173,7 @@ export class MapLocation implements ToolbarDebugHTML {
 
     const imageMapLocationContainer = document.getElementById('image_map_location_container')!;
 
-    const mySwiper = new Swiper('.swiper', {
+    const mySwiper = new Swiper('.map_swiper', {
       spaceBetween: 40,
       slidesPerView: 3,
       modules: [Manipulation],

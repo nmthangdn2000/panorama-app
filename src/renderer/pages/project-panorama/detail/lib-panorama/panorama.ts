@@ -261,6 +261,8 @@ export class Panorama implements PanoramaType {
     this.__setMarkers(panorama);
 
     this.renderMiniMap(panorama);
+
+    this.__dispatchPanoramaChange(panorama);
   }
 
   private async __handleChangePanorama(textureData: any, panorama: PanoramaDataType, cb?: () => void, isRotate: boolean = true, changeTexture?: boolean) {
@@ -303,6 +305,8 @@ export class Panorama implements PanoramaType {
             imgElement.style.transform = 'scale(1.5)';
           }
 
+          this.__dispatchPanoramaChange(panorama, changeTexture ? 'change-texture' : 'change-panorama');
+
           setTimeout(() => {
             imgElement.remove();
           }, 2000);
@@ -315,6 +319,16 @@ export class Panorama implements PanoramaType {
       'image/jpeg',
       0.5,
     );
+  }
+
+  private __dispatchPanoramaChange(panorama: PanoramaDataType, action: 'change-texture' | 'change-panorama' = 'change-panorama') {
+    const customEvent = new CustomEvent<HTMLElementEventMap['panorama-changed']['detail']>('panorama-changed', {
+      detail: {
+        panorama,
+        action: action,
+      },
+    });
+    this.viewer.container.dispatchEvent(customEvent);
   }
 
   private __formatPanoramaPath(panorama: string) {

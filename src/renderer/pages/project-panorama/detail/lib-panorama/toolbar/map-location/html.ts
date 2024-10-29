@@ -42,7 +42,7 @@ export const bodyMapMiniHTML = () => {
   return `
 <div class="flex flex-col h-full w-full items-center">
    <div class="flex gap-4 w-full">
-      <div class="swiper w-full max-h-[232px] flex-1 p-4">
+      <div class="swiper map_swiper w-full max-h-[232px] flex-1 p-4">
         <div class="swiper-wrapper">
         </div>
       </div>
