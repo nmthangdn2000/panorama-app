@@ -23,8 +23,13 @@ const preload = async () => {
     return;
   }
 
-  window.panoramas = project.panoramas || [];
+  // Use only new structure (locations)
+  window.locations = project.locations || [];
   window.pathProject = project.pathFolder;
+
+  console.log('Loaded project:', name);
+  console.log('Locations count:', window.locations?.length || 0);
+  console.log('Locations data:', window.locations);
 
   renderListImage();
 };

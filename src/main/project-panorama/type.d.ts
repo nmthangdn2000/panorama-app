@@ -23,6 +23,7 @@ export type ProjectPanorama = {
   avatar: string;
   description?: string;
   panoramas?: PanoramaDataType[];
+  locations?: PanoramaLocationType[];
   panoramasImport?: PanoramaDataType[];
   imagesQuality?: string[];
   imagesLow?: string[];
@@ -31,5 +32,6 @@ export type ProjectPanorama = {
 };
 
 export type RenderProject = {
-  panoramas: PanoramaDataType[];
+  panoramas?: PanoramaDataType[];
+  locations?: PanoramaLocationType[];
 };

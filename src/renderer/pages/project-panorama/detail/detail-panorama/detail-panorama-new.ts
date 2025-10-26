@@ -14,12 +14,15 @@ const openDialogSelectImages = () => {
 
     if (!folderPath) return;
 
-    // Create separate location for each image
+    // Always use new location structure - create one location with multiple options
     console.log('Adding images:', folderPath.length, 'images');
 
     if (!window.locations) window.locations = [];
 
-    folderPath.forEach((path) => {
+    // Create options for all selected images
+    const newOptions: PanoramaOptionType[] = [];
+
+    folderPath.forEach((path, index) => {
       const lastDotIndex = path.name.lastIndexOf('.');
 
       const newPanorama: PanoramaDataType = {
@@ -38,23 +41,26 @@ const openDialogSelectImages = () => {
 
       const newOption: PanoramaOptionType = {
         id: nanoid(),
-        name: `Option 1`,
+        name: `Option ${index + 1}`,
         panorama: newPanorama,
       };
 
-      // Create separate location for each image
-      const newLocation: PanoramaLocationType = {
-        id: nanoid(),
-        name: `Location ${window.locations.length + 1}`,
-        description: `Location with ${path.name}`,
-        defaultOption: newOption.id,
-        pointPosition: { bottom: '50%', left: '50%' },
-        options: [newOption],
-      };
-
-      window.locations.push(newLocation);
-      console.log(`Added location:`, newLocation.name, 'with 1 option. Total locations:', window.locations.length);
+      newOptions.push(newOption);
+      console.log(`Created option ${index + 1}:`, newOption.name);
     });
+
+    // Create one location with all options
+    const newLocation: PanoramaLocationType = {
+      id: nanoid(),
+      name: `Location ${window.locations.length + 1}`,
+      description: `Location with ${newOptions.length} panorama options`,
+      defaultOption: newOptions[0].id,
+      pointPosition: { bottom: '50%', left: '50%' },
+      options: newOptions,
+    };
+
+    window.locations.push(newLocation);
+    console.log(`Added location:`, newLocation.name, 'with', newOptions.length, 'options. Total locations:', window.locations.length);
 
     renderListImage();
   });
@@ -115,9 +121,6 @@ const renderEmptyView = () => {
 const setupLocationEventHandlers = () => {
   // Update button states
   updateButtonStates();
-
-  // Setup drag and drop for locations
-  handleDragAndDropItem();
 
   destroyViewerPanorama();
   saveProjectPanorama();
@@ -221,40 +224,26 @@ window.onRemoveOption = (locationId: string, optionId: string) => {
     location.defaultOption = location.options[0].id;
   }
 
-  // Rename and reorder options in ascending order
-  location.options.forEach((option, index) => {
-    option.name = `Option ${index + 1}`;
-  });
-
   renderListImage();
 };
 
-window.onAddOption = async (locationId: string) => {
+window.onAddOption = (locationId: string) => {
   if (!window.locations) return;
 
   const location = window.locations.find((loc) => loc.id === locationId);
   if (!location) return;
 
-  // Open file dialog to select image
-  const folderPath = await window.api.projectPanorama.selectImages();
-
-  if (!folderPath || folderPath.length === 0) return;
-
-  // Use the first selected image
-  const path = folderPath[0];
-  const lastDotIndex = path.name.lastIndexOf('.');
-
+  // Create a new option with a default panorama
   const newPanorama: PanoramaDataType = {
     id: nanoid(),
-    title: path.name.substring(0, lastDotIndex),
+    title: `New Option ${location.options.length + 1}`,
     pointPosition: { bottom: '50%', left: '50%' },
     cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
-    subtitle: path.name,
-    description: `This is the ${path.name} panorama`,
-    image: `file://${path.path}`,
+    subtitle: 'New Option',
+    description: 'This is a new panorama option',
+    image: '1.png', // Default image
     thumbnail: '1.png',
     markers: [],
-    metadata: path.metadata,
     isNew: true,
   };
 
@@ -291,7 +280,7 @@ window.onEditLocationName = (locationId: string) => {
   }
 };
 
-window.onEditPanoramaTitle = (locationId: string, optionId: string) => {
+window.onEditPanoramaTitle = (locationId: string, optionId: string, panoramaId: string) => {
   if (!window.locations) return;
 
   const location = window.locations.find((loc) => loc.id === locationId);
@@ -314,56 +303,36 @@ btnRemoveAllPanorama.addEventListener('click', () => {
 });
 
 const handleDragAndDropItem = () => {
-  const items = document.querySelectorAll('.location_panorama') as NodeListOf<HTMLElement>;
+  const items = document.querySelectorAll('.item_location') as NodeListOf<HTMLElement>;
 
   items.forEach((item) => {
-    // Make the entire card not draggable by default
-    item.draggable = false;
-    item.style.cursor = 'default';
+    item.draggable = true;
 
-    // Find the drag handle within this item
-    const dragHandle = item.querySelector('.drag-handle') as HTMLElement;
-    if (dragHandle) {
-      // Make only the drag handle draggable
-      dragHandle.draggable = true;
-      dragHandle.style.cursor = 'grab';
+    item.addEventListener('dragstart', () => {
+      item.classList.add('dragging');
+    });
 
-      dragHandle.addEventListener('dragstart', (e) => {
-        // Set the entire card as the dragged element
-        item.draggable = true;
-        item.classList.add('dragging');
-        item.style.cursor = 'grabbing';
-        item.style.opacity = '0.5';
+    item.addEventListener('dragend', () => {
+      item.classList.remove('dragging');
 
-        // Set the drag data to the card
-        e.dataTransfer?.setData('text/plain', item.getAttribute('data-location-id') || '');
+      // update locations order
+      const items = document.querySelectorAll('.item_location');
+
+      const newLocations: PanoramaLocationType[] = [];
+      items.forEach((item) => {
+        const id = item.getAttribute('data-location-id')!;
+        const location = window.locations?.find((location) => location.id === id);
+        if (location) {
+          newLocations.push(location);
+        }
       });
 
-      dragHandle.addEventListener('dragend', () => {
-        item.draggable = false;
-        item.classList.remove('dragging');
-        item.style.cursor = 'default';
-        item.style.opacity = '1';
+      if (!window.locations) window.locations = [];
+      window.locations = newLocations;
 
-        // update locations order
-        const items = document.querySelectorAll('.location_panorama');
-
-        const newLocations: PanoramaLocationType[] = [];
-        items.forEach((item) => {
-          const id = item.getAttribute('data-location-id')!;
-          const location = window.locations?.find((location) => location.id === id);
-          if (location) {
-            newLocations.push(location);
-          }
-        });
-
-        if (!window.locations) window.locations = [];
-        window.locations = newLocations;
-
-        destroyViewerPanorama();
-        saveProjectPanorama();
-      });
-    }
+      destroyViewerPanorama();
+      saveProjectPanorama();
+    });
   });
 
   imagePanoramaContainer.addEventListener('dragover', initSortableList);
@@ -373,7 +342,7 @@ const handleDragAndDropItem = () => {
 const initSortableList = (e: DragEvent) => {
   e.preventDefault();
   const draggingItem = document.querySelector('.dragging') as HTMLElement;
-  const siblings = [...imagePanoramaContainer.querySelectorAll('.location_panorama:not(.dragging)')];
+  const siblings = [...imagePanoramaContainer.querySelectorAll('.item_location:not(.dragging)')];
 
   let nextSibling = siblings.find((sibling) => {
     return e.clientY <= (sibling as HTMLElement).offsetTop + (sibling as HTMLElement).offsetHeight / 2;
@@ -386,7 +355,7 @@ const initSortableList = (e: DragEvent) => {
 /**
  * Save project panorama
  */
-export const saveProjectPanorama = debounce(() => {
+const saveProjectPanorama = debounce(() => {
   const url = new URL(window.location.href);
   const name = url.searchParams.get('name');
 
@@ -398,6 +367,8 @@ export const saveProjectPanorama = debounce(() => {
   window.api.projectPanorama.saveProject(name, {
     locations: window.locations,
   });
+
+  return;
 }, 1000);
 
 export default () => {

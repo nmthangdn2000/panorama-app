@@ -8,4 +8,10 @@ export const debounce = (func: () => void, delay: number) => {
   timeoutId = setTimeout(() => {
     func();
   }, delay);
+
+  return () => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  };
 };

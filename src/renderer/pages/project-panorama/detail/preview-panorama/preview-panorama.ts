@@ -1,6 +1,7 @@
 import { Modal } from 'flowbite';
 import { Panorama } from '../lib-panorama';
 import Swiper from 'swiper';
+import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 
 import 'swiper/css';
 import { EffectCards, Manipulation } from 'swiper/modules';
@@ -21,7 +22,10 @@ const onClickPreviewPanorama = () => {
 };
 
 const previewPanorama = () => {
-  if (window.panoramas.length === 0) return;
+  // Use only new structure (locations)
+  const panoramas = window.locations && window.locations.length > 0 ? convertLocationsToPanoramas(window.locations) : [];
+
+  if (panoramas.length === 0) return;
 
   if (window.viewerPanorama) {
     return;

@@ -109,7 +109,8 @@ export const markerLocationHTML = (isActive: boolean = true) => {
 };
 
 export const modalSelectPanoramaWithMapHTML = () => {
-  const panoramas = window.panoramas;
+  // Use only new structure (locations)
+  const panoramas = window.locations && window.locations.length > 0 ? window.locations.flatMap((location) => location.options.map((option) => option.panorama)) : [];
   return `<div id="modal_select_panorama_with_map" tabindex="-1" class="hidden overflow-hidden fixed top-0 right-0 left-0 z-[51] justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full">
     <div class="relative p-4 w-full max-w-md max-h-full">
         <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">

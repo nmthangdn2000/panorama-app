@@ -249,4 +249,36 @@
   pointer-events: none;
 }
 
+/* Drag and Drop Styles */
+.location_panorama {
+  transition: all 0.3s ease-in-out;
+  user-select: none;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+
+  &.dragging {
+    opacity: 0.5;
+    transform: rotate(5deg) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    z-index: 1000;
+  }
+
+  .drag-handle {
+    cursor: grab !important;
+    transition: all 0.2s ease-in-out;
+
+    &:hover {
+      color: #6b7280 !important;
+      transform: scale(1.1);
+    }
+
+    &:active {
+      cursor: grabbing !important;
+    }
+  }
+}
+
 /*  */

@@ -34,16 +34,23 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
     name: string;
   }[] = [];
 
+  // Get all panoramas from locations if available, otherwise use panoramas
+  const allPanoramas =
+    project.locations && project.locations.length > 0 ? project.locations.flatMap((location) => location.options.map((option) => option.panorama)) : project.panoramas || [];
+
   const newPanoramas = await Promise.all(
-    project.panoramas.map(async (panorama) => {
+    allPanoramas.map(async (panorama) => {
+      // Always process image path to ensure only filename is saved
+      console.log('Processing panorama:', panorama.title, 'image:', panorama.image);
       let image = panorama.image;
 
-      if (panorama.isNew) {
-        const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
+      if (regexPath.test(panorama.image)) {
+        console.log('Image has path, converting to filename');
+        // If it's a file path, copy the file and use filename
+        if (panorama.isNew) {
+          console.log('Panorama is new, copying file');
+          const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
 
-        let imagePanorama = panorama.image;
-
-        if (regexPath.test(imagePanorama)) {
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {
@@ -56,23 +63,13 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
               .resize(2000, Jimp.AUTO)
               .quality(60)
               .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
-            // .toFormat('jpeg', {
-            //   quality: 40,
-            //   progressive: true,
-            //   force: true,
-            //   trellisQuantisation: true,
-            //   overshootDeringing: true,
-            //   optimizeScans: true,
-            //   optimizeCoding: true,
-            //   quantisationTable: 2,
-            //   chromaSubsampling: '4:4:4',
-            //   quantizationTable: 2,
-            // })
-            // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
           }
-
-          image = `${panorama.title}.jpg`;
         }
+        // Always use filename instead of full path
+        image = `${panorama.title}.jpg`;
+        console.log('Converted image to:', image);
+      } else {
+        console.log('Image already filename, keeping as is');
       }
 
       if (panorama.minimap && panorama.minimap.src) {
@@ -120,14 +117,20 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
     }),
   );
 
-  writeFileSync(join(pathProject, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+  // Save only locations (new structure)
+  if (project.locations && project.locations.length > 0) {
+    writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(project.locations, null, 2));
+  } else {
+    // Fallback: save panoramas.json for backward compatibility
+    writeFileSync(join(pathProject, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+  }
 
   // remove panorama
   const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
 
   currentPanoramas.forEach((cp) => {
     const fileNames = cp.split('.jpg')[0];
-    const isExist = project.panoramas.find((p) => p.title === fileNames);
+    const isExist = allPanoramas.find((p) => p.title === fileNames);
 
     if (!isExist) {
       rmSync(join(path, name, 'panoramas', cp));
@@ -144,7 +147,7 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
   const currentThumbnails = readdirSync(join(path, name, 'thumbnails'));
 
   currentThumbnails.forEach((ct) => {
-    const isExist = project.panoramas.find((p) => p.thumbnail === ct);
+    const isExist = allPanoramas.find((p) => p.thumbnail === ct);
 
     if (!isExist) {
       rmSync(join(path, name, 'thumbnails', ct));
@@ -154,7 +157,7 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
   const currentMinimap = readdirSync(join(path, name, 'minimap'));
 
   currentMinimap.forEach((cm) => {
-    const isExist = project.panoramas.find((p) => {
+    const isExist = allPanoramas.find((p) => {
       return p.minimap && p.minimap.src && p.minimap.src === cm;
     });
 

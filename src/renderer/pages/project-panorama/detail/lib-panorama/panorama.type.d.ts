@@ -150,6 +150,21 @@ export type PanoramaDataType = {
   isNew?: boolean;
 };
 
+export type PanoramaOptionType = {
+  id: string;
+  name: string;
+  panorama: PanoramaDataType;
+};
+
+export type PanoramaLocationType = {
+  id: string;
+  name: string;
+  description: string;
+  defaultOption: string;
+  pointPosition: { bottom: string; left: string };
+  options: PanoramaOptionType[];
+};
+
 export type ToolbarDebugHTML = {
   /**
    * Create button toolbar debug

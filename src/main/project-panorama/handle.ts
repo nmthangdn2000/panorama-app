@@ -130,8 +130,10 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
   const avatar = `file://${pathProject}/avatar.jpg`;
   const description = existsSync(join(pathProject, 'description.txt')) ? readFileSync(join(pathProject, 'description.txt'), 'utf-8') : '';
 
-  const panoramas = existsSync(join(pathProject, 'panoramas.json')) ? JSON.parse(readFileSync(join(pathProject, 'panoramas.json'), 'utf-8')) : [];
-  const panoramasImport = existsSync(join(pathProject, 'import-panoramas.json')) ? JSON.parse(readFileSync(join(pathProject, 'import-panoramas.json'), 'utf-8')) : [];
+  // Read only locations.json (new structure)
+  const locations = existsSync(join(pathProject, 'locations.json')) ? JSON.parse(readFileSync(join(pathProject, 'locations.json'), 'utf-8')) : [];
+  const panoramas: any[] = []; // Empty for compatibility
+  const panoramasImport: any[] = []; // Empty for compatibility
 
   const imagesQuality = existsSync(join(pathProject, 'panoramas')) ? readdirSync(join(pathProject, 'panoramas')) : [];
   const imagesLow = existsSync(join(pathProject, 'panoramas-low')) ? readdirSync(join(pathProject, 'panoramas-low')) : [];
@@ -142,6 +144,7 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
     name,
     avatar,
     description,
+    locations,
     panoramas,
     panoramasImport,
     imagesQuality,
@@ -180,9 +183,11 @@ export const renderProject = async (name: string, size: number, renderData: Rend
   try {
     cancelProgress();
 
-    const { panoramas } = renderData;
-
-    const totalProcess = panoramas.length + 1;
+    const { panoramas, locations } = renderData;
+    // Prioritize panoramas with calculated metadata from renderer
+    const allPanoramas =
+      panoramas && panoramas.length > 0 ? panoramas : locations && locations.length > 0 ? locations.flatMap((location) => location.options.map((option) => option.panorama)) : [];
+    const totalProcess = allPanoramas.length + 1;
     const tasks: string[] = [];
 
     const path = await checkPathProject();
@@ -325,16 +330,26 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     name: string;
   }[] = [];
 
-  const newPanoramas = await Promise.all(
-    project.panoramas.map(async (panorama) => {
-      let image = panorama.image;
+  // Prioritize panoramas with calculated metadata from renderer
+  const allPanoramas =
+    project.panoramas && project.panoramas.length > 0
+      ? project.panoramas
+      : project.locations && project.locations.length > 0
+        ? project.locations.flatMap((location) => location.options.map((option) => option.panorama))
+        : [];
 
-      if (panorama.isNew) {
-        const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
+  // Process images for all panoramas
+  await Promise.all(
+    allPanoramas.map(async (panorama) => {
+      // Always process image path to ensure only filename is saved
+      console.log('Processing panorama:', panorama.title, 'image:', panorama.image);
 
-        let imagePanorama = panorama.image;
-
-        if (regexPath.test(imagePanorama)) {
+      if (regexPath.test(panorama.image)) {
+        console.log('Image has path, converting to filename');
+        // If it's a file path, copy the file and use filename
+        if (panorama.isNew) {
+          console.log('Panorama is new, copying file');
+          const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {
@@ -347,23 +362,13 @@ export const saveProject = async (name: string, project: RenderProject, isRender
               .resize(2000, Jimp.AUTO)
               .quality(60)
               .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
-            // .toFormat('jpeg', {
-            //   quality: 40,
-            //   progressive: true,
-            //   force: true,
-            //   trellisQuantisation: true,
-            //   overshootDeringing: true,
-            //   optimizeScans: true,
-            //   optimizeCoding: true,
-            //   quantisationTable: 2,
-            //   chromaSubsampling: '4:4:4',
-            //   quantizationTable: 2,
-            // })
-            // .toFile(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
           }
-
-          image = `${panorama.title}.jpg`;
         }
+        // Always use filename instead of full path
+        panorama.image = `${panorama.title}.jpg`;
+        console.log('Converted image to:', panorama.image);
+      } else {
+        console.log('Image already filename, keeping as is');
       }
 
       if (panorama.minimap && panorama.minimap.src) {
@@ -394,11 +399,6 @@ export const saveProject = async (name: string, project: RenderProject, isRender
       }
 
       delete panorama.isNew;
-
-      return {
-        ...panorama,
-        image,
-      };
     }),
   );
 
@@ -411,7 +411,8 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     }),
   );
 
-  writeFileSync(join(pathProject, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
+  // Save only locations (new structure)
+  writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(project.locations, null, 2));
 
   // remove panorama
   const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
@@ -419,7 +420,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
   currentPanoramas.forEach((cp) => {
     const fileNames = cp.split('.jpg')[0];
-    const isExist = project.panoramas.find((p) => p.title === fileNames);
+    const isExist = allPanoramas.find((p) => p.title === fileNames);
 
     if (!isExist) {
       rmSync(join(path, name, 'panoramas', cp));
@@ -440,7 +441,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   const currentThumbnails = readdirSync(join(path, name, 'thumbnails'));
 
   currentThumbnails.forEach((ct) => {
-    const isExist = project.panoramas.find((p) => p.thumbnail === ct);
+    const isExist = allPanoramas.find((p) => p.thumbnail === ct);
 
     if (!isExist) {
       rmSync(join(path, name, 'thumbnails', ct));
@@ -450,7 +451,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   const currentMinimap = readdirSync(join(path, name, 'minimap'));
 
   currentMinimap.forEach((cm) => {
-    const isExist = project.panoramas.find((p) => {
+    const isExist = allPanoramas.find((p) => {
       return p.minimap && p.minimap.src && p.minimap.src === cm;
     });
 

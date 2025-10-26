@@ -1,5 +1,6 @@
 import { Modal } from 'flowbite';
 import { itemRadioTileSize } from './html';
+import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 
 let currentProgress = 0;
 let progressPercentage = 0;
@@ -31,7 +32,15 @@ const renderProject = () => {
   btnRenderPanorama.addEventListener('click', async () => {
     settingModalPanorama.show();
 
-    const widthPanorama = window.panoramas[0].metadata.width;
+    // Use only new structure (locations)
+    const panoramas = window.locations && window.locations.length > 0 ? convertLocationsToPanoramas(window.locations) : [];
+
+    if (panoramas.length === 0) {
+      console.error('No panoramas available for rendering');
+      return;
+    }
+
+    const widthPanorama = panoramas[0].metadata?.width;
 
     const faceSize = widthPanorama / 4;
     const tileSizes: number[] = [];
@@ -127,12 +136,38 @@ const handleRenderProject = async (size: number) => {
   const url = new URL(window.location.href);
   const name = url.searchParams.get('name');
 
+  if (!name) {
+    console.error('Project name is required');
+    return;
+  }
+
   setTimeout(() => {
     progressModal.show();
   }, 500);
 
-  const result = await window.api.projectPanorama.renderProject(name!, size, {
-    panoramas: window.panoramas,
+  // Use only new structure (locations)
+  const panoramas = window.locations && window.locations.length > 0 ? convertLocationsToPanoramas(window.locations) : [];
+
+  // Calculate faceSize and nbTiles for each panorama
+  const panoramasWithMetadata = panoramas.map((panorama) => {
+    if (panorama.metadata) {
+      const nbTiles = Math.floor(panorama.metadata.width / 4 / size);
+
+      return {
+        ...panorama,
+        metadata: {
+          ...panorama.metadata,
+          faceSize: Number(size),
+          nbTiles,
+        },
+      };
+    }
+    return panorama;
+  });
+
+  const result = await window.api.projectPanorama.renderProject(name, size, {
+    panoramas: panoramasWithMetadata,
+    locations: window.locations, // Include locations if available
   });
 
   if (!result) {
