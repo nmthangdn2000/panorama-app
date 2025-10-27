@@ -23,8 +23,9 @@ const preload = async () => {
     return;
   }
 
-  // Use only new structure (locations)
+  // Use new structure (locations) with fallback to old structure (panoramas)
   window.locations = project.locations || [];
+  window.panoramas = project.panoramas || []; // Keep for backward compatibility
   window.pathProject = project.pathFolder;
 
   console.log('Loaded project:', name);

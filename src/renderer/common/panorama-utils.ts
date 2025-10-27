@@ -49,7 +49,21 @@ export const convertLocationsToPanoramas = (locations: PanoramaLocationType[]): 
 
   locations.forEach((location) => {
     location.options.forEach((option) => {
-      panoramas.push(option.panorama);
+      // Ensure panorama has required fields with defaults
+      const panorama = {
+        ...option.panorama,
+        cameraPosition: option.panorama.cameraPosition || {
+          yaw: 0,
+          pitch: 0,
+          fov: 45,
+        },
+        pointPosition: option.panorama.pointPosition || {
+          bottom: '50%',
+          left: '50%',
+        },
+        markers: option.panorama.markers || [],
+      };
+      panoramas.push(panorama);
     });
   });
 

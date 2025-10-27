@@ -145,8 +145,14 @@ const handleRenderProject = async (size: number) => {
     progressModal.show();
   }, 500);
 
-  // Use only new structure (locations)
-  const panoramas = window.locations && window.locations.length > 0 ? convertLocationsToPanoramas(window.locations) : [];
+  // Use new structure (locations) with fallback to old structure (panoramas)
+  let panoramas: any[] = [];
+
+  if (window.locations && window.locations.length > 0) {
+    panoramas = convertLocationsToPanoramas(window.locations);
+  } else if (window.panoramas && window.panoramas.length > 0) {
+    panoramas = window.panoramas;
+  }
 
   // Calculate faceSize and nbTiles for each panorama
   const panoramasWithMetadata = panoramas.map((panorama) => {

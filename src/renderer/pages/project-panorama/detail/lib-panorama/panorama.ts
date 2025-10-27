@@ -248,14 +248,36 @@ export class Panorama implements PanoramaType {
         .catch(() => {});
     }
 
-    const panorama = this._panoramas.find((pano) => pano.image === panoramaUrl)!;
+    console.log('Looking for panorama with URL:', panoramaUrl);
+    console.log(
+      'Available panoramas:',
+      this._panoramas.map((p) => p.image),
+    );
+
+    const panorama = this._panoramas.find((pano) => pano.image === panoramaUrl);
+
+    if (!panorama) {
+      console.error('Panorama not found:', panoramaUrl);
+      console.log(
+        'Available panorama images:',
+        this._panoramas.map((p) => p.image),
+      );
+      return;
+    }
+
+    // Ensure cameraPosition exists with defaults
+    const cameraPosition = panorama.cameraPosition || {
+      yaw: 0,
+      pitch: 0,
+      fov: 45,
+    };
 
     await this.viewer.setPanorama(this.__formatPanoramaPath(panoramaUrl), {
       speed: 0,
-      zoom: panorama.cameraPosition.fov || 45,
+      zoom: cameraPosition.fov || 45,
       showLoader: false,
       transition: false,
-      position: panorama.cameraPosition,
+      position: cameraPosition,
     });
 
     this.__setMarkers(panorama);
