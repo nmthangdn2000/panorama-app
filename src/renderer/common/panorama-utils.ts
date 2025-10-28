@@ -24,13 +24,13 @@ export const convertPanoramasToLocations = (panoramas: PanoramaDataType[]): Pano
 
     const options: PanoramaOptionType[] = panoramaGroup.map((panorama, optionIndex) => ({
       id: `${locationId}-op${optionIndex + 1}`,
-      name: `Option ${optionIndex + 1}`,
+      name: panorama.name || `Option ${optionIndex + 1}`,
       panorama: panorama,
     }));
 
     return {
       id: locationId,
-      name: `Location ${index + 1}`,
+      name: firstPanorama.name || `Location ${index + 1}`,
       description: firstPanorama.description || `Location with ${panoramaGroup.length} options`,
       defaultOption: options[0].id,
       pointPosition: firstPanorama.pointPosition,

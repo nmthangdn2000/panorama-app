@@ -116,6 +116,8 @@ export type EventListenerType = {
 };
 
 export type PanoramaDataType = {
+  id: string;
+  name: string;
   pointPosition: {
     bottom: string;
     left: string;

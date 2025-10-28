@@ -126,7 +126,7 @@ export const modalSelectPanoramaWithMapHTML = () => {
                       <label for="title">To panorama: </label>
                       <select name="select_panorama_with_map" id="countries" class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                         ${panoramas.map((panorama) => {
-                          return `<option value="${panorama.id}"> ${panorama.title}</option>`;
+                          return `<option value="${panorama.id}"> ${panorama.name}</option>`;
                         })}
                       </select>
                   </div>

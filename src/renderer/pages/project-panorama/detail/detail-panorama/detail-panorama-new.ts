@@ -26,6 +26,8 @@ const openDialogSelectImages = () => {
       const lastDotIndex = path.name.lastIndexOf('.');
 
       const newPanorama: PanoramaDataType = {
+        id: nanoid(),
+        name: path.name.substring(0, lastDotIndex),
         pointPosition: { bottom: '50%', left: '50%' },
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
         description: `This is the ${path.name} panorama`,
@@ -233,10 +235,9 @@ window.onAddOption = (locationId: string) => {
   // Create a new option with a default panorama
   const newPanorama: PanoramaDataType = {
     id: nanoid(),
-    title: `New Option ${location.options.length + 1}`,
+    name: `New Option ${location.options.length + 1}`,
     pointPosition: { bottom: '50%', left: '50%' },
     cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
-    subtitle: 'New Option',
     description: 'This is a new panorama option',
     image: '1.png', // Default image
     thumbnail: '1.png',

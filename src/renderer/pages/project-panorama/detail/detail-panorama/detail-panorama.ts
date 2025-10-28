@@ -24,10 +24,9 @@ const openDialogSelectImages = () => {
 
       const newPanorama: PanoramaDataType = {
         id: nanoid(),
-        title: path.name.substring(0, lastDotIndex),
+        name: path.name.substring(0, lastDotIndex),
         pointPosition: { bottom: '50%', left: '50%' },
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
-        subtitle: path.name,
         description: `This is the ${path.name} panorama`,
         image: `file://${path.path}`,
         thumbnail: '1.png',
@@ -246,10 +245,9 @@ window.onAddOption = async (locationId: string) => {
 
   const newPanorama: PanoramaDataType = {
     id: nanoid(),
-    title: path.name.substring(0, lastDotIndex),
+    name: path.name.substring(0, lastDotIndex),
     pointPosition: { bottom: '50%', left: '50%' },
     cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
-    subtitle: path.name,
     description: `This is the ${path.name} panorama`,
     image: `file://${path.path}`,
     thumbnail: '1.png',

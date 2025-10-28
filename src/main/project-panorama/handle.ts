@@ -342,14 +342,14 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   await Promise.all(
     allPanoramas.map(async (panorama) => {
       // Always process image path to ensure only filename is saved
-      console.log('Processing panorama:', panorama.title, 'image:', panorama.image);
+      console.log('Processing panorama:', panorama.name, 'image:', panorama.image);
 
       if (regexPath.test(panorama.image)) {
         console.log('Image has path, converting to filename');
         // If it's a file path, copy the file and use filename
         if (panorama.isNew) {
           console.log('Panorama is new, copying file');
-          const pathImage = join(pathProject, 'panoramas', `${panorama.title}.jpg`);
+          const pathImage = join(pathProject, 'panoramas', `${panorama.name}.jpg`);
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {
@@ -361,11 +361,11 @@ export const saveProject = async (name: string, project: RenderProject, isRender
             )
               .resize(2000, Jimp.AUTO)
               .quality(60)
-              .writeAsync(join(path, name, 'panoramas-low', `${panorama.title}-low.jpg`));
+              .writeAsync(join(path, name, 'panoramas-low', `${panorama.name}-low.jpg`));
           }
         }
         // Always use filename instead of full path
-        panorama.image = `${panorama.title}.jpg`;
+        panorama.image = `${panorama.name}.jpg`;
         console.log('Converted image to:', panorama.image);
       } else {
         console.log('Image already filename, keeping as is');
@@ -393,9 +393,9 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         )
           .resize(300, Jimp.AUTO)
           .quality(80)
-          .writeAsync(join(pathProject, 'thumbnails', `${panorama.title}.jpg`));
+          .writeAsync(join(pathProject, 'thumbnails', `${panorama.name}.jpg`));
 
-        panorama.thumbnail = `${panorama.title}.jpg`;
+        panorama.thumbnail = `${panorama.name}.jpg`;
       }
 
       delete panorama.isNew;
@@ -420,7 +420,7 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
   currentPanoramas.forEach((cp) => {
     const fileNames = cp.split('.jpg')[0];
-    const isExist = allPanoramas.find((p) => p.title === fileNames);
+    const isExist = allPanoramas.find((p) => p.name === fileNames);
 
     if (!isExist) {
       rmSync(join(path, name, 'panoramas', cp));
