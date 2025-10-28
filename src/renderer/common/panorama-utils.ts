@@ -30,7 +30,7 @@ export const convertPanoramasToLocations = (panoramas: PanoramaDataType[]): Pano
 
     return {
       id: locationId,
-      name: firstPanorama.title || `Location ${index + 1}`,
+      name: `Location ${index + 1}`,
       description: firstPanorama.description || `Location with ${panoramaGroup.length} options`,
       defaultOption: options[0].id,
       pointPosition: firstPanorama.pointPosition,
@@ -90,15 +90,15 @@ export const getDefaultPanoramaForLocation = (location: PanoramaLocationType): P
 };
 
 /**
- * Get panorama by ID from locations
+ * Get panorama by option ID from locations
  * @param locations - Array of locations with options
- * @param panoramaId - ID of the panorama to find
+ * @param optionId - ID of the option to find
  * @returns Found panorama or undefined
  */
-export const getPanoramaByIdFromLocations = (locations: PanoramaLocationType[], panoramaId: string): PanoramaDataType | undefined => {
+export const getPanoramaByOptionIdFromLocations = (locations: PanoramaLocationType[], optionId: string): PanoramaDataType | undefined => {
   for (const location of locations) {
     for (const option of location.options) {
-      if (option.panorama.id === panoramaId) {
+      if (option.id === optionId) {
         return option.panorama;
       }
     }

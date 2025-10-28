@@ -93,14 +93,14 @@ export const itemLocationPanorama = (location: PanoramaLocationType, borderColor
 
         <!-- Selected Option Content -->
         <div class="selected-option-content">
-          ${itemOptionPanorama(location.id, defaultOption.id, defaultPanorama, borderColor)}
+          ${itemOptionPanorama(location.id, defaultOption.id, defaultPanorama, borderColor, defaultOption.name)}
         </div>
       </div>
     </div>
   `;
 };
 
-export const itemOptionPanorama = (locationId: string, optionId: string, panorama: any, borderColor: string) => {
+export const itemOptionPanorama = (locationId: string, optionId: string, panorama: any, borderColor: string, optionName: string) => {
   const regex = /[\/\\]/;
   let src = panorama.image;
   if (!regex.test(src)) src = `${window.pathProject}/panoramas/${src}`;
@@ -114,15 +114,15 @@ export const itemOptionPanorama = (locationId: string, optionId: string, panoram
             class="object-cover w-full md:w-48 h-48 md:h-32 rounded-lg border-2"
             style="border-color: ${borderColor}"
             src="${src}"
-            alt="${panorama.title}"
+            alt="${optionName}"
           />
         </div>
 
         <!-- Panorama Details -->
         <div class="flex-1">
           <div class="flex items-center gap-2 mb-2">
-            <h4 class="text-lg font-medium text-gray-900 dark:text-white">${panorama.title}</h4>
-            <button onclick="onEditPanoramaTitle('${locationId}', '${optionId}', '${panorama.id}')" title="Edit Title" type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
+            <h4 class="text-lg font-medium text-gray-900 dark:text-white">${optionName}</h4>
+            <button onclick="onEditPanoramaTitle('${locationId}', '${optionId}')" title="Edit Title" type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M13.9993 4.18177C14.7686 3.42506 15.8116 3 16.8991 3C17.9866 3 19.0296 3.42506 19.799 4.18177C20.5676 4.93912 21 5.96653 21 7.03713C21 8.10486 20.5705 9.12903 19.8057 9.8858L18.5002 11.2139L12.6998 5.50355L13.9872 4.1938L13.9993 4.18177ZM11.2826 6.94524L6.1861 12.1299L8.36073 14.2713L13.4239 9.05326L11.2826 6.94524ZM5.03244 13.8309L3.05229 19.6799C2.93029 20.0403 3.02557 20.4376 3.29843 20.7062C3.57129 20.9748 3.97488 21.0686 4.34097 20.9485L10.2823 18.9992L5.03244 13.8309ZM11.9866 17.8401L17.0831 12.6555L14.8651 10.472L9.80193 15.6901L11.9866 17.8401Z"/>
               </svg>

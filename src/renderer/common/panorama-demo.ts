@@ -16,14 +16,11 @@ export const demoLocationData: PanoramaLocationType[] = [
         id: 'kitchen-op1',
         name: 'Option 1',
         panorama: {
-          id: 'yKAnGHvbQLJ7Oj1-Geqh-',
-          title: '01-Kitchen-OP1',
           pointPosition: { bottom: '50%', left: '50%' },
           cameraPosition: {
             yaw: 4.720283855981834,
             pitch: -0.0004923518129509308,
           },
-          subtitle: '01-Kitchen-OP1.jpg',
           description: 'This is the 01-Kitchen-OP1.jpg panorama',
           image: '01-Kitchen-OP1.jpg',
           thumbnail: '1.png',
@@ -35,15 +32,12 @@ export const demoLocationData: PanoramaLocationType[] = [
         id: 'kitchen-op2',
         name: 'Option 2',
         panorama: {
-          id: 'cwi7hOwm9zXQTyLnXBN9i',
-          title: '01-Kitchen-OP2',
           pointPosition: { bottom: '50%', left: '50%' },
           cameraPosition: {
             yaw: 2.5644056031325437,
             pitch: -0.18120413994219753,
             fov: 45,
           },
-          subtitle: '01-Kitchen-OP2.jpg',
           description: 'This is the 01-Kitchen-OP2.jpg panorama',
           image: '01-Kitchen-OP2.jpg',
           thumbnail: '1.png',
@@ -52,8 +46,8 @@ export const demoLocationData: PanoramaLocationType[] = [
               id: 'markercwi7hOwm9zXQTyLnXBN9i-1',
               zoomLvl: 90,
               position: { yaw: 4.684620848795218, pitch: 0.015407146394328386 },
-              toPanorama: 'cwi7hOwm9zXQTyLnXBN9i',
-              toPanoramaTitle: '01-Kitchen-OP2',
+              toPanorama: 'kitchen-op2',
+              toPanoramaTitle: 'Option 2',
               style: { cursor: 'pointer', zIndex: '100' },
             },
             {
@@ -63,8 +57,8 @@ export const demoLocationData: PanoramaLocationType[] = [
                 yaw: 0.45713701705421056,
                 pitch: -0.18900277607022975,
               },
-              toPanorama: 'yKAnGHvbQLJ7Oj1-Geqh-',
-              toPanoramaTitle: '01-Kitchen-OP1',
+              toPanorama: 'kitchen-op1',
+              toPanoramaTitle: 'Option 1',
               style: { cursor: 'pointer', zIndex: '100' },
             },
           ],
@@ -75,14 +69,11 @@ export const demoLocationData: PanoramaLocationType[] = [
         id: 'kitchen-op3',
         name: 'Option 3',
         panorama: {
-          id: 'fxalaIn50k9In4Rv55xYt',
-          title: '01-Kitchen-OP3',
           pointPosition: { bottom: '50%', left: '50%' },
           cameraPosition: {
             yaw: 4.720283855981834,
             pitch: -0.0004923518129509308,
           },
-          subtitle: '01-Kitchen-OP3.jpg',
           description: 'This is the 01-Kitchen-OP3.jpg panorama',
           image: '01-Kitchen-OP3.jpg',
           thumbnail: '1.png',
@@ -103,14 +94,11 @@ export const demoLocationData: PanoramaLocationType[] = [
         id: 'living-room-op1',
         name: 'Modern Style',
         panorama: {
-          id: 'living-room-modern',
-          title: '02-Living-Room-Modern',
           pointPosition: { bottom: '30%', left: '70%' },
           cameraPosition: {
             yaw: 3.14159,
             pitch: 0.1,
           },
-          subtitle: '02-Living-Room-Modern.jpg',
           description: 'Modern living room design',
           image: '02-Living-Room-Modern.jpg',
           thumbnail: '2.png',
@@ -122,14 +110,11 @@ export const demoLocationData: PanoramaLocationType[] = [
         id: 'living-room-op2',
         name: 'Classic Style',
         panorama: {
-          id: 'living-room-classic',
-          title: '02-Living-Room-Classic',
           pointPosition: { bottom: '30%', left: '70%' },
           cameraPosition: {
             yaw: 3.14159,
             pitch: 0.1,
           },
-          subtitle: '02-Living-Room-Classic.jpg',
           description: 'Classic living room design',
           image: '02-Living-Room-Classic.jpg',
           thumbnail: '2.png',
@@ -153,7 +138,7 @@ export const exampleUsage = () => {
   if (kitchenLocation) {
     const defaultOption = kitchenLocation.options.find((opt) => opt.id === kitchenLocation.defaultOption);
     const defaultPanorama = defaultOption?.panorama;
-    console.log('Default kitchen panorama:', defaultPanorama?.title);
+    console.log('Default kitchen panorama:', defaultPanorama?.description);
   }
 
   // Get all options for a location

@@ -45,9 +45,14 @@ const previewPanorama = () => {
     return;
   }
 
-  window.viewerPanorama = new Panorama(viewerElement, panoramas, {
-    debug: true,
-  });
+  window.viewerPanorama = new Panorama(
+    viewerElement,
+    panoramas,
+    {
+      debug: true,
+    },
+    locations,
+  );
 
   // Set initial panorama (first option of first location)
   const firstLocation = locations[0];

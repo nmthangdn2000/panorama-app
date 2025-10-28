@@ -145,35 +145,38 @@ const handleRenderProject = async (size: number) => {
     progressModal.show();
   }, 500);
 
+  // Update locations with faceSize and nbTiles for rendering
+  let updatedLocations = window.locations;
+
+  if (window.locations && window.locations.length > 0) {
+    updatedLocations = window.locations.map((location) => ({
+      ...location,
+      options: location.options.map((option) => ({
+        ...option,
+        panorama: {
+          ...option.panorama,
+          metadata: {
+            ...option.panorama.metadata,
+            faceSize: Number(size),
+            nbTiles: option.panorama.metadata ? Math.floor(option.panorama.metadata.width / 4 / size) : 0,
+          },
+        },
+      })),
+    }));
+  }
+
   // Use new structure (locations) with fallback to old structure (panoramas)
   let panoramas: any[] = [];
 
-  if (window.locations && window.locations.length > 0) {
-    panoramas = convertLocationsToPanoramas(window.locations);
+  if (updatedLocations && updatedLocations.length > 0) {
+    panoramas = convertLocationsToPanoramas(updatedLocations);
   } else if (window.panoramas && window.panoramas.length > 0) {
     panoramas = window.panoramas;
   }
 
-  // Calculate faceSize and nbTiles for each panorama
-  const panoramasWithMetadata = panoramas.map((panorama) => {
-    if (panorama.metadata) {
-      const nbTiles = Math.floor(panorama.metadata.width / 4 / size);
-
-      return {
-        ...panorama,
-        metadata: {
-          ...panorama.metadata,
-          faceSize: Number(size),
-          nbTiles,
-        },
-      };
-    }
-    return panorama;
-  });
-
   const result = await window.api.projectPanorama.renderProject(name, size, {
-    panoramas: panoramasWithMetadata,
-    locations: window.locations, // Include locations if available
+    panoramas: panoramas,
+    locations: updatedLocations, // Include updated locations with faceSize and nbTiles
   });
 
   if (!result) {

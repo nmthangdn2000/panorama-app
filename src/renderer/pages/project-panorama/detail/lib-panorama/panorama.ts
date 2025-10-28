@@ -22,6 +22,7 @@ export class Panorama implements PanoramaType {
   public viewer: Viewer;
   private _events: EventListenerType;
   private _panoramas: PanoramaDataType[] = [];
+  private _locations: any[] = [];
   private _animationDataBtnArrow: any;
   private _debuggerPanorama: DebuggerPanorama;
   private _gyroscopeEnabled: boolean;
@@ -35,7 +36,7 @@ export class Panorama implements PanoramaType {
    * const panorama = new Panorama(document.querySelector('#viewer')! as any, PANORAMA);
    * panorama.swapPanorama(1);
    */
-  constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], options?: PanoramaOptionsType) {
+  constructor(container: string | HTMLElement, panoramas: PanoramaDataType[], options?: PanoramaOptionsType, locations?: any[]) {
     this.viewer = new Viewer({
       container,
       adapter: EquirectangularAdapter,
@@ -52,6 +53,7 @@ export class Panorama implements PanoramaType {
     });
 
     this._panoramas = panoramas;
+    this._locations = locations || [];
 
     this._events = {
       onMarkerClick: () => {},
@@ -123,10 +125,46 @@ export class Panorama implements PanoramaType {
   }
 
   private async __setMarkers(panorama: PanoramaDataType) {
+    console.log('__setMarkers called for panorama:', panorama);
+    console.log('panorama.markers from parameter:', panorama.markers);
+
     const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
     markersPlugin.clearMarkers();
+
+    // Get fresh markers from window.locations to ensure we have the latest data
+    let freshMarkers = panorama.markers;
+    let foundInLocations = false;
+
+    if (window.locations) {
+      console.log('window.locations available, searching for panorama...');
+      for (const location of window.locations) {
+        console.log('Checking location:', location.name);
+        for (const option of location.options) {
+          console.log('Checking option:', option.name, 'panorama:', option.panorama);
+          console.log('Reference equality check:', option.panorama === panorama);
+          console.log('Image comparison:', option.panorama.image === panorama.image);
+
+          if (option.panorama.image === panorama.image) {
+            freshMarkers = option.panorama.markers;
+            foundInLocations = true;
+            console.log('Found matching panorama in window.locations!');
+            console.log('Using fresh markers from window.locations:', freshMarkers.length, 'markers');
+            console.log('Fresh markers:', freshMarkers);
+            break;
+          }
+        }
+        if (foundInLocations) break;
+      }
+
+      if (!foundInLocations) {
+        console.log('Panorama not found in window.locations, using original markers');
+      }
+    } else {
+      console.log('window.locations not available');
+    }
+
     markersPlugin.setMarkers(
-      panorama.markers.map((marker) => {
+      freshMarkers.map((marker) => {
         return {
           ...marker,
           html: btnHotSpot(`onMarkerClick('${marker.toPanorama}', '${marker.id}')`, `${marker.toPanoramaTitle}`),
@@ -144,7 +182,7 @@ export class Panorama implements PanoramaType {
       });
     }
 
-    const markerVideos = panorama.markers.filter((marker) => marker.videoLayer);
+    const markerVideos = freshMarkers.filter((marker) => marker.videoLayer);
     if (markerVideos.length < 1) return;
 
     markerVideos.forEach(async (marker) => {
@@ -194,7 +232,10 @@ export class Panorama implements PanoramaType {
    * @example
    * panorama.swapPanorama(1, 'marker-1', () => {});
    * */
-  async swapPanorama(id: string, markerId?: string, cb?: () => void) {
+  async swapPanorama(optionId: string, markerId?: string, cb?: () => void) {
+    console.log('swapPanorama called with optionId:', optionId, 'markerId:', markerId);
+    console.log('window.locations:', window.locations);
+
     const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
 
     if (markerId) {
@@ -202,18 +243,68 @@ export class Panorama implements PanoramaType {
       // await delay(300);
     }
 
-    this._panoramas.forEach(async (panorama) => {
-      if (panorama.id === id) {
-        await this.__transitionPanorama(
-          panorama.image,
-          () => {
-            this.__setMarkers(panorama);
-            if (cb) cb();
-          },
-          !markerId,
-        );
+    // Find panorama by option ID in locations
+    if (this._locations && this._locations.length > 0) {
+      console.log('Searching in _locations:', this._locations.length, 'locations');
+      for (const location of this._locations) {
+        console.log('Location:', location.name, 'has', location.options.length, 'options');
+        for (const option of location.options) {
+          console.log('Checking option:', option.id, 'against:', optionId);
+          if (option.id === optionId) {
+            console.log('Found matching option, switching to:', option.panorama.image);
+            await this.__transitionPanorama(
+              option.panorama.image,
+              () => {
+                this.__setMarkers(option.panorama);
+                if (cb) cb();
+              },
+              !markerId,
+            );
+            return;
+          }
+        }
       }
-    });
+      console.log('No matching option found for optionId:', optionId);
+    } else {
+      console.log('_locations is not defined or empty, falling back to window.locations');
+      // Fallback to window.locations if _locations not available
+      if (window.locations && window.locations.length > 0) {
+        console.log('Searching in window.locations:', window.locations.length, 'locations');
+        for (const location of window.locations) {
+          console.log('Location:', location.name, 'has', location.options.length, 'options');
+          for (const option of location.options) {
+            console.log('Checking option:', option.id, 'against:', optionId);
+            if (option.id === optionId) {
+              console.log('Found matching option in window.locations, switching to:', option.panorama.image);
+              await this.__transitionPanorama(
+                option.panorama.image,
+                () => {
+                  this.__setMarkers(option.panorama);
+                  if (cb) cb();
+                },
+                !markerId,
+              );
+              return;
+            }
+          }
+        }
+        console.log('No matching option found in window.locations for optionId:', optionId);
+
+        // Fallback: try to find by panorama image if optionId looks like old panorama ID
+        console.log('Trying fallback: searching by panorama image...');
+        // This is a temporary fallback for old markers
+        // In the future, all markers should use option.id
+
+        // For now, let's just log the current panorama to understand the context
+        const currentPanorama = this.getCurrentPanorama();
+        console.log('Current panorama:', currentPanorama);
+        if (currentPanorama && currentPanorama.markers) {
+          console.log('Current panorama markers:', currentPanorama.markers);
+        }
+      } else {
+        console.log('window.locations is also not available');
+      }
+    }
   }
 
   /**

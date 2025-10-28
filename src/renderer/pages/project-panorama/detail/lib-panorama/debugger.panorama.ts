@@ -1,5 +1,6 @@
 import { Viewer } from '@photo-sphere-viewer/core';
-import { PanoramaDataType } from './panorama.type';
+import { PanoramaDataType, PanoramaLocationType } from './panorama.type';
+import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 import { OriginalPerspective } from './toolbar/original-perspective/original-perspective';
 import { Marker } from '@photo-sphere-viewer/markers-plugin';
 import { EVENT_KEY } from './event.panorama';
@@ -35,9 +36,13 @@ export class DebuggerPanorama {
     this.getCurrentPanorama = getCurrentPanorama;
     this.setMarkers = setMarkers;
 
-    this.newHotSpot = new NewHotSpot(viewer, panorama, getCurrentPanorama, setMarkers, setAnimationToBtnArrow);
-    this.originalPerspective = new OriginalPerspective(viewer, panorama, getCurrentPanorama);
-    this.mapLocation = new MapLocation(viewer, panorama, setPanorama, getCurrentPanorama);
+    // Use locations if available, otherwise fall back to panoramas
+    const locations = (window as any).locations || [];
+    const panoramas = locations.length > 0 ? convertLocationsToPanoramas(locations) : panorama;
+
+    this.newHotSpot = new NewHotSpot(viewer, locations, getCurrentPanorama, setMarkers, setAnimationToBtnArrow);
+    this.originalPerspective = new OriginalPerspective(viewer, panoramas, getCurrentPanorama);
+    this.mapLocation = new MapLocation(viewer, panoramas, setPanorama, getCurrentPanorama);
 
     this.toggleDebugMode();
     this.openAndCloseDebugModeWithKey();

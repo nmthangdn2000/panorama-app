@@ -30,10 +30,10 @@ export type PanoramaType = {
    * @description Swap panorama after marker click
    * @example
    * ```javascript
-   * viewerPanorama.swapPanorama(1);
+   * viewerPanorama.swapPanorama('option-id');
    * ```
    */
-  swapPanorama: (id: string, markerId?: string, cb?: () => void) => void;
+  swapPanorama: (optionId: string, markerId?: string, cb?: () => void) => void;
 
   /**
    * Get current panorama
@@ -116,9 +116,6 @@ export type EventListenerType = {
 };
 
 export type PanoramaDataType = {
-  id: string;
-  title: string;
-  subtitle: string;
   pointPosition: {
     bottom: string;
     left: string;
@@ -145,7 +142,11 @@ export type PanoramaDataType = {
     toPanorama?: string;
     toPanoramaTitle?: string;
   })[];
-  metadata?: sharp.Metadata;
+  metadata?: sharp.Metadata & {
+    // Rendering metadata for cube map generation
+    faceSize?: number;
+    nbTiles?: number;
+  };
   // this field is used to determine if the panorama is new or not
   isNew?: boolean;
 };

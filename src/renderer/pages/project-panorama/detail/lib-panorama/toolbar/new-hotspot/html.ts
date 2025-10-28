@@ -1,4 +1,4 @@
-import { PanoramaDataType } from '../../panorama.type';
+import { PanoramaDataType, PanoramaLocationType } from '../../panorama.type';
 
 export const btnAddHotSpotHtml = () => {
   return `
@@ -18,14 +18,14 @@ export const btnAddHotSpotHtml = () => {
 `;
 };
 
-export const formAddHotSpot = (panoramas: PanoramaDataType[]) => {
+export const formAddHotSpot = (locations: PanoramaLocationType[]) => {
   return `
   <div class="form">
     <div class="flex gap-2 items-center">
-      <label for="title">To panorama: </label>
+      <label for="title">To location: </label>
       <select name="select-panorama" id="select-panorama" id="countries" class="flex-1 bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
-        ${panoramas.map((panorama) => {
-          return `<option value="${panorama.id}"> ${panorama.title}</option>`;
+        ${locations.map((location) => {
+          return `<option value="${location.id}">${location.name}</option>`;
         })}
       </select>
     </div>

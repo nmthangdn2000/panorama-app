@@ -161,7 +161,7 @@ window.onSelectOption = (locationId: string, optionId: string) => {
   const selectedOptionContent = document.querySelector(`[data-location-id="${locationId}"] .selected-option-content`);
   if (selectedOptionContent) {
     const color = '#ff6b6b'; // You might want to calculate this based on the location
-    selectedOptionContent.innerHTML = itemOptionPanorama(locationId, optionId, option.panorama, color);
+    selectedOptionContent.innerHTML = itemOptionPanorama(locationId, optionId, option.panorama, color, option.name);
   }
 
   // Update button states
@@ -300,9 +300,9 @@ window.onEditPanoramaTitle = (locationId: string, optionId: string) => {
   const option = location.options.find((opt) => opt.id === optionId);
   if (!option) return;
 
-  const newTitle = prompt('Enter new panorama title:', option.panorama.title);
+  const newTitle = prompt('Enter new option name:', option.name);
   if (newTitle && newTitle.trim()) {
-    option.panorama.title = newTitle.trim();
+    option.name = newTitle.trim();
     renderListImage();
   }
 };
@@ -391,14 +391,17 @@ export const saveProjectPanorama = debounce(() => {
   const name = url.searchParams.get('name');
 
   if (!name) {
+    console.log('No project name found, cannot save');
     return;
   }
+
+  console.log('Saving project:', name, 'with locations:', window.locations);
 
   // Save only locations (new structure)
   window.api.projectPanorama.saveProject(name, {
     locations: window.locations,
   });
-}, 1000);
+}, 100); // Reduced delay from 1000ms to 100ms
 
 export default () => {
   openDialogSelectImages();

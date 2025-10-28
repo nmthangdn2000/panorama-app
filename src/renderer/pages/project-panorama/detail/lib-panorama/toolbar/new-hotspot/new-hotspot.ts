@@ -1,13 +1,13 @@
 import { ClickData, Viewer } from '@photo-sphere-viewer/core';
 import { Marker, MarkersPlugin } from '@photo-sphere-viewer/markers-plugin';
-import { PanoramaDataType, ToolbarDebugHTML } from '../../panorama.type';
+import { PanoramaDataType, PanoramaLocationType, ToolbarDebugHTML } from '../../panorama.type';
 import { EVENT_KEY } from '../../event.panorama';
 import { btnAddHotSpotHtml, btnHotSpot, formAddHotSpot } from './html';
 import { saveProjectPanorama } from '../../../detail-panorama/detail-panorama';
 
 export class NewHotSpot implements ToolbarDebugHTML {
   private viewer: Viewer;
-  private panoramas: PanoramaDataType[];
+  private locations: PanoramaLocationType[];
   private getCurrentPanorama: () => PanoramaDataType | undefined;
   private setMarkers: (panorama: PanoramaDataType) => void;
   private setAnimationToBtnArrow: () => void;
@@ -18,13 +18,13 @@ export class NewHotSpot implements ToolbarDebugHTML {
 
   constructor(
     viewer: Viewer,
-    panorama: PanoramaDataType[],
+    locations: PanoramaLocationType[],
     getCurrentPanorama: () => PanoramaDataType | undefined,
     setMarkers: (panorama: PanoramaDataType) => void,
     setAnimationToBtnArrow: () => void,
   ) {
     this.viewer = viewer;
-    this.panoramas = panorama;
+    this.locations = locations;
     this.getCurrentPanorama = getCurrentPanorama;
     this.setMarkers = setMarkers;
     this.setAnimationToBtnArrow = setAnimationToBtnArrow;
@@ -107,7 +107,8 @@ export class NewHotSpot implements ToolbarDebugHTML {
     const section = document.createElement('section');
     section.id = 'section-new-hotspot';
 
-    section.innerHTML += formAddHotSpot(this.panoramas);
+    // Show all locations for selection
+    section.innerHTML += formAddHotSpot(this.locations);
 
     this.viewer.container.parentElement!.appendChild(section);
 
@@ -128,15 +129,19 @@ export class NewHotSpot implements ToolbarDebugHTML {
       if (!currentPanorama) return;
 
       const selectPanorama = document.getElementById('select-panorama') as HTMLSelectElement;
-      const panoramaId = selectPanorama.value;
+      const locationId = selectPanorama.value;
 
-      const toPanorama = this.panoramas.find((panorama) => panorama.id === panoramaId);
+      // Find the location by ID
+      const toLocation = this.locations.find((location) => location.id === locationId);
+      if (!toLocation) return;
 
-      if (!toPanorama) return;
+      // Get the default option of the target location
+      const toOption = toLocation.options.find((option) => option.id === toLocation.defaultOption) || toLocation.options[0];
+      if (!toOption) return;
 
       const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
 
-      const markerId = `marker${currentPanorama?.id}-${(currentPanorama?.markers.length || 0) + 1}`;
+      const markerId = `marker${Date.now()}-${(currentPanorama?.markers.length || 0) + 1}`;
 
       const marker = {
         id: markerId,
@@ -145,8 +150,8 @@ export class NewHotSpot implements ToolbarDebugHTML {
           yaw: data.yaw,
           pitch: data.pitch,
         },
-        toPanorama: toPanorama.id,
-        toPanoramaTitle: toPanorama.title,
+        toPanorama: toOption.id,
+        toPanoramaTitle: toLocation.name,
         style: {
           cursor: 'pointer',
           zIndex: '100',
@@ -155,20 +160,55 @@ export class NewHotSpot implements ToolbarDebugHTML {
 
       markersPlugin.addMarker({
         ...marker,
-        html: btnHotSpot(`onMarkerClick('${toPanorama.id}', '${markerId}')`, toPanorama.title),
+        html: btnHotSpot(`onMarkerClick('${toOption.id}', '${markerId}')`, toLocation.name),
       });
 
       this.createButtonRemoveMarker(markersPlugin.getMarker(marker.id));
       this.setAnimationToBtnArrow();
 
-      const panorama = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-      if (panorama < 0) return;
+      // Find and update the current panorama in window.locations
+      if (window.locations) {
+        let markerAdded = false;
+        for (const location of window.locations) {
+          for (const option of location.options) {
+            console.log('Checking option for marker addition:', option.name);
+            console.log('Reference equality:', option.panorama === currentPanorama);
+            console.log('Image comparison:', option.panorama.image === currentPanorama.image);
 
-      this.panoramas[panorama].markers.push(marker);
+            if (option.panorama.image === currentPanorama.image) {
+              option.panorama.markers.push(marker);
+              markerAdded = true;
+              console.log('Added marker to window.locations:', marker);
+              console.log('Total markers now:', option.panorama.markers.length);
+              break;
+            }
+          }
+          if (markerAdded) break;
+        }
+
+        if (!markerAdded) {
+          console.log('ERROR: Could not find matching panorama in window.locations to add marker');
+        }
+      } else {
+        console.log('window.locations is not defined, cannot save marker');
+      }
 
       document.getElementById('section-new-hotspot')?.remove();
 
+      console.log('Calling saveProjectPanorama() immediately after adding marker');
       saveProjectPanorama();
+
+      // Also call save immediately without debounce for critical operations
+      setTimeout(() => {
+        console.log('Force saving project after marker addition');
+        const url = new URL(window.location.href);
+        const name = url.searchParams.get('name');
+        if (name && window.locations) {
+          window.api.projectPanorama.saveProject(name, {
+            locations: window.locations,
+          });
+        }
+      }, 200);
     });
   }
 
@@ -185,23 +225,48 @@ export class NewHotSpot implements ToolbarDebugHTML {
     marker.domElement.appendChild(btnRemove);
 
     btnRemove.onclick = () => {
-      markersPlugin.clearMarkers();
+      console.log('Removing marker:', marker.id);
 
-      const markerIndex = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-      if (markerIndex < 0) return;
+      // Find the current panorama in window.locations
+      let currentOption: any = null;
+      if (window.locations) {
+        for (const location of window.locations) {
+          currentOption = location.options.find((option) => option.panorama.image === currentPanorama.image);
+          if (currentOption) break;
+        }
+      }
 
-      const markerIndexRemove = this.panoramas[markerIndex].markers.findIndex((m) => m.id === marker.id);
-      if (markerIndexRemove < 0) return;
+      if (!currentOption) {
+        console.log('ERROR: Could not find current panorama in window.locations');
+        return;
+      }
 
-      this.panoramas[markerIndex].markers.splice(markerIndexRemove, 1);
-      this.panoramas[markerIndex].markers = this.panoramas[markerIndex].markers.map((marker, index) => {
+      console.log('Found current option:', currentOption.name);
+      console.log('Current markers before removal:', currentOption.panorama.markers.length);
+
+      const markerIndexRemove = currentOption.panorama.markers.findIndex((m) => m.id === marker.id);
+      if (markerIndexRemove < 0) {
+        console.log('ERROR: Marker not found in panorama markers');
+        return;
+      }
+
+      // Remove only the specific marker
+      currentOption.panorama.markers.splice(markerIndexRemove, 1);
+      console.log('Markers after removal:', currentOption.panorama.markers.length);
+
+      // Update marker IDs to be sequential
+      currentOption.panorama.markers = currentOption.panorama.markers.map((marker, index) => {
         return {
           ...marker,
-          id: `marker${currentPanorama.id}-${index + 1}`,
+          id: `marker${Date.now()}-${index + 1}`,
         };
       });
 
+      // Clear and re-set markers
+      markersPlugin.clearMarkers();
       this.setMarkers(currentPanorama);
+
+      console.log('Marker removal completed');
     };
 
     saveProjectPanorama();
