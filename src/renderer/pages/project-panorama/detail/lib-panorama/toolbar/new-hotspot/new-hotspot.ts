@@ -141,7 +141,20 @@ export class NewHotSpot implements ToolbarDebugHTML {
 
       const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
 
-      const markerId = `marker${Date.now()}-${(currentPanorama?.markers.length || 0) + 1}`;
+      // Find the current location that contains the current panorama
+      let currentLocation: PanoramaLocationType | undefined;
+      if (window.locations) {
+        currentLocation = window.locations.find((location) => 
+          location.options.some((option) => option.panorama.image === currentPanorama.image)
+        );
+      }
+
+      if (!currentLocation) {
+        console.log('ERROR: Could not find current location containing the panorama');
+        return;
+      }
+
+      const markerId = `marker${Date.now()}-${(currentLocation.markers?.length || 0) + 1}`;
 
       const marker = {
         id: markerId,
@@ -166,29 +179,15 @@ export class NewHotSpot implements ToolbarDebugHTML {
       this.createButtonRemoveMarker(markersPlugin.getMarker(marker.id));
       this.setAnimationToBtnArrow();
 
-      // Find and update the current panorama in window.locations
+      // Add marker to location (shared across all options)
       if (window.locations) {
-        let markerAdded = false;
-        for (const location of window.locations) {
-          for (const option of location.options) {
-            console.log('Checking option for marker addition:', option.name);
-            console.log('Reference equality:', option.panorama === currentPanorama);
-            console.log('Image comparison:', option.panorama.image === currentPanorama.image);
-
-            if (option.panorama.image === currentPanorama.image) {
-              option.panorama.markers.push(marker);
-              markerAdded = true;
-              console.log('Added marker to window.locations:', marker);
-              console.log('Total markers now:', option.panorama.markers.length);
-              break;
-            }
-          }
-          if (markerAdded) break;
+        // Ensure markers array exists
+        if (!currentLocation.markers) {
+          currentLocation.markers = [];
         }
-
-        if (!markerAdded) {
-          console.log('ERROR: Could not find matching panorama in window.locations to add marker');
-        }
+        currentLocation.markers.push(marker);
+        console.log('Added marker to location:', currentLocation.name);
+        console.log('Total markers now:', currentLocation.markers.length);
       } else {
         console.log('window.locations is not defined, cannot save marker');
       }
@@ -227,35 +226,34 @@ export class NewHotSpot implements ToolbarDebugHTML {
     btnRemove.onclick = () => {
       console.log('Removing marker:', marker.id);
 
-      // Find the current panorama in window.locations
-      let currentOption: any = null;
+      // Find the current location that contains the current panorama
+      let currentLocation: PanoramaLocationType | undefined;
       if (window.locations) {
-        for (const location of window.locations) {
-          currentOption = location.options.find((option) => option.panorama.image === currentPanorama.image);
-          if (currentOption) break;
-        }
+        currentLocation = window.locations.find((location) => 
+          location.options.some((option) => option.panorama.image === currentPanorama.image)
+        );
       }
 
-      if (!currentOption) {
-        console.log('ERROR: Could not find current panorama in window.locations');
+      if (!currentLocation || !currentLocation.markers) {
+        console.log('ERROR: Could not find current location or location has no markers');
         return;
       }
 
-      console.log('Found current option:', currentOption.name);
-      console.log('Current markers before removal:', currentOption.panorama.markers.length);
+      console.log('Found current location:', currentLocation.name);
+      console.log('Current markers before removal:', currentLocation.markers.length);
 
-      const markerIndexRemove = currentOption.panorama.markers.findIndex((m) => m.id === marker.id);
+      const markerIndexRemove = currentLocation.markers.findIndex((m) => m.id === marker.id);
       if (markerIndexRemove < 0) {
-        console.log('ERROR: Marker not found in panorama markers');
+        console.log('ERROR: Marker not found in location markers');
         return;
       }
 
-      // Remove only the specific marker
-      currentOption.panorama.markers.splice(markerIndexRemove, 1);
-      console.log('Markers after removal:', currentOption.panorama.markers.length);
+      // Remove only the specific marker from location
+      currentLocation.markers.splice(markerIndexRemove, 1);
+      console.log('Markers after removal:', currentLocation.markers.length);
 
       // Update marker IDs to be sequential
-      currentOption.panorama.markers = currentOption.panorama.markers.map((marker, index) => {
+      currentLocation.markers = currentLocation.markers.map((marker, index) => {
         return {
           ...marker,
           id: `marker${Date.now()}-${index + 1}`,

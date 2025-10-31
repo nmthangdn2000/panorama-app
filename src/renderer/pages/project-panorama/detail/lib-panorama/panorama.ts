@@ -126,41 +126,36 @@ export class Panorama implements PanoramaType {
 
   private async __setMarkers(panorama: PanoramaDataType) {
     console.log('__setMarkers called for panorama:', panorama);
-    console.log('panorama.markers from parameter:', panorama.markers);
 
     const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
     markersPlugin.clearMarkers();
 
-    // Get fresh markers from window.locations to ensure we have the latest data
-    let freshMarkers = panorama.markers;
-    let foundInLocations = false;
+    // Get markers from location instead of panorama
+    let freshMarkers: any[] = [];
+    let foundLocation = false;
 
     if (window.locations) {
-      console.log('window.locations available, searching for panorama...');
+      console.log('window.locations available, searching for location containing panorama...');
       for (const location of window.locations) {
-        console.log('Checking location:', location.name);
-        for (const option of location.options) {
-          console.log('Checking option:', option.name, 'panorama:', option.panorama);
-          console.log('Reference equality check:', option.panorama === panorama);
-          console.log('Image comparison:', option.panorama.image === panorama.image);
+        // Check if any option in this location contains this panorama
+        const foundOption = location.options.find((option) => option.panorama.image === panorama.image);
 
-          if (option.panorama.image === panorama.image) {
-            freshMarkers = option.panorama.markers;
-            foundInLocations = true;
-            console.log('Found matching panorama in window.locations!');
-            console.log('Using fresh markers from window.locations:', freshMarkers.length, 'markers');
-            console.log('Fresh markers:', freshMarkers);
-            break;
-          }
+        if (foundOption) {
+          // Use markers from the location (shared across all options)
+          freshMarkers = location.markers || [];
+          foundLocation = true;
+          console.log('Found matching panorama in location:', location.name);
+          console.log('Using markers from location:', freshMarkers.length, 'markers');
+          console.log('Fresh markers:', freshMarkers);
+          break;
         }
-        if (foundInLocations) break;
       }
 
-      if (!foundInLocations) {
-        console.log('Panorama not found in window.locations, using original markers');
+      if (!foundLocation) {
+        console.log('Panorama not found in window.locations, using empty markers array');
       }
     } else {
-      console.log('window.locations not available');
+      console.log('window.locations not available, using empty markers array');
     }
 
     markersPlugin.setMarkers(
@@ -289,18 +284,6 @@ export class Panorama implements PanoramaType {
           }
         }
         console.log('No matching option found in window.locations for optionId:', optionId);
-
-        // Fallback: try to find by panorama image if optionId looks like old panorama ID
-        console.log('Trying fallback: searching by panorama image...');
-        // This is a temporary fallback for old markers
-        // In the future, all markers should use option.id
-
-        // For now, let's just log the current panorama to understand the context
-        const currentPanorama = this.getCurrentPanorama();
-        console.log('Current panorama:', currentPanorama);
-        if (currentPanorama && currentPanorama.markers) {
-          console.log('Current panorama markers:', currentPanorama.markers);
-        }
       } else {
         console.log('window.locations is also not available');
       }
@@ -356,12 +339,27 @@ export class Panorama implements PanoramaType {
       return;
     }
 
-    // Ensure cameraPosition exists with defaults
-    const cameraPosition = panorama.cameraPosition || {
+    // Get cameraPosition from location (now stored at location level)
+    let cameraPosition = {
       yaw: 0,
       pitch: 0,
       fov: 45,
     };
+
+    // Try to find location containing this panorama
+    if (window.locations && window.locations.length > 0) {
+      for (const location of window.locations) {
+        const foundOption = location.options.find((option) => option.panorama.image === panoramaUrl);
+        if (foundOption && location.cameraPosition) {
+          cameraPosition = {
+            yaw: location.cameraPosition.yaw,
+            pitch: location.cameraPosition.pitch,
+            fov: location.cameraPosition.fov || 45,
+          };
+          break;
+        }
+      }
+    }
 
     await this.viewer.setPanorama(this.__formatPanoramaPath(panoramaUrl), {
       speed: 0,
@@ -397,10 +395,26 @@ export class Panorama implements PanoramaType {
         imgElement.onload = async () => {
           await this.__delay(100);
 
+          // Get cameraPosition from location
+          let cameraPosition = { yaw: 0, pitch: 0, fov: 45 };
+          if (window.locations && window.locations.length > 0) {
+            for (const location of window.locations) {
+              const foundOption = location.options.find((option) => option.panorama.image === panorama.image);
+              if (foundOption && location.cameraPosition) {
+                cameraPosition = {
+                  yaw: location.cameraPosition.yaw,
+                  pitch: location.cameraPosition.pitch,
+                  fov: location.cameraPosition.fov || 45,
+                };
+                break;
+              }
+            }
+          }
+
           await this.viewer.setPanorama(textureData.panorama, {
             panoData: textureData.panoData,
             speed: 0,
-            zoom: !changeTexture ? panorama.cameraPosition.fov || 45 : undefined,
+            zoom: !changeTexture ? cameraPosition.fov || 45 : undefined,
             showLoader: false,
             transition: false,
           });
@@ -408,7 +422,7 @@ export class Panorama implements PanoramaType {
           this.renderMiniMap(panorama);
           this.__setMarkers(panorama);
 
-          if (panorama && isRotate) this.viewer.rotate(panorama.cameraPosition);
+          if (panorama && isRotate) this.viewer.rotate(cameraPosition);
           if (cb) cb();
 
           if (changeTexture) {
@@ -529,42 +543,67 @@ export class Panorama implements PanoramaType {
   }
 
   private renderMiniMap(panorama: PanoramaDataType) {
-    if (!panorama.minimap || !panorama.minimap.src) return;
+    // Get minimap from location (now stored at location level)
+    let currentLocationMinimap: any = null;
+    let currentLocationCameraPosition: any = null;
+
+    if (window.locations && window.locations.length > 0) {
+      for (const location of window.locations) {
+        const foundOption = location.options.find((option) => option.panorama.image === panorama.image);
+        if (foundOption) {
+          currentLocationMinimap = location.minimap;
+          currentLocationCameraPosition = location.cameraPosition;
+          break;
+        }
+      }
+    }
+
+    if (!currentLocationMinimap || !currentLocationMinimap.src) return;
 
     let miniMap = document.getElementById('minimap');
 
     if (!miniMap) {
       miniMap = document.createElement('div');
       miniMap.id = 'minimap';
-      miniMap.innerHTML = miniMapHTML(panorama.minimap.src);
+      miniMap.innerHTML = miniMapHTML(currentLocationMinimap.src);
       this.viewer.container.appendChild(miniMap);
     }
 
     const imageMap = miniMap.querySelector('img')!;
 
-    if (imageMap.src !== panorama.minimap.src) {
-      if (regexPath.test(panorama.minimap.src)) imageMap.src = panorama.minimap.src;
-      else imageMap.src = `${window.pathProject}/minimap/${panorama.minimap.src}`;
+    if (imageMap.src !== currentLocationMinimap.src) {
+      if (regexPath.test(currentLocationMinimap.src)) imageMap.src = currentLocationMinimap.src;
+      else imageMap.src = `${window.pathProject}/minimap/${currentLocationMinimap.src}`;
     }
 
-    const panoramasMiniMap = this._panoramas.filter((pano) => pano.minimap && pano.minimap.src);
+    // Get all locations with minimap
+    const locationsWithMinimap = (window.locations || []).filter((loc) => loc.minimap && loc.minimap.src);
 
     miniMap.querySelectorAll('.marker-location-mini-map').forEach((element) => element.remove());
 
-    panoramasMiniMap.forEach((pano) => {
+    locationsWithMinimap.forEach((location) => {
+      if (!location.minimap) return;
+
       const divMarker = document.createElement('div');
       divMarker.classList.add('absolute');
       divMarker.classList.add('marker-location-mini-map');
-      divMarker.style.left = `${pano.minimap!.position.x}%`;
-      divMarker.style.top = `${pano.minimap!.position.y}%`;
+      divMarker.style.left = `${location.minimap.position.x}%`;
+      divMarker.style.top = `${location.minimap.position.y}%`;
       divMarker.style.transform = 'translate(-50%, -50%)';
-      divMarker.innerHTML = markerMiniMapLocationHTML(panorama.image === pano.image);
+
+      // Check if this location contains the current panorama
+      const isCurrentLocation = location.options.some((option) => option.panorama.image === panorama.image);
+      divMarker.innerHTML = markerMiniMapLocationHTML(isCurrentLocation);
       miniMap.firstElementChild!.appendChild(divMarker);
 
-      if (panorama.image !== pano.image) {
-        divMarker.querySelector('#point_marker_location_mini_map')!.addEventListener('click', () => {
-          this.setPanorama(pano.image);
-        });
+      if (!isCurrentLocation) {
+        // Find first panorama image from this location
+        const firstOptionPanoramaImage = location.options[0]?.panorama.image;
+        if (firstOptionPanoramaImage) {
+          divMarker.querySelector('#point_marker_location_mini_map')!.addEventListener('click', () => {
+            this.setPanorama(firstOptionPanoramaImage);
+          });
+        }
         return;
       }
 
@@ -575,16 +614,18 @@ export class Panorama implements PanoramaType {
       const path = divMarker.querySelector('path');
       const previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
 
-      const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian, radius);
-      const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian + 130 * (Math.PI / 180), radius);
+      const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + location.minimap.radian, radius);
+      const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + location.minimap.radian + 130 * (Math.PI / 180), radius);
 
       const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
 
       path?.setAttribute('d', d);
 
       this.viewer.addEventListener('position-updated', ({ position }) => {
-        const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian + position.yaw - pano.cameraPosition.yaw, radius);
-        const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + pano.minimap!.radian + position.yaw - pano.cameraPosition.yaw + 130 * (Math.PI / 180), radius);
+        if (!location.minimap) return;
+        const cameraYaw = currentLocationCameraPosition?.yaw || 0;
+        const [xA, yA] = calculateEndPosition(xStart, yStart, previousRadian + location.minimap.radian + position.yaw - cameraYaw, radius);
+        const [xB, yB] = calculateEndPosition(xStart, yStart, previousRadian + location.minimap.radian + position.yaw - cameraYaw + 130 * (Math.PI / 180), radius);
 
         const d = `M 40 40 L ${xA} ${yA} A ${radius} ${radius} 0 0 1 ${xB} ${yB} Z`;
 

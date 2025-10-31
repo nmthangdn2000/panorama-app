@@ -40,7 +40,11 @@ const renderProject = () => {
       return;
     }
 
-    const widthPanorama = panoramas[0].metadata?.width;
+    // Get metadata from location (now stored at location level)
+    let widthPanorama: number | undefined;
+    if (window.locations && window.locations.length > 0) {
+      widthPanorama = window.locations[0].metadata?.width;
+    }
 
     const faceSize = widthPanorama / 4;
     const tileSizes: number[] = [];
@@ -151,17 +155,11 @@ const handleRenderProject = async (size: number) => {
   if (window.locations && window.locations.length > 0) {
     updatedLocations = window.locations.map((location) => ({
       ...location,
-      options: location.options.map((option) => ({
-        ...option,
-        panorama: {
-          ...option.panorama,
-          metadata: {
-            ...option.panorama.metadata,
-            faceSize: Number(size),
-            nbTiles: option.panorama.metadata ? Math.floor(option.panorama.metadata.width / 4 / size) : 0,
-          },
-        },
-      })),
+      metadata: {
+        ...location.metadata,
+        faceSize: Number(size),
+        nbTiles: location.metadata ? Math.floor(location.metadata.width / 4 / size) : 0,
+      },
     }));
   }
 

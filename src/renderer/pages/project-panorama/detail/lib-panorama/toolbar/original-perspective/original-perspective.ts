@@ -93,23 +93,38 @@ export class OriginalPerspective implements ToolbarDebugHTML {
 
           if (!currentPanorama) return;
 
-          const index = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
-          if (index < 0) return;
-
-          this.panoramas[index].cameraPosition = this.viewer.getPosition();
-          this.panoramas[index].cameraPosition.fov = this.viewer.getZoomLevel();
-          this.panoramas[index].thumbnail = await new Promise((resolve) => {
-            (document.querySelector('.psv-container canvas')! as HTMLCanvasElement).toBlob((blob) => {
-              if (!blob) {
-                resolve(this.panoramas[index].thumbnail);
-                return;
+          // Update cameraPosition at location level (now stored at location level)
+          if (window.locations && window.locations.length > 0) {
+            for (const location of window.locations) {
+              const foundOption = location.options.find((option) => option.panorama.id === currentPanorama.id);
+              if (foundOption) {
+                const position = this.viewer.getPosition();
+                location.cameraPosition = {
+                  yaw: position.yaw,
+                  pitch: position.pitch,
+                  fov: this.viewer.getZoomLevel(),
+                };
+                break;
               }
+            }
+          }
 
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result! as string);
-              reader.readAsDataURL(blob);
+          // Update thumbnail (still on panorama)
+          const index = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
+          if (index >= 0) {
+            this.panoramas[index].thumbnail = await new Promise((resolve) => {
+              (document.querySelector('.psv-container canvas')! as HTMLCanvasElement).toBlob((blob) => {
+                if (!blob) {
+                  resolve(this.panoramas[index].thumbnail);
+                  return;
+                }
+
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result! as string);
+                reader.readAsDataURL(blob);
+              });
             });
-          });
+          }
 
           // opacity 1 to 0.5 to 1
           this.viewer.container.style.transition = 'opacity 0.3s ease-in-out';

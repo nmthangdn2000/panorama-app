@@ -10,7 +10,10 @@ export const convertPanoramasToLocations = (panoramas: PanoramaDataType[]): Pano
   const locationMap = new Map<string, PanoramaDataType[]>();
 
   panoramas.forEach((panorama) => {
-    const positionKey = `${panorama.pointPosition.bottom}-${panorama.pointPosition.left}`;
+    // For backward compatibility: panoramas in old format may have pointPosition
+    // If not, use default position
+    const pointPosition = (panorama as any).pointPosition || { bottom: '50%', left: '50%' };
+    const positionKey = `${pointPosition.bottom}-${pointPosition.left}`;
     if (!locationMap.has(positionKey)) {
       locationMap.set(positionKey, []);
     }
@@ -28,13 +31,29 @@ export const convertPanoramasToLocations = (panoramas: PanoramaDataType[]): Pano
       panorama: panorama,
     }));
 
+    // Get markers, cameraPosition, minimap, metadata from the first panorama
+    // Note: For backward compatibility, old panoramas might have these fields
+    const markers = (firstPanorama as any).markers || [];
+    const cameraPosition = (firstPanorama as any).cameraPosition || {
+      yaw: 0,
+      pitch: 0,
+      fov: 45,
+    };
+    const minimap = (firstPanorama as any).minimap;
+    const metadata = (firstPanorama as any).metadata;
+    const pointPosition = (firstPanorama as any).pointPosition || { bottom: '50%', left: '50%' };
+
     return {
       id: locationId,
       name: firstPanorama.name || `Location ${index + 1}`,
       description: firstPanorama.description || `Location with ${panoramaGroup.length} options`,
       defaultOption: options[0].id,
-      pointPosition: firstPanorama.pointPosition,
+      pointPosition: pointPosition,
+      cameraPosition: cameraPosition,
+      minimap: minimap,
+      metadata: metadata,
       options: options,
+      markers: markers,
     };
   });
 };
@@ -49,19 +68,22 @@ export const convertLocationsToPanoramas = (locations: PanoramaLocationType[]): 
 
   locations.forEach((location) => {
     location.options.forEach((option) => {
-      // Ensure panorama has required fields with defaults
-      const panorama = {
+      // For backward compatibility, add location-level properties to panorama
+      // Note: These properties are now stored at location level, not panorama level
+      const panorama: any = {
         ...option.panorama,
-        cameraPosition: option.panorama.cameraPosition || {
+        // Location-level properties are now on location, but we add them to panorama for backward compatibility
+        pointPosition: location.pointPosition || { bottom: '50%', left: '50%' },
+        cameraPosition: location.cameraPosition || {
           yaw: 0,
           pitch: 0,
           fov: 45,
         },
-        pointPosition: option.panorama.pointPosition || {
-          bottom: '50%',
-          left: '50%',
-        },
-        markers: option.panorama.markers || [],
+        minimap: location.minimap,
+        metadata: location.metadata,
+        // For backward compatibility, we include location markers on panorama
+        // but they should not be used for new code
+        markers: location.markers || [],
       };
       panoramas.push(panorama);
     });

@@ -118,6 +118,24 @@ export type EventListenerType = {
 export type PanoramaDataType = {
   id: string;
   name: string;
+  description: string;
+  image: string;
+  thumbnail: string;
+  // this field is used to determine if the panorama is new or not
+  isNew?: boolean;
+};
+
+export type PanoramaOptionType = {
+  id: string;
+  name: string;
+  panorama: PanoramaDataType;
+};
+
+export type PanoramaLocationType = {
+  id: string;
+  name: string;
+  description: string;
+  defaultOption: string;
   pointPosition: {
     bottom: string;
     left: string;
@@ -137,35 +155,16 @@ export type PanoramaDataType = {
     radian: number;
     d: string;
   };
-  description: string;
-  image: string;
-  thumbnail: string;
-  markers: (MarkerConfig & {
-    toPanorama?: string;
-    toPanoramaTitle?: string;
-  })[];
   metadata?: sharp.Metadata & {
     // Rendering metadata for cube map generation
     faceSize?: number;
     nbTiles?: number;
   };
-  // this field is used to determine if the panorama is new or not
-  isNew?: boolean;
-};
-
-export type PanoramaOptionType = {
-  id: string;
-  name: string;
-  panorama: PanoramaDataType;
-};
-
-export type PanoramaLocationType = {
-  id: string;
-  name: string;
-  description: string;
-  defaultOption: string;
-  pointPosition: { bottom: string; left: string };
   options: PanoramaOptionType[];
+  markers: (MarkerConfig & {
+    toPanorama?: string;
+    toPanoramaTitle?: string;
+  })[];
 };
 
 export type ToolbarDebugHTML = {

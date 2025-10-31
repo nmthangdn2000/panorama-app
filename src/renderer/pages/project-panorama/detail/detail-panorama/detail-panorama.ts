@@ -25,13 +25,9 @@ const openDialogSelectImages = () => {
       const newPanorama: PanoramaDataType = {
         id: nanoid(),
         name: path.name.substring(0, lastDotIndex),
-        pointPosition: { bottom: '50%', left: '50%' },
-        cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
         description: `This is the ${path.name} panorama`,
         image: `file://${path.path}`,
         thumbnail: '1.png',
-        markers: [],
-        metadata: path.metadata,
         isNew: true,
       };
 
@@ -42,13 +38,17 @@ const openDialogSelectImages = () => {
       };
 
       // Create separate location for each image
+      // pointPosition, cameraPosition, minimap, metadata are now at location level
       const newLocation: PanoramaLocationType = {
         id: nanoid(),
         name: `Location ${window.locations.length + 1}`,
         description: `Location with ${path.name}`,
         defaultOption: newOption.id,
         pointPosition: { bottom: '50%', left: '50%' },
+        cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
+        metadata: path.metadata,
         options: [newOption],
+        markers: [],
       };
 
       window.locations.push(newLocation);
@@ -91,9 +91,9 @@ const renderLocationsView = () => {
 
   const html = window.locations!.map((location, index) => {
     console.log(`Rendering location ${index + 1}:`, location.name);
-    // Get all panoramas from this location to check sizes
-    const allPanoramas = location.options.map((opt) => opt.panorama);
-    const sizes = allPanoramas.map((p) => (p.metadata ? `${p.metadata.width}x${p.metadata.height}` : 'unknown'));
+    // Get sizes from location metadata (now stored at location level)
+    const size = location.metadata ? `${location.metadata.width}x${location.metadata.height}` : 'unknown';
+    const sizes = [size];
     const uniqueSizes = [...new Set(sizes)];
 
     // Use the first size for color (or generate if mixed sizes)
@@ -246,13 +246,9 @@ window.onAddOption = async (locationId: string) => {
   const newPanorama: PanoramaDataType = {
     id: nanoid(),
     name: path.name.substring(0, lastDotIndex),
-    pointPosition: { bottom: '50%', left: '50%' },
-    cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
     description: `This is the ${path.name} panorama`,
     image: `file://${path.path}`,
     thumbnail: '1.png',
-    markers: [],
-    metadata: path.metadata,
     isNew: true,
   };
 
@@ -261,6 +257,11 @@ window.onAddOption = async (locationId: string) => {
     name: `Option ${location.options.length + 1}`,
     panorama: newPanorama,
   };
+
+  // Update location metadata if needed (keep existing cameraPosition, pointPosition, minimap)
+  if (path.metadata && !location.metadata) {
+    location.metadata = path.metadata;
+  }
 
   location.options.push(newOption);
   renderListImage();

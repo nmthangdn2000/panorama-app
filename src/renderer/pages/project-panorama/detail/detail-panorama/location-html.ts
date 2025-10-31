@@ -23,6 +23,7 @@ export const itemLocationPanorama = (location: PanoramaLocationType, borderColor
             <div class="w-3 h-3 rounded-full" style="background-color: ${borderColor}"></div>
             <h3 class="text-lg font-semibold text-gray-900 dark:text-white">${location.name}</h3>
             <span class="text-sm text-gray-500 dark:text-gray-400">(${location.options.length} options)</span>
+            ${location.markers && location.markers.length > 0 ? `<span class="text-sm text-blue-500 dark:text-blue-400 ml-2">${location.markers.length} markers</span>` : ''}
           </div>
           <div class="flex items-center gap-2">
             <button onclick="onEditLocationName('${location.id}')" title="Edit Location Name" type="button" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300">
@@ -105,6 +106,15 @@ export const itemOptionPanorama = (locationId: string, optionId: string, panoram
   let src = panorama.image;
   if (!regex.test(src)) src = `${window.pathProject}/panoramas/${src}`;
 
+  // Get metadata from location (now stored at location level)
+  let metadata: any = null;
+  if (window.locations && window.locations.length > 0) {
+    const location = window.locations.find((loc) => loc.id === locationId);
+    if (location) {
+      metadata = location.metadata;
+    }
+  }
+
   return `
     <div class="option-panorama-content" data-location-id="${locationId}" data-option-id="${optionId}">
       <div class="flex flex-col md:flex-row gap-4">
@@ -132,9 +142,7 @@ export const itemOptionPanorama = (locationId: string, optionId: string, panoram
           <p class="text-sm text-gray-600 dark:text-gray-400 mb-2">${panorama.description}</p>
 
           <div class="flex items-center gap-4 text-sm text-gray-500 dark:text-gray-400">
-            <span>${panorama.metadata?.width || 0} x ${panorama.metadata?.height || 0} px</span>
-            <span>•</span>
-            <span>${panorama.markers?.length || 0} markers</span>
+            <span>${metadata?.width || 0} x ${metadata?.height || 0} px</span>
           </div>
         </div>
 

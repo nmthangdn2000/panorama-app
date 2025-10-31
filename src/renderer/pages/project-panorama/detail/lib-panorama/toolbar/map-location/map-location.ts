@@ -29,18 +29,21 @@ export class MapLocation implements ToolbarDebugHTML {
     this.setPanorama = setPanorama;
     this.getCurrentPanorama = getCurrentPanorama;
 
-    this.panoramas.forEach((panorama) => {
-      if (panorama.minimap && panorama.minimap.src) {
-        const isExist = this.miniMaps.find((src) => src.split('/').pop() === panorama.minimap?.src);
+    // Get minimaps from locations (now stored at location level)
+    if (window.locations && window.locations.length > 0) {
+      window.locations.forEach((location) => {
+        if (location.minimap && location.minimap.src) {
+          const isExist = this.miniMaps.find((src) => src.split('/').pop() === location.minimap?.src);
 
-        if (!isExist) {
-          let src = '';
-          if (regexPath.test(panorama.minimap.src)) src = panorama.minimap.src;
-          else src = `${window.pathProject}/minimap/${panorama.minimap.src}`;
-          this.miniMaps.push(src);
+          if (!isExist) {
+            let src = '';
+            if (regexPath.test(location.minimap.src)) src = location.minimap.src;
+            else src = `${window.pathProject}/minimap/${location.minimap.src}`;
+            this.miniMaps.push(src);
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   initialize() {
@@ -194,11 +197,14 @@ export class MapLocation implements ToolbarDebugHTML {
     });
 
     window.removeItemMiniMap = (element: Element, src: string) => {
-      this.panoramas.forEach((panorama) => {
-        if (panorama.minimap && panorama.minimap.src.split('/').pop() === (regexPath.test(src) ? src.split('/').pop() : src)) {
-          delete panorama.minimap;
-        }
-      });
+      // Remove minimap from locations (now stored at location level)
+      if (window.locations && window.locations.length > 0) {
+        window.locations.forEach((location) => {
+          if (location.minimap && location.minimap.src.split('/').pop() === (regexPath.test(src) ? src.split('/').pop() : src)) {
+            delete location.minimap;
+          }
+        });
+      }
 
       element.parentElement?.parentElement?.remove();
 
@@ -262,15 +268,18 @@ export class MapLocation implements ToolbarDebugHTML {
 
     if (!image.src) return;
 
-    const panoramasMiniMap = this.panoramas.filter((panorama) => panorama.minimap && panorama.minimap.src === image.src.split('/').pop());
+    // Get locations with minimap matching the image src (now stored at location level)
+    const locationsWithMinimap = (window.locations || []).filter(
+      (location) => location.minimap && location.minimap.src === image.src.split('/').pop()
+    );
 
-    panoramasMiniMap.forEach((panorama) => {
-      if (!panorama.minimap) return;
+    locationsWithMinimap.forEach((location) => {
+      if (!location.minimap) return;
 
       const divMarker = document.createElement('div');
       divMarker.classList.add('absolute');
-      divMarker.style.left = `${panorama.minimap.position.x}%`;
-      divMarker.style.top = `${panorama.minimap.position.y}%`;
+      divMarker.style.left = `${location.minimap.position.x}%`;
+      divMarker.style.top = `${location.minimap.position.y}%`;
       divMarker.style.transform = 'translate(-50%, -50%)';
       divImage.style.zIndex = '20';
       divMarker.innerHTML = markerLocationHTML();
@@ -279,8 +288,8 @@ export class MapLocation implements ToolbarDebugHTML {
 
       const path = divMarker.querySelector('path')!;
 
-      path.dataset.previousRadian = panorama.minimap.radian.toString();
-      path.setAttribute('d', panorama.minimap.d);
+      path.dataset.previousRadian = location.minimap.radian.toString();
+      path.setAttribute('d', location.minimap.d);
     });
   }
 
@@ -300,9 +309,19 @@ export class MapLocation implements ToolbarDebugHTML {
 
       if (!panoramaId) return;
 
-      const panoramaIndex = this.panoramas.findIndex((panorama) => panorama.id === panoramaId);
+      // Find location containing the panorama
+      let foundLocation: any = null;
+      if (window.locations && window.locations.length > 0) {
+        for (const location of window.locations) {
+          const foundOption = location.options.find((option) => option.panorama.id === panoramaId);
+          if (foundOption) {
+            foundLocation = location;
+            break;
+          }
+        }
+      }
 
-      if (panoramaIndex < 0) return;
+      if (!foundLocation) return;
 
       const markers = divImage.querySelectorAll('.marker_location_map')! as NodeListOf<HTMLElement>;
       markers.forEach((marker) => {
@@ -338,7 +357,7 @@ export class MapLocation implements ToolbarDebugHTML {
       let previousRadian = parseFloat(path ? path.dataset.previousRadian! : '0');
       let radian = 0;
 
-      this.updatePanoramaMiniMap(panoramaIndex, image, previousRadian, radian, path?.getAttribute('d') || '', xCenterPercent, yCenterPercent);
+      this.updateLocationMiniMap(foundLocation, image, previousRadian, radian, path?.getAttribute('d') || '', xCenterPercent, yCenterPercent);
 
       divMarker.addEventListener('mousedown', (event) => {
         const marker = event.target as HTMLElement;
@@ -378,7 +397,7 @@ export class MapLocation implements ToolbarDebugHTML {
         document.addEventListener('mousemove', onMouseMove);
         document.addEventListener('mouseup', () => {
           onMouseUp();
-          this.updatePanoramaMiniMap(panoramaIndex, image, previousRadian, radian, path?.getAttribute('d') || '', xCenterPercent, yCenterPercent);
+          this.updateLocationMiniMap(foundLocation, image, previousRadian, radian, path?.getAttribute('d') || '', xCenterPercent, yCenterPercent);
         });
 
         document.addEventListener('mouseleave', onMouseUp);
@@ -421,9 +440,10 @@ export class MapLocation implements ToolbarDebugHTML {
     modalBodyMapLocation.appendChild(divBodyMapMain);
   }
 
-  private updatePanoramaMiniMap(panoramaIndex: number, image: HTMLImageElement, previousRadian: number, radian: number, d: string, xCenterPercent: number, yCenterPercent: number) {
-    if (!this.panoramas[panoramaIndex].minimap) {
-      this.panoramas[panoramaIndex].minimap = {
+  private updateLocationMiniMap(location: any, image: HTMLImageElement, previousRadian: number, radian: number, d: string, xCenterPercent: number, yCenterPercent: number) {
+    // Update minimap at location level (now stored at location level)
+    if (!location.minimap) {
+      location.minimap = {
         src: '',
         position: {
           x: 0,
@@ -434,13 +454,13 @@ export class MapLocation implements ToolbarDebugHTML {
       };
     }
 
-    this.panoramas[panoramaIndex].minimap!.radian = previousRadian + radian;
-    this.panoramas[panoramaIndex].minimap!.d = d;
-    this.panoramas[panoramaIndex].minimap!.position = {
+    location.minimap.radian = previousRadian + radian;
+    location.minimap.d = d;
+    location.minimap.position = {
       x: xCenterPercent,
       y: yCenterPercent,
     };
-    this.panoramas[panoramaIndex].minimap!.src = image.src;
+    location.minimap.src = image.src;
 
     saveProjectPanorama();
   }
