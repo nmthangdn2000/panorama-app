@@ -3,6 +3,7 @@ import { join } from 'path';
 import { parentPort } from 'worker_threads';
 import { RenderProject } from './type';
 import Jimp from 'jimp';
+import { PanoramaLocationType, DataVirtualTourType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 
 parentPort!.on('message', ({ path, name, project }: { path: string; name: string; project: RenderProject }) => {
   return saveProject(path, name, project);
@@ -34,9 +35,43 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
     name: string;
   }[] = [];
 
-  // Get all panoramas from locations if available, otherwise use panoramas
+  // Get panoramaLocations from DataVirtualTourType or use locations directly if it's an array (old structure)
+  let panoramaLocations: PanoramaLocationType[] = [];
+  let dataVirtualTour: DataVirtualTourType | null = null;
+
+  if (project.locations) {
+    if (Array.isArray(project.locations)) {
+      // Old structure: array of PanoramaLocationType
+      panoramaLocations = project.locations;
+    } else if ('panoramaLocations' in project.locations) {
+      // New structure: DataVirtualTourType
+      dataVirtualTour = project.locations as DataVirtualTourType;
+      panoramaLocations = dataVirtualTour.panoramaLocations;
+    }
+  }
+
+  // Get all panoramas from panoramaLocations if available, otherwise use panoramas
   const allPanoramas =
-    project.locations && project.locations.length > 0 ? project.locations.flatMap((location) => location.options.map((option) => option.panorama)) : project.panoramas || [];
+    panoramaLocations && panoramaLocations.length > 0
+      ? panoramaLocations.flatMap((location) => location.options.map((option) => option.panorama))
+      : project.panoramas || [];
+
+  // Process minimaps from panoramaLocations
+  if (panoramaLocations && panoramaLocations.length > 0) {
+    panoramaLocations.forEach((location: PanoramaLocationType) => {
+      if (location.minimap && location.minimap.src) {
+        const isExist = listMinimap.find((m) => m.path === location.minimap?.src);
+        if (!isExist && regexPath.test(location.minimap.src)) {
+          const name = location.minimap.src.split(/[\\/]/).pop()!.split('.')[0];
+          listMinimap.push({
+            path: location.minimap.src,
+            name: `${name}.jpg`,
+          });
+          location.minimap.src = `${name}.jpg`;
+        }
+      }
+    });
+  }
 
   const newPanoramas = await Promise.all(
     allPanoramas.map(async (panorama) => {
@@ -72,16 +107,18 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
         console.log('Image already filename, keeping as is');
       }
 
-      if (panorama.minimap && panorama.minimap.src) {
-        const isExist = listMinimap.find((m) => m.path === panorama.minimap?.src);
-        if (!isExist && regexPath.test(panorama.minimap.src)) {
-          const name = panorama.minimap.src.split(/[\\/]/).pop()!.split('.')[0];
+      // Note: minimap is now at location level, not panorama level
+      // This check is for backward compatibility with old structure
+      if (panorama.minimap && (panorama.minimap as any).src) {
+        const isExist = listMinimap.find((m) => m.path === (panorama.minimap as any)?.src);
+        if (!isExist && regexPath.test((panorama.minimap as any).src)) {
+          const name = (panorama.minimap as any).src.split(/[\\/]/).pop()!.split('.')[0];
           listMinimap.push({
-            path: panorama.minimap.src,
+            path: (panorama.minimap as any).src,
             name: `${name}.jpg`,
           });
 
-          panorama.minimap.src = `${name}.jpg`;
+          (panorama.minimap as any).src = `${name}.jpg`;
         }
       }
 
@@ -117,9 +154,34 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
     }),
   );
 
-  // Save only locations (new structure)
-  if (project.locations && project.locations.length > 0) {
-    writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(project.locations, null, 2));
+  // Collect unique minimaps from locations for DataVirtualTourType
+  const uniqueMinimaps = new Map<string, { id: string; src: string }>();
+  if (panoramaLocations && panoramaLocations.length > 0) {
+    panoramaLocations.forEach((location) => {
+      if (location.minimap && location.minimap.src) {
+        const minimapId = location.minimap.minimapId || location.minimap.src.split('.')[0];
+        const minimapSrc = location.minimap.src;
+        if (!uniqueMinimaps.has(minimapSrc)) {
+          uniqueMinimaps.set(minimapSrc, { id: minimapId, src: minimapSrc });
+        }
+      }
+    });
+  }
+
+  // Save locations as DataVirtualTourType (new structure)
+  if (panoramaLocations && panoramaLocations.length > 0) {
+    const dataVirtualTourToSave: DataVirtualTourType = dataVirtualTour
+      ? {
+          name: dataVirtualTour.name,
+          miniMaps: Array.from(uniqueMinimaps.values()),
+          panoramaLocations: panoramaLocations,
+        }
+      : {
+          name: name, // Use project name if not provided
+          miniMaps: Array.from(uniqueMinimaps.values()),
+          panoramaLocations: panoramaLocations,
+        };
+    writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(dataVirtualTourToSave, null, 2));
   } else {
     // Fallback: save panoramas.json for backward compatibility
     writeFileSync(join(pathProject, 'panoramas.json'), JSON.stringify(newPanoramas, null, 2));
@@ -157,9 +219,19 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
   const currentMinimap = readdirSync(join(path, name, 'minimap'));
 
   currentMinimap.forEach((cm) => {
-    const isExist = allPanoramas.find((p) => {
-      return p.minimap && p.minimap.src && p.minimap.src === cm;
-    });
+    // Check minimap from panoramaLocations (new structure)
+    let isExist = false;
+    if (panoramaLocations && panoramaLocations.length > 0) {
+      isExist = panoramaLocations.some((location: PanoramaLocationType) => {
+        return location.minimap && location.minimap.src && location.minimap.src === cm;
+      });
+    }
+    // Fallback: check from panoramas (old structure for backward compatibility)
+    if (!isExist) {
+      isExist = allPanoramas.some((p) => {
+        return p.minimap && (p.minimap as any).src && (p.minimap as any).src === cm;
+      });
+    }
 
     if (!isExist) {
       rmSync(join(path, name, 'minimap', cm));

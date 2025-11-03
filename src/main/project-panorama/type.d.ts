@@ -1,4 +1,4 @@
-import { PanoramaDataType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
+import { PanoramaDataType, PanoramaLocationType, DataVirtualTourType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 
 export type FileType = {
   name: string;
@@ -23,7 +23,7 @@ export type ProjectPanorama = {
   avatar: string;
   description?: string;
   panoramas?: PanoramaDataType[];
-  locations?: PanoramaLocationType[];
+  locations?: PanoramaLocationType[] | DataVirtualTourType; // Can be old structure (array) or new structure (DataVirtualTourType)
   panoramasImport?: PanoramaDataType[];
   imagesQuality?: string[];
   imagesLow?: string[];
@@ -33,5 +33,5 @@ export type ProjectPanorama = {
 
 export type RenderProject = {
   panoramas?: PanoramaDataType[];
-  locations?: PanoramaLocationType[];
+  locations?: PanoramaLocationType[] | DataVirtualTourType; // Can be old structure (array) or new structure (DataVirtualTourType)
 };

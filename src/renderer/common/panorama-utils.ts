@@ -39,6 +39,7 @@ export const convertPanoramasToLocations = (panoramas: PanoramaDataType[]): Pano
       pitch: 0,
       fov: 45,
     };
+    // minimap might be undefined or MinimapType from old panorama structure
     const minimap = (firstPanorama as any).minimap;
     const metadata = (firstPanorama as any).metadata;
     const pointPosition = (firstPanorama as any).pointPosition || { bottom: '50%', left: '50%' };

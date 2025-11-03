@@ -131,6 +131,17 @@ export type PanoramaOptionType = {
   panorama: PanoramaDataType;
 };
 
+export type MinimapType = {
+  minimapId?: string;
+  src?: string;
+  position: {
+    x: number;
+    y: number;
+  };
+  radian: number;
+  d: string;
+};
+
 export type PanoramaLocationType = {
   id: string;
   name: string;
@@ -146,15 +157,7 @@ export type PanoramaLocationType = {
     pitch: number;
     fov?: number;
   };
-  minimap?: {
-    src: string;
-    position: {
-      x: number;
-      y: number;
-    };
-    radian: number;
-    d: string;
-  };
+  minimap?: MinimapType;
   metadata?: sharp.Metadata & {
     // Rendering metadata for cube map generation
     faceSize?: number;
@@ -165,6 +168,15 @@ export type PanoramaLocationType = {
     toPanorama?: string;
     toPanoramaTitle?: string;
   })[];
+};
+
+export type DataVirtualTourType = {
+  name: string;
+  miniMaps: {
+    id: string;
+    src: string;
+  }[];
+  panoramaLocations: PanoramaLocationType[];
 };
 
 export type ToolbarDebugHTML = {

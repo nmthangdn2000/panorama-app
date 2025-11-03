@@ -565,15 +565,15 @@ export class Panorama implements PanoramaType {
     if (!miniMap) {
       miniMap = document.createElement('div');
       miniMap.id = 'minimap';
-      miniMap.innerHTML = miniMapHTML(currentLocationMinimap.src);
+      miniMap.innerHTML = miniMapHTML(currentLocationMinimap.src!);
       this.viewer.container.appendChild(miniMap);
     }
 
     const imageMap = miniMap.querySelector('img')!;
 
     if (imageMap.src !== currentLocationMinimap.src) {
-      if (regexPath.test(currentLocationMinimap.src)) imageMap.src = currentLocationMinimap.src;
-      else imageMap.src = `${window.pathProject}/minimap/${currentLocationMinimap.src}`;
+      if (regexPath.test(currentLocationMinimap.src!)) imageMap.src = currentLocationMinimap.src!;
+      else imageMap.src = `${window.pathProject}/minimap/${currentLocationMinimap.src!}`;
     }
 
     // Get all locations with minimap

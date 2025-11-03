@@ -24,7 +24,20 @@ const preload = async () => {
   }
 
   // Use new structure (locations) with fallback to old structure (panoramas)
-  window.locations = project.locations || [];
+  // Extract panoramaLocations from DataVirtualTourType if needed
+  if (project.locations) {
+    if (Array.isArray(project.locations)) {
+      // Old structure: array of PanoramaLocationType
+      window.locations = project.locations;
+    } else if ('panoramaLocations' in project.locations) {
+      // New structure: DataVirtualTourType - extract panoramaLocations
+      window.locations = project.locations.panoramaLocations;
+    } else {
+      window.locations = [];
+    }
+  } else {
+    window.locations = [];
+  }
   window.panoramas = project.panoramas || []; // Keep for backward compatibility
   window.pathProject = project.pathFolder;
 

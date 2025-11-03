@@ -11,6 +11,7 @@ import Jimp from 'jimp';
 import { is } from '@electron-toolkit/utils';
 import { isBase64Image } from '../utils/util';
 import { Worker } from 'worker_threads';
+import { PanoramaLocationType, DataVirtualTourType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
 
 let CHILD: ChildProcessWithoutNullStreams | undefined;
 const regexPath = /[\/\\]/;
@@ -130,8 +131,27 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
   const avatar = `file://${pathProject}/avatar.jpg`;
   const description = existsSync(join(pathProject, 'description.txt')) ? readFileSync(join(pathProject, 'description.txt'), 'utf-8') : '';
 
-  // Read only locations.json (new structure)
-  const locations = existsSync(join(pathProject, 'locations.json')) ? JSON.parse(readFileSync(join(pathProject, 'locations.json'), 'utf-8')) : [];
+  // Read locations.json (can be DataVirtualTourType or old structure PanoramaLocationType[])
+  const locationsData = existsSync(join(pathProject, 'locations.json')) ? JSON.parse(readFileSync(join(pathProject, 'locations.json'), 'utf-8')) : null;
+  
+  // Handle both new structure (DataVirtualTourType) and old structure (PanoramaLocationType[])
+  let locations: PanoramaLocationType[] | DataVirtualTourType | undefined;
+  if (locationsData) {
+    // Check if it's new structure (has panoramaLocations property) or old structure (array)
+    if (Array.isArray(locationsData)) {
+      // Old structure: array of PanoramaLocationType
+      locations = locationsData as PanoramaLocationType[];
+    } else if (locationsData.panoramaLocations) {
+      // New structure: DataVirtualTourType
+      locations = locationsData as DataVirtualTourType;
+    } else {
+      // Fallback: treat as old structure
+      locations = [];
+    }
+  } else {
+    locations = undefined;
+  }
+
   const panoramas: any[] = []; // Empty for compatibility
   const panoramasImport: any[] = []; // Empty for compatibility
 
@@ -330,13 +350,45 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     name: string;
   }[] = [];
 
+  // Get panoramaLocations from DataVirtualTourType or use locations directly if it's an array (old structure)
+  let panoramaLocations: PanoramaLocationType[] = [];
+  let dataVirtualTour: DataVirtualTourType | null = null;
+
+  if (project.locations) {
+    if (Array.isArray(project.locations)) {
+      // Old structure: array of PanoramaLocationType
+      panoramaLocations = project.locations;
+    } else if ('panoramaLocations' in project.locations) {
+      // New structure: DataVirtualTourType
+      dataVirtualTour = project.locations as DataVirtualTourType;
+      panoramaLocations = dataVirtualTour.panoramaLocations;
+    }
+  }
+
   // Prioritize panoramas with calculated metadata from renderer
   const allPanoramas =
     project.panoramas && project.panoramas.length > 0
       ? project.panoramas
-      : project.locations && project.locations.length > 0
-        ? project.locations.flatMap((location) => location.options.map((option) => option.panorama))
+      : panoramaLocations && panoramaLocations.length > 0
+        ? panoramaLocations.flatMap((location) => location.options.map((option) => option.panorama))
         : [];
+
+  // Process minimaps from panoramaLocations
+  if (panoramaLocations && panoramaLocations.length > 0) {
+    panoramaLocations.forEach((location: PanoramaLocationType) => {
+      if (location.minimap && location.minimap.src) {
+        const isExist = listMinimap.find((m) => m.path === location.minimap?.src);
+        if (!isExist && regexPath.test(location.minimap.src)) {
+          const name = location.minimap.src.split(/[\\/]/).pop()!.split('.')[0];
+          listMinimap.push({
+            path: location.minimap.src,
+            name: `${name}.jpg`,
+          });
+          location.minimap.src = `${name}.jpg`;
+        }
+      }
+    });
+  }
 
   // Process images for all panoramas
   await Promise.all(
@@ -371,16 +423,18 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         console.log('Image already filename, keeping as is');
       }
 
-      if (panorama.minimap && panorama.minimap.src) {
-        const isExist = listMinimap.find((m) => m.path === panorama.minimap?.src);
-        if (!isExist && regexPath.test(panorama.minimap.src)) {
-          const name = panorama.minimap.src.split(/[\\/]/).pop()!.split('.')[0];
+      // Note: minimap is now at location level, not panorama level
+      // This check is for backward compatibility with old structure
+      if (panorama.minimap && (panorama.minimap as any).src) {
+        const isExist = listMinimap.find((m) => m.path === (panorama.minimap as any)?.src);
+        if (!isExist && regexPath.test((panorama.minimap as any).src)) {
+          const name = (panorama.minimap as any).src.split(/[\\/]/).pop()!.split('.')[0];
           listMinimap.push({
-            path: panorama.minimap.src,
+            path: (panorama.minimap as any).src,
             name: `${name}.jpg`,
           });
 
-          panorama.minimap.src = `${name}.jpg`;
+          (panorama.minimap as any).src = `${name}.jpg`;
         }
       }
 
@@ -411,8 +465,35 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     }),
   );
 
-  // Save only locations (new structure)
-  writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(project.locations, null, 2));
+  // Collect unique minimaps from locations for DataVirtualTourType
+  const uniqueMinimaps = new Map<string, { id: string; src: string }>();
+  if (panoramaLocations && panoramaLocations.length > 0) {
+    panoramaLocations.forEach((location) => {
+      if (location.minimap && location.minimap.src) {
+        const minimapId = location.minimap.minimapId || location.minimap.src.split('.')[0];
+        const minimapSrc = location.minimap.src;
+        if (!uniqueMinimaps.has(minimapSrc)) {
+          uniqueMinimaps.set(minimapSrc, { id: minimapId, src: minimapSrc });
+        }
+      }
+    });
+  }
+
+  // Create or update DataVirtualTourType structure
+  const dataVirtualTourToSave: DataVirtualTourType = dataVirtualTour
+    ? {
+        name: dataVirtualTour.name,
+        miniMaps: Array.from(uniqueMinimaps.values()),
+        panoramaLocations: panoramaLocations,
+      }
+    : {
+        name: name, // Use project name if not provided
+        miniMaps: Array.from(uniqueMinimaps.values()),
+        panoramaLocations: panoramaLocations,
+      };
+
+  // Save locations as DataVirtualTourType (new structure)
+  writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(dataVirtualTourToSave, null, 2));
 
   // remove panorama
   const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
@@ -451,9 +532,19 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   const currentMinimap = readdirSync(join(path, name, 'minimap'));
 
   currentMinimap.forEach((cm) => {
-    const isExist = allPanoramas.find((p) => {
-      return p.minimap && p.minimap.src && p.minimap.src === cm;
-    });
+    // Check minimap from panoramaLocations (new structure)
+    let isExist = false;
+    if (panoramaLocations && panoramaLocations.length > 0) {
+      isExist = panoramaLocations.some((location: PanoramaLocationType) => {
+        return location.minimap && location.minimap.src && location.minimap.src === cm;
+      });
+    }
+    // Fallback: check from panoramas (old structure for backward compatibility)
+    if (!isExist) {
+      isExist = allPanoramas.some((p) => {
+        return p.minimap && (p.minimap as any).src && (p.minimap as any).src === cm;
+      });
+    }
 
     if (!isExist) {
       rmSync(join(path, name, 'minimap', cm));

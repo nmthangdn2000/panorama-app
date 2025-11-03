@@ -35,7 +35,7 @@ export class MapLocation implements ToolbarDebugHTML {
         if (location.minimap && location.minimap.src) {
           const isExist = this.miniMaps.find((src) => src.split('/').pop() === location.minimap?.src);
 
-          if (!isExist) {
+          if (!isExist && location.minimap.src) {
             let src = '';
             if (regexPath.test(location.minimap.src)) src = location.minimap.src;
             else src = `${window.pathProject}/minimap/${location.minimap.src}`;
@@ -200,7 +200,7 @@ export class MapLocation implements ToolbarDebugHTML {
       // Remove minimap from locations (now stored at location level)
       if (window.locations && window.locations.length > 0) {
         window.locations.forEach((location) => {
-          if (location.minimap && location.minimap.src.split('/').pop() === (regexPath.test(src) ? src.split('/').pop() : src)) {
+          if (location.minimap && location.minimap.src && location.minimap.src.split('/').pop() === (regexPath.test(src) ? src.split('/').pop() : src)) {
             delete location.minimap;
           }
         });
@@ -269,9 +269,7 @@ export class MapLocation implements ToolbarDebugHTML {
     if (!image.src) return;
 
     // Get locations with minimap matching the image src (now stored at location level)
-    const locationsWithMinimap = (window.locations || []).filter(
-      (location) => location.minimap && location.minimap.src === image.src.split('/').pop()
-    );
+    const locationsWithMinimap = (window.locations || []).filter((location) => location.minimap && location.minimap.src && location.minimap.src === image.src.split('/').pop());
 
     locationsWithMinimap.forEach((location) => {
       if (!location.minimap) return;
@@ -460,7 +458,9 @@ export class MapLocation implements ToolbarDebugHTML {
       x: xCenterPercent,
       y: yCenterPercent,
     };
-    location.minimap.src = image.src;
+    // Extract filename from image.src for minimap.src
+    const imageSrc = image.src.split('/').pop() || '';
+    location.minimap.src = imageSrc;
 
     saveProjectPanorama();
   }
