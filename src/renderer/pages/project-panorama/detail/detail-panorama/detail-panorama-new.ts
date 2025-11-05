@@ -59,7 +59,12 @@ const openDialogSelectImages = () => {
         pitch: 0,
         fov: 45,
       },
-      metadata: firstImageMetadata,
+      metadata: {
+        pc: {
+          width: firstImageMetadata.width,
+          height: firstImageMetadata.height,
+        },
+      },
       markers: [],
       options: newOptions,
     };
@@ -104,7 +109,9 @@ const renderLocationsView = () => {
   const html = window.locations!.map((location, index) => {
     console.log(`Rendering location ${index + 1}:`, location.name);
     // Get size from location metadata (now stored at location level)
-    const size = location.metadata ? `${location.metadata.width}x${location.metadata.height}` : 'unknown';
+    const width = location.metadata?.pc?.width || location.metadata?.tablet?.width || location.metadata?.mobile?.width;
+    const height = location.metadata?.pc?.height || location.metadata?.tablet?.height || location.metadata?.mobile?.height;
+    const size = width && height ? `${width}x${height}` : 'unknown';
     const uniqueSizes = [size];
 
     // Use the first size for color (or generate if mixed sizes)

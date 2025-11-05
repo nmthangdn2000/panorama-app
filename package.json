@@ -32,10 +32,10 @@
     "archiver": "^7.0.1",
     "electron-updater": "^6.3.0-alpha.4",
     "flowbite": "^2.3.0",
-    "jimp": "^0.22.12",
     "lottie-web": "^5.12.2",
     "nanoid": "^5.0.7",
     "sass": "^1.77.2",
+    "sharp": "^0.34.4",
     "slugify": "^1.6.6",
     "swiper": "^11.1.4"
   },

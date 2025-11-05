@@ -1,6 +1,5 @@
 import { Viewer } from '@photo-sphere-viewer/core';
 import { MarkerConfig } from '@photo-sphere-viewer/markers-plugin';
-import sharp from 'sharp';
 
 export type PanoramaType = {
   /**
@@ -158,17 +157,26 @@ export type PanoramaLocationType = {
     fov?: number;
   };
   minimap?: MinimapType;
-  metadata?: sharp.Metadata & {
+  metadata?: {
+    // Legacy: faceSize and nbTiles at top level (for backward compatibility)
+    faceSize?: number;
+    nbTiles?: number;
     // Rendering metadata for cube map generation per device
     pc?: {
+      width?: number;
+      height?: number;
       faceSize?: number;
       nbTiles?: number;
     };
     tablet?: {
+      width?: number;
+      height?: number;
       faceSize?: number;
       nbTiles?: number;
     };
     mobile?: {
+      width?: number;
+      height?: number;
       faceSize?: number;
       nbTiles?: number;
     };

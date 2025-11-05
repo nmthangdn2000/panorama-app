@@ -7,7 +7,7 @@ import { KEY_IPC } from '../../constants/common.constant';
 import archiver from 'archiver';
 import { platform } from 'os';
 import { getSetting } from '../setting/handle';
-import Jimp from 'jimp';
+import sharp from 'sharp';
 import { is } from '@electron-toolkit/utils';
 import { isBase64Image } from '../utils/util';
 import { Worker } from 'worker_threads';
@@ -35,14 +35,14 @@ export const checkPathProject = async () => {
 export const getFiles = async (filePaths: string[]): Promise<FileType[]> => {
   return Promise.all(
     filePaths.map(async (filePath) => {
-      const metadata = await Jimp.read(filePath);
+      const metadata = await sharp(filePath).metadata();
 
       return {
         name: filePath.split(/[\\/]/).pop()!,
         path: filePath,
         metadata: {
-          width: metadata.getWidth(),
-          height: metadata.getHeight(),
+          width: metadata.width!,
+          height: metadata.height!,
         },
       };
     }),
@@ -83,7 +83,7 @@ export const newProject = async ({ name, description, avatar }: NewProject) => {
   if (avatar && avatar.path) {
     const buffer = readFileSync(avatar.path);
     // convert to jpeg
-    await (await Jimp.read(buffer)).resize(400, Jimp.AUTO).quality(80).writeAsync(join(pathProject, 'avatar.jpg'));
+    await sharp(buffer).resize(400, null).jpeg({ quality: 80 }).toFile(join(pathProject, 'avatar.jpg'));
   }
 
   if (description) {
@@ -449,9 +449,10 @@ export const saveProject = async (name: string, project: RenderProject, isRender
           if (isRender) {
             // Read original image
             const buffer = readFileSync(panorama.image.substring(7));
-            const originalImage = await Jimp.read(buffer);
-            const originalWidth = originalImage.getWidth();
-            const originalHeight = originalImage.getHeight();
+            const originalImage = sharp(buffer);
+            const metadata = await originalImage.metadata();
+            const originalWidth = metadata.width!;
+            const originalHeight = metadata.height!;
 
             // Calculate sizes for different devices
             // Tablet: 4096x2048 (resize to target, maintain aspect ratio)
@@ -471,31 +472,30 @@ export const saveProject = async (name: string, project: RenderProject, isRender
             const finalMobileHeight = Math.round(originalHeight * mobileScale);
 
             // PC: Original size (copy to pc folder)
-            const pcImage = originalImage.clone();
-            await pcImage.writeAsync(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
-            await pcImage
+            await originalImage.clone().toFile(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
+            await originalImage
               .clone()
-              .resize(2000, Jimp.AUTO)
-              .quality(60)
-              .writeAsync(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
+              .resize(2000, null)
+              .jpeg({ quality: 60 })
+              .toFile(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
 
             // Tablet: Resized version
-            const tabletImage = originalImage.clone().resize(finalTabletWidth, finalTabletHeight);
-            await tabletImage.writeAsync(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
-            await tabletImage
+            await originalImage.clone().resize(finalTabletWidth, finalTabletHeight).toFile(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
+            await originalImage
               .clone()
-              .resize(2000, Jimp.AUTO)
-              .quality(60)
-              .writeAsync(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
+              .resize(finalTabletWidth, finalTabletHeight)
+              .resize(2000, null)
+              .jpeg({ quality: 60 })
+              .toFile(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
 
             // Mobile: Resized version
-            const mobileImage = originalImage.clone().resize(finalMobileWidth, finalMobileHeight);
-            await mobileImage.writeAsync(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
-            await mobileImage
+            await originalImage.clone().resize(finalMobileWidth, finalMobileHeight).toFile(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
+            await originalImage
               .clone()
-              .resize(2000, Jimp.AUTO)
-              .quality(60)
-              .writeAsync(join(path, name, 'mobile', 'panoramas-low', `${panorama.name}-low.jpg`));
+              .resize(finalMobileWidth, finalMobileHeight)
+              .resize(2000, null)
+              .jpeg({ quality: 60 })
+              .toFile(join(path, name, 'mobile', 'panoramas-low', `${panorama.name}-low.jpg`));
           }
         }
         // Always use filename instead of full path
@@ -515,9 +515,10 @@ export const saveProject = async (name: string, project: RenderProject, isRender
           if (existsSync(existingImagePath)) {
             try {
               const buffer = readFileSync(existingImagePath);
-              const originalImage = await Jimp.read(buffer);
-              const originalWidth = originalImage.getWidth();
-              const originalHeight = originalImage.getHeight();
+              const originalImage = sharp(buffer);
+              const metadata = await originalImage.metadata();
+              const originalWidth = metadata.width!;
+              const originalHeight = metadata.height!;
 
               // Calculate sizes for different devices
               // Tablet: ~1024px width (maintain aspect ratio)
@@ -529,31 +530,30 @@ export const saveProject = async (name: string, project: RenderProject, isRender
               const mobileHeight = Math.round((mobileWidth / originalWidth) * originalHeight);
 
               // PC: Original size (copy to pc folder)
-              const pcImage = originalImage.clone();
-              await pcImage.writeAsync(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
-              await pcImage
+              await originalImage.clone().toFile(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
+              await originalImage
                 .clone()
-                .resize(2000, Jimp.AUTO)
-                .quality(60)
-                .writeAsync(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
+                .resize(2000, null)
+                .jpeg({ quality: 60 })
+                .toFile(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
 
               // Tablet: Resized version
-              const tabletImage = originalImage.clone().resize(tabletWidth, tabletHeight);
-              await tabletImage.writeAsync(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
-              await tabletImage
+              await originalImage.clone().resize(tabletWidth, tabletHeight).toFile(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
+              await originalImage
                 .clone()
-                .resize(2000, Jimp.AUTO)
-                .quality(60)
-                .writeAsync(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
+                .resize(tabletWidth, tabletHeight)
+                .resize(2000, null)
+                .jpeg({ quality: 60 })
+                .toFile(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
 
               // Mobile: Resized version
-              const mobileImage = originalImage.clone().resize(mobileWidth, mobileHeight);
-              await mobileImage.writeAsync(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
-              await mobileImage
+              await originalImage.clone().resize(mobileWidth, mobileHeight).toFile(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
+              await originalImage
                 .clone()
-                .resize(2000, Jimp.AUTO)
-                .quality(60)
-                .writeAsync(join(path, name, 'mobile', 'panoramas-low', `${panorama.name}-low.jpg`));
+                .resize(mobileWidth, mobileHeight)
+                .resize(2000, null)
+                .jpeg({ quality: 60 })
+                .toFile(join(path, name, 'mobile', 'panoramas-low', `${panorama.name}-low.jpg`));
             } catch (error) {
               console.error(`Error processing existing image ${panorama.name}:`, error);
             }
@@ -581,33 +581,33 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         const base64Data = panorama.thumbnail.replace(/^data:image\/\w+;base64,/, '');
         const bufferThumbnail = Buffer.from(base64Data, 'base64');
 
-        const thumbnailImage = await Jimp.read(bufferThumbnail);
+        const thumbnailImage = sharp(bufferThumbnail);
 
         if (isRender) {
           // Create thumbnails for all devices
           await thumbnailImage
             .clone()
-            .resize(300, Jimp.AUTO)
-            .quality(80)
-            .writeAsync(join(path, name, 'pc', 'thumbnails', `${panorama.name}.jpg`));
+            .resize(300, null)
+            .jpeg({ quality: 80 })
+            .toFile(join(path, name, 'pc', 'thumbnails', `${panorama.name}.jpg`));
 
           await thumbnailImage
             .clone()
-            .resize(300, Jimp.AUTO)
-            .quality(80)
-            .writeAsync(join(path, name, 'tablet', 'thumbnails', `${panorama.name}.jpg`));
+            .resize(300, null)
+            .jpeg({ quality: 80 })
+            .toFile(join(path, name, 'tablet', 'thumbnails', `${panorama.name}.jpg`));
 
           await thumbnailImage
             .clone()
-            .resize(300, Jimp.AUTO)
-            .quality(80)
-            .writeAsync(join(path, name, 'mobile', 'thumbnails', `${panorama.name}.jpg`));
+            .resize(300, null)
+            .jpeg({ quality: 80 })
+            .toFile(join(path, name, 'mobile', 'thumbnails', `${panorama.name}.jpg`));
         } else {
           // Keep old structure for backward compatibility
           await thumbnailImage
-            .resize(300, Jimp.AUTO)
-            .quality(80)
-            .writeAsync(join(pathProject, 'thumbnails', `${panorama.name}.jpg`));
+            .resize(300, null)
+            .jpeg({ quality: 80 })
+            .toFile(join(pathProject, 'thumbnails', `${panorama.name}.jpg`));
         }
 
         panorama.thumbnail = `${panorama.name}.jpg`;
@@ -620,28 +620,28 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   await Promise.all(
     listMinimap.map(async (minimap) => {
       const bufferMiniMap = readFileSync(minimap.path.substring(7));
-      const minimapImage = await Jimp.read(bufferMiniMap);
+      const minimapImage = sharp(bufferMiniMap);
 
       if (isRender) {
         // Create minimaps for all devices
         await minimapImage
           .clone()
-          .resize(400, Jimp.AUTO)
-          .writeAsync(join(path, name, 'pc', 'minimap', minimap.name));
+          .resize(400, null)
+          .toFile(join(path, name, 'pc', 'minimap', minimap.name));
 
         await minimapImage
           .clone()
-          .resize(400, Jimp.AUTO)
-          .writeAsync(join(path, name, 'tablet', 'minimap', minimap.name));
+          .resize(400, null)
+          .toFile(join(path, name, 'tablet', 'minimap', minimap.name));
 
         await minimapImage
           .clone()
-          .resize(400, Jimp.AUTO)
-          .writeAsync(join(path, name, 'mobile', 'minimap', minimap.name));
+          .resize(400, null)
+          .toFile(join(path, name, 'mobile', 'minimap', minimap.name));
       } else {
         // Keep old structure for backward compatibility
         const pathMiniMap = join(pathProject, 'minimap', minimap.name);
-        await minimapImage.resize(400, Jimp.AUTO).writeAsync(pathMiniMap);
+        await minimapImage.resize(400, null).toFile(pathMiniMap);
       }
     }),
   );

@@ -41,7 +41,7 @@ export const itemImagePanorama = (id: string, src: string, name: string, metadat
         </button>
       </div>
       <p class="font-normal text-gray-700 dark:text-gray-400">
-        ${metadata.width} x ${metadata.height} px
+        ${metadata.width || metadata.pc?.width || metadata.tablet?.width || metadata.mobile?.width || 'unknown'} x ${metadata.height || metadata.pc?.height || metadata.tablet?.height || metadata.mobile?.height || 'unknown'} px
       </p>
     </div>
   </div>

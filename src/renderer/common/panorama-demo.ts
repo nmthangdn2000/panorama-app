@@ -16,7 +16,14 @@ export const demoLocationData: PanoramaLocationType[] = [
       pitch: -0.0004923518129509308,
       fov: 45,
     },
-    metadata: { width: 8192, height: 4096, faceSize: 256, nbTiles: 8 },
+    metadata: {
+      faceSize: 256,
+      nbTiles: 8,
+      pc: {
+        width: 8192,
+        height: 4096,
+      },
+    },
     markers: [
       {
         id: 'markercwi7hOwm9zXQTyLnXBN9i-1',
@@ -85,7 +92,14 @@ export const demoLocationData: PanoramaLocationType[] = [
       pitch: 0.1,
       fov: 45,
     },
-    metadata: { width: 8192, height: 4096, faceSize: 256, nbTiles: 8 },
+    metadata: {
+      faceSize: 256,
+      nbTiles: 8,
+      pc: {
+        width: 8192,
+        height: 4096,
+      },
+    },
     markers: [],
     options: [
       {

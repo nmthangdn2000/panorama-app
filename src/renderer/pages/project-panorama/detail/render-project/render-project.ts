@@ -44,8 +44,9 @@ const renderProject = () => {
     let widthPanorama: number | undefined;
     let heightPanorama: number | undefined;
     if (window.locations && window.locations.length > 0) {
-      widthPanorama = window.locations[0].metadata?.width;
-      heightPanorama = window.locations[0].metadata?.height;
+      const metadata = window.locations[0].metadata;
+      widthPanorama = metadata?.pc?.width || metadata?.tablet?.width || metadata?.mobile?.width;
+      heightPanorama = metadata?.pc?.height || metadata?.tablet?.height || metadata?.mobile?.height;
     }
 
     if (!widthPanorama || !heightPanorama) {
@@ -196,8 +197,9 @@ const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: 
         ...location.metadata,
         // PC faceSize and nbTiles
         pc: {
+          ...location.metadata?.pc,
           faceSize: Number(sizes.pc),
-          nbTiles: location.metadata ? Math.floor(location.metadata.width / 4 / sizes.pc) : 0,
+          nbTiles: location.metadata?.pc?.width ? Math.floor(location.metadata.pc.width / 4 / sizes.pc) : 0,
         },
         // Tablet faceSize and nbTiles (based on 4096x2048)
         tablet: {

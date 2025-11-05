@@ -46,7 +46,12 @@ const openDialogSelectImages = () => {
         defaultOption: newOption.id,
         pointPosition: { bottom: '50%', left: '50%' },
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
-        metadata: path.metadata,
+        metadata: {
+          pc: {
+            width: path.metadata.width,
+            height: path.metadata.height,
+          },
+        },
         options: [newOption],
         markers: [],
       };
@@ -92,7 +97,9 @@ const renderLocationsView = () => {
   const html = window.locations!.map((location, index) => {
     console.log(`Rendering location ${index + 1}:`, location.name);
     // Get sizes from location metadata (now stored at location level)
-    const size = location.metadata ? `${location.metadata.width}x${location.metadata.height}` : 'unknown';
+    const width = location.metadata?.pc?.width || location.metadata?.tablet?.width || location.metadata?.mobile?.width;
+    const height = location.metadata?.pc?.height || location.metadata?.tablet?.height || location.metadata?.mobile?.height;
+    const size = width && height ? `${width}x${height}` : 'unknown';
     const sizes = [size];
     const uniqueSizes = [...new Set(sizes)];
 
@@ -260,7 +267,12 @@ window.onAddOption = async (locationId: string) => {
 
   // Update location metadata if needed (keep existing cameraPosition, pointPosition, minimap)
   if (path.metadata && !location.metadata) {
-    location.metadata = path.metadata;
+    location.metadata = {
+      pc: {
+        width: path.metadata.width,
+        height: path.metadata.height,
+      },
+    };
   }
 
   location.options.push(newOption);
