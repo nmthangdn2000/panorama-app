@@ -28,13 +28,9 @@ const openDialogSelectImages = () => {
       const newPanorama: PanoramaDataType = {
         id: nanoid(),
         name: path.name.substring(0, lastDotIndex),
-        pointPosition: { bottom: '50%', left: '50%' },
-        cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
         description: `This is the ${path.name} panorama`,
         image: `file://${path.path}`,
         thumbnail: '1.png',
-        markers: [],
-        metadata: path.metadata,
         isNew: true,
       };
 
@@ -49,12 +45,22 @@ const openDialogSelectImages = () => {
     });
 
     // Create one location with all options
+    // Get metadata from first image if available
+    const firstImageMetadata = folderPath[0]?.metadata;
+    
     const newLocation: PanoramaLocationType = {
       id: nanoid(),
       name: `Location ${window.locations.length + 1}`,
       description: `Location with ${newOptions.length} panorama options`,
-      defaultOption: newOptions[0].id,
+      defaultOption: newOptions.length > 1 ? newOptions[1].id : newOptions[0].id,
       pointPosition: { bottom: '50%', left: '50%' },
+      cameraPosition: {
+        yaw: 0,
+        pitch: 0,
+        fov: 45,
+      },
+      metadata: firstImageMetadata,
+      markers: [],
       options: newOptions,
     };
 
@@ -97,10 +103,9 @@ const renderLocationsView = () => {
 
   const html = window.locations!.map((location, index) => {
     console.log(`Rendering location ${index + 1}:`, location.name);
-    // Get all panoramas from this location to check sizes
-    const allPanoramas = location.options.map((opt) => opt.panorama);
-    const sizes = allPanoramas.map((p) => (p.metadata ? `${p.metadata.width}x${p.metadata.height}` : 'unknown'));
-    const uniqueSizes = [...new Set(sizes)];
+    // Get size from location metadata (now stored at location level)
+    const size = location.metadata ? `${location.metadata.width}x${location.metadata.height}` : 'unknown';
+    const uniqueSizes = [size];
 
     // Use the first size for color (or generate if mixed sizes)
     const color = uniqueSizes.length === 1 ? generateColor(uniqueSizes[0]) : '#ff6b6b';
@@ -236,12 +241,9 @@ window.onAddOption = (locationId: string) => {
   const newPanorama: PanoramaDataType = {
     id: nanoid(),
     name: `New Option ${location.options.length + 1}`,
-    pointPosition: { bottom: '50%', left: '50%' },
-    cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
     description: 'This is a new panorama option',
     image: '1.png', // Default image
     thumbnail: '1.png',
-    markers: [],
     isNew: true,
   };
 

@@ -676,7 +676,36 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   // Save locations as DataVirtualTourType (new structure)
   writeFileSync(join(pathProject, 'locations.json'), JSON.stringify(dataVirtualTourToSave, null, 2));
 
-  // remove panorama
+  // When rendering, remove old folder structure and keep only pc/, tablet/, mobile/
+  if (isRender) {
+    const oldFoldersToRemove = ['panoramas', 'panoramas-low', 'thumbnails', 'minimap', 'cube'];
+    oldFoldersToRemove.forEach((folder) => {
+      const folderPath = join(pathProject, folder);
+      if (existsSync(folderPath)) {
+        try {
+          rmSync(folderPath, { recursive: true, force: true });
+          console.log(`Removed old folder: ${folder}`);
+        } catch (error) {
+          console.error(`Error removing folder ${folder}:`, error);
+        }
+      }
+    });
+
+    // Also remove panoramas.json if exists (use locations.json instead)
+    const panoramasJsonPath = join(pathProject, 'panoramas.json');
+    if (existsSync(panoramasJsonPath)) {
+      try {
+        rmSync(panoramasJsonPath);
+        console.log('Removed old panoramas.json');
+      } catch (error) {
+        console.error('Error removing panoramas.json:', error);
+      }
+    }
+
+    return true;
+  }
+
+  // remove panorama (only when not rendering - for backward compatibility)
   const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
   console.log('currentPanoramas', currentPanoramas);
 

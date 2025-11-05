@@ -17,15 +17,14 @@ export class MapLocation implements ToolbarDebugHTML {
   private viewer: Viewer;
   private modalMapLocation: Modal | null = null;
   private modalSelectPanoramaWithMap: Modal | null = null;
-  private panoramas: PanoramaDataType[];
   private setPanorama: (panoramaUrl: string) => void;
   private getCurrentPanorama: () => PanoramaDataType | undefined;
 
   private miniMaps: string[] = [];
 
-  constructor(viewer: Viewer, panorama: PanoramaDataType[], setPanorama: (panoramaUrl: string) => void, getCurrentPanorama: () => PanoramaDataType | undefined) {
+  constructor(viewer: Viewer, _panorama: PanoramaDataType[], setPanorama: (panoramaUrl: string) => void, getCurrentPanorama: () => PanoramaDataType | undefined) {
     this.viewer = viewer;
-    this.panoramas = panorama;
+    // panoramas parameter kept for API compatibility but not used
     this.setPanorama = setPanorama;
     this.getCurrentPanorama = getCurrentPanorama;
 

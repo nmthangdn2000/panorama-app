@@ -90,7 +90,7 @@ const previewPanorama = () => {
   });
 
   // Create slides for each location
-  locations.forEach((location, locationIndex) => {
+  locations.forEach((location) => {
     // Prefer second option if available, otherwise first option
     const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || 
       (location.options.length > 1 ? location.options[1] : location.options[0]);
@@ -252,7 +252,7 @@ const previewPanorama = () => {
       }
 
       // Update option buttons for this location with the correct active option
-      updateOptionButtons(targetLocationId, targetOptionId);
+      updateOptionButtons(targetLocationId, targetOptionId || undefined);
     }
   });
 };

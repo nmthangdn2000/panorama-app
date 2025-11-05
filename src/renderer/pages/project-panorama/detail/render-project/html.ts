@@ -1,5 +1,4 @@
 export const itemRadioTileSize = (size: number, index: number, device: 'pc' | 'tablet' | 'mobile', totalOptions: number) => {
-  const deviceName = device === 'pc' ? 'PC' : device === 'tablet' ? 'Tablet' : 'Mobile';
   // If more than 2 options, prefer second option (index 1), otherwise first option (index 0)
   const defaultIndex = totalOptions > 2 ? 1 : 0;
   const isChecked = index === defaultIndex;

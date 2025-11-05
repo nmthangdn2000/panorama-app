@@ -1,4 +1,4 @@
-import { PanoramaDataType, PanoramaLocationType } from '../../panorama.type';
+import { PanoramaLocationType } from '../../panorama.type';
 
 export const btnAddHotSpotHtml = () => {
   return `

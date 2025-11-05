@@ -159,9 +159,19 @@ export type PanoramaLocationType = {
   };
   minimap?: MinimapType;
   metadata?: sharp.Metadata & {
-    // Rendering metadata for cube map generation
-    faceSize?: number;
-    nbTiles?: number;
+    // Rendering metadata for cube map generation per device
+    pc?: {
+      faceSize?: number;
+      nbTiles?: number;
+    };
+    tablet?: {
+      faceSize?: number;
+      nbTiles?: number;
+    };
+    mobile?: {
+      faceSize?: number;
+      nbTiles?: number;
+    };
   };
   options: PanoramaOptionType[];
   markers: (MarkerConfig & {

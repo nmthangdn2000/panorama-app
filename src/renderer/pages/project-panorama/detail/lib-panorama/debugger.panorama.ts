@@ -1,5 +1,5 @@
 import { Viewer } from '@photo-sphere-viewer/core';
-import { PanoramaDataType, PanoramaLocationType } from './panorama.type';
+import { PanoramaDataType } from './panorama.type';
 import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 import { OriginalPerspective } from './toolbar/original-perspective/original-perspective';
 import { Marker } from '@photo-sphere-viewer/markers-plugin';

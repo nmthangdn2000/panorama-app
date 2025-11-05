@@ -1,5 +1,5 @@
 import { Modal } from 'flowbite';
-import { itemRadioTileSize, deviceTileSizeSection } from './html';
+import { deviceTileSizeSection } from './html';
 import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 
 let currentProgress = 0;
@@ -54,7 +54,7 @@ const renderProject = () => {
     }
 
     // Calculate tile sizes for each device
-    const calculateTileSizes = (width: number, height: number) => {
+    const calculateTileSizes = (width: number) => {
       const faceSize = width / 4;
       const tileSizes: number[] = [];
       const tileSizesOptions = [2, 4, 8, 16];
@@ -69,17 +69,17 @@ const renderProject = () => {
     };
 
     // PC: Original size
-    const pcTileSizes = calculateTileSizes(widthPanorama, heightPanorama);
+    const pcTileSizes = calculateTileSizes(widthPanorama);
 
     // Tablet: 4096x2048 (minimum)
     const tabletWidth = 4096;
     const tabletHeight = 2048;
-    const tabletTileSizes = calculateTileSizes(tabletWidth, tabletHeight);
+    const tabletTileSizes = calculateTileSizes(tabletWidth);
 
     // Mobile: 2048x1024 (minimum)
     const mobileWidth = 2048;
     const mobileHeight = 1024;
-    const mobileTileSizes = calculateTileSizes(mobileWidth, mobileHeight);
+    const mobileTileSizes = calculateTileSizes(mobileWidth);
 
     // Render device sections
     const container = formSettingRenderPanorama.querySelector('div')!;
@@ -195,14 +195,20 @@ const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: 
       metadata: {
         ...location.metadata,
         // PC faceSize and nbTiles
-        faceSize: Number(sizes.pc),
-        nbTiles: location.metadata ? Math.floor(location.metadata.width / 4 / sizes.pc) : 0,
+        pc: {
+          faceSize: Number(sizes.pc),
+          nbTiles: location.metadata ? Math.floor(location.metadata.width / 4 / sizes.pc) : 0,
+        },
         // Tablet faceSize and nbTiles (based on 4096x2048)
-        tabletFaceSize: Number(sizes.tablet),
-        tabletNbTiles: Math.floor(4096 / 4 / sizes.tablet),
+        tablet: {
+          faceSize: Number(sizes.tablet),
+          nbTiles: Math.floor(4096 / 4 / sizes.tablet),
+        },
         // Mobile faceSize and nbTiles (based on 2048x1024)
-        mobileFaceSize: Number(sizes.mobile),
-        mobileNbTiles: Math.floor(2048 / 4 / sizes.mobile),
+        mobile: {
+          faceSize: Number(sizes.mobile),
+          nbTiles: Math.floor(2048 / 4 / sizes.mobile),
+        },
       },
     }));
   }
