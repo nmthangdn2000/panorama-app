@@ -133,7 +133,7 @@ export const getProject = async (name: string): Promise<ProjectPanorama | null> 
 
   // Read locations.json (can be DataVirtualTourType or old structure PanoramaLocationType[])
   const locationsData = existsSync(join(pathProject, 'locations.json')) ? JSON.parse(readFileSync(join(pathProject, 'locations.json'), 'utf-8')) : null;
-  
+
   // Handle both new structure (DataVirtualTourType) and old structure (PanoramaLocationType[])
   let locations: PanoramaLocationType[] | DataVirtualTourType | undefined;
   if (locationsData) {
@@ -199,14 +199,28 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
   calculateProgress(totalProcess, tasks.length);
 };
 
-export const renderProject = async (name: string, size: number, renderData: RenderProject) => {
+export const renderProject = async (name: string, sizes: { pc: number; tablet: number; mobile: number }, renderData: RenderProject) => {
   try {
     cancelProgress();
 
     const { panoramas, locations } = renderData;
     // Prioritize panoramas with calculated metadata from renderer
+    // Handle both PanoramaLocationType[] and DataVirtualTourType
+    let panoramaLocations: any[] = [];
+    if (locations) {
+      if (Array.isArray(locations)) {
+        panoramaLocations = locations;
+      } else if ('panoramaLocations' in locations) {
+        panoramaLocations = (locations as any).panoramaLocations || [];
+      }
+    }
+
     const allPanoramas =
-      panoramas && panoramas.length > 0 ? panoramas : locations && locations.length > 0 ? locations.flatMap((location) => location.options.map((option) => option.panorama)) : [];
+      panoramas && panoramas.length > 0
+        ? panoramas
+        : panoramaLocations.length > 0
+          ? panoramaLocations.flatMap((location: any) => location.options.map((option: any) => option.panorama))
+          : [];
     const totalProcess = allPanoramas.length + 1;
     const tasks: string[] = [];
 
@@ -228,46 +242,55 @@ export const renderProject = async (name: string, size: number, renderData: Rend
     const isExistTool = existsSync(toolPath1);
 
     const toolPath = isExistTool ? toolPath1 : toolPath2;
-    const inputQualityPath = join(path, name, 'panoramas');
-    const inputLowPath = join(path, name, 'panoramas-low');
-    const outputPath = join(path, name, 'cube');
 
-    await new Promise((resolve, reject) => {
-      // `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`
-      const child = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', `${size}`, '--quality', '80']);
+    // Render cube map for all devices
+    const devices: Array<{ name: 'pc' | 'tablet' | 'mobile'; size: number }> = [
+      { name: 'pc', size: sizes.pc },
+      { name: 'tablet', size: sizes.tablet },
+      { name: 'mobile', size: sizes.mobile },
+    ];
 
-      CHILD = child;
+    for (const device of devices) {
+      const inputQualityPath = join(path, name, device.name, 'panoramas');
+      const inputLowPath = join(path, name, device.name, 'panoramas-low');
+      const outputPath = join(path, name, device.name, 'cube');
 
-      child.stderr.on('data', (data) => {
-        const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
+      await new Promise((resolve, reject) => {
+        const child = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', `${device.size}`, '--quality', '80']);
 
-        const match = data.toString().match(regex);
+        CHILD = child;
 
-        if (match) {
-          if (match[1]) {
-            pushTaskProgress(tasks, totalProcess);
+        child.stderr.on('data', (data) => {
+          const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
+
+          const match = data.toString().match(regex);
+
+          if (match) {
+            if (match[1]) {
+              pushTaskProgress(tasks, totalProcess);
+            }
           }
-        }
+        });
+
+        child.on('error', (err) => {
+          console.log(`error: ${err.message}`);
+          CHILD = undefined;
+          reject(err);
+        });
+
+        child.on('close', (code) => {
+          console.log(`child process exited with code ${code} for device ${device.name}`);
+
+          if (code === 0) {
+            return resolve(true);
+          }
+
+          if (child.killed) {
+            child.kill();
+          }
+        });
       });
-
-      child.on('error', (err) => {
-        console.log(`error: ${err.message}`);
-        CHILD = undefined;
-        reject(err);
-      });
-
-      child.on('close', (code) => {
-        console.log(`child process exited with code ${code}`);
-
-        if (code === 0) {
-          return resolve(true);
-        }
-
-        if (child.killed) {
-          child.kill();
-        }
-      });
-    });
+    }
 
     if (tasks.length < totalProcess) {
       for (let i = tasks.length; i < totalProcess; i++) {
@@ -275,7 +298,7 @@ export const renderProject = async (name: string, size: number, renderData: Rend
       }
     }
 
-    return `${toolPath}  --input-quality "${inputQualityPath}" --input-low "${inputLowPath}" --output "${outputPath}" --size 375 --quality 80`;
+    return true;
   } catch (error) {
     console.log('renderProject', error);
     return false;
@@ -329,20 +352,39 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
   const pathProject = join(path, name);
 
-  if (!existsSync(join(pathProject, 'panoramas'))) {
-    mkdirSync(join(pathProject, 'panoramas'), { recursive: true });
-  }
+  // Create device folders structure: pc/, tablet/, mobile/
+  const devices = ['pc', 'tablet', 'mobile'];
 
-  if (!existsSync(join(pathProject, 'panoramas-low'))) {
-    mkdirSync(join(pathProject, 'panoramas-low'), { recursive: true });
-  }
+  devices.forEach((device) => {
+    const devicePath = join(pathProject, device);
+    if (!existsSync(devicePath)) {
+      mkdirSync(devicePath, { recursive: true });
+    }
 
-  if (!existsSync(join(pathProject, 'thumbnails'))) {
-    mkdirSync(join(pathProject, 'thumbnails'), { recursive: true });
-  }
+    // Create subfolders for each device
+    const subfolders = ['panoramas', 'panoramas-low', 'thumbnails', 'minimap', 'cube'];
+    subfolders.forEach((subfolder) => {
+      const subfolderPath = join(devicePath, subfolder);
+      if (!existsSync(subfolderPath)) {
+        mkdirSync(subfolderPath, { recursive: true });
+      }
+    });
+  });
 
-  if (!existsSync(join(pathProject, 'minimap'))) {
-    mkdirSync(join(pathProject, 'minimap'), { recursive: true });
+  // Keep old structure for backward compatibility (when not rendering)
+  if (!isRender) {
+    if (!existsSync(join(pathProject, 'panoramas'))) {
+      mkdirSync(join(pathProject, 'panoramas'), { recursive: true });
+    }
+    if (!existsSync(join(pathProject, 'panoramas-low'))) {
+      mkdirSync(join(pathProject, 'panoramas-low'), { recursive: true });
+    }
+    if (!existsSync(join(pathProject, 'thumbnails'))) {
+      mkdirSync(join(pathProject, 'thumbnails'), { recursive: true });
+    }
+    if (!existsSync(join(pathProject, 'minimap'))) {
+      mkdirSync(join(pathProject, 'minimap'), { recursive: true });
+    }
   }
 
   const listMinimap: {
@@ -405,15 +447,55 @@ export const saveProject = async (name: string, project: RenderProject, isRender
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {
-            // create file low quality
+            // Read original image
             const buffer = readFileSync(panorama.image.substring(7));
+            const originalImage = await Jimp.read(buffer);
+            const originalWidth = originalImage.getWidth();
+            const originalHeight = originalImage.getHeight();
 
-            await (
-              await Jimp.read(buffer)
-            )
+            // Calculate sizes for different devices
+            // Tablet: 4096x2048 (resize to target, maintain aspect ratio)
+            const tabletTargetWidth = 4096;
+            const tabletTargetHeight = 2048;
+            // Calculate scale to fit target while maintaining aspect ratio
+            const tabletScale = Math.max(tabletTargetWidth / originalWidth, tabletTargetHeight / originalHeight);
+            const finalTabletWidth = Math.round(originalWidth * tabletScale);
+            const finalTabletHeight = Math.round(originalHeight * tabletScale);
+
+            // Mobile: 2048x1024 (resize to target, maintain aspect ratio)
+            const mobileTargetWidth = 2048;
+            const mobileTargetHeight = 1024;
+            // Calculate scale to fit target while maintaining aspect ratio
+            const mobileScale = Math.max(mobileTargetWidth / originalWidth, mobileTargetHeight / originalHeight);
+            const finalMobileWidth = Math.round(originalWidth * mobileScale);
+            const finalMobileHeight = Math.round(originalHeight * mobileScale);
+
+            // PC: Original size (copy to pc folder)
+            const pcImage = originalImage.clone();
+            await pcImage.writeAsync(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
+            await pcImage
+              .clone()
               .resize(2000, Jimp.AUTO)
               .quality(60)
-              .writeAsync(join(path, name, 'panoramas-low', `${panorama.name}-low.jpg`));
+              .writeAsync(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
+
+            // Tablet: Resized version
+            const tabletImage = originalImage.clone().resize(finalTabletWidth, finalTabletHeight);
+            await tabletImage.writeAsync(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
+            await tabletImage
+              .clone()
+              .resize(2000, Jimp.AUTO)
+              .quality(60)
+              .writeAsync(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
+
+            // Mobile: Resized version
+            const mobileImage = originalImage.clone().resize(finalMobileWidth, finalMobileHeight);
+            await mobileImage.writeAsync(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
+            await mobileImage
+              .clone()
+              .resize(2000, Jimp.AUTO)
+              .quality(60)
+              .writeAsync(join(path, name, 'mobile', 'panoramas-low', `${panorama.name}-low.jpg`));
           }
         }
         // Always use filename instead of full path
@@ -421,20 +503,77 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         console.log('Converted image to:', panorama.image);
       } else {
         console.log('Image already filename, keeping as is');
+
+        // If rendering and image already exists, create versions for all devices
+        if (isRender) {
+          // Try to find existing image in old structure first, then in pc folder
+          let existingImagePath = join(pathProject, 'panoramas', panorama.image);
+          if (!existsSync(existingImagePath)) {
+            existingImagePath = join(pathProject, 'pc', 'panoramas', panorama.image);
+          }
+
+          if (existsSync(existingImagePath)) {
+            try {
+              const buffer = readFileSync(existingImagePath);
+              const originalImage = await Jimp.read(buffer);
+              const originalWidth = originalImage.getWidth();
+              const originalHeight = originalImage.getHeight();
+
+              // Calculate sizes for different devices
+              // Tablet: ~1024px width (maintain aspect ratio)
+              const tabletWidth = 1024;
+              const tabletHeight = Math.round((tabletWidth / originalWidth) * originalHeight);
+
+              // Mobile: ~768px width (maintain aspect ratio)
+              const mobileWidth = 768;
+              const mobileHeight = Math.round((mobileWidth / originalWidth) * originalHeight);
+
+              // PC: Original size (copy to pc folder)
+              const pcImage = originalImage.clone();
+              await pcImage.writeAsync(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
+              await pcImage
+                .clone()
+                .resize(2000, Jimp.AUTO)
+                .quality(60)
+                .writeAsync(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
+
+              // Tablet: Resized version
+              const tabletImage = originalImage.clone().resize(tabletWidth, tabletHeight);
+              await tabletImage.writeAsync(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
+              await tabletImage
+                .clone()
+                .resize(2000, Jimp.AUTO)
+                .quality(60)
+                .writeAsync(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
+
+              // Mobile: Resized version
+              const mobileImage = originalImage.clone().resize(mobileWidth, mobileHeight);
+              await mobileImage.writeAsync(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
+              await mobileImage
+                .clone()
+                .resize(2000, Jimp.AUTO)
+                .quality(60)
+                .writeAsync(join(path, name, 'mobile', 'panoramas-low', `${panorama.name}-low.jpg`));
+            } catch (error) {
+              console.error(`Error processing existing image ${panorama.name}:`, error);
+            }
+          }
+        }
       }
 
       // Note: minimap is now at location level, not panorama level
       // This check is for backward compatibility with old structure
-      if (panorama.minimap && (panorama.minimap as any).src) {
-        const isExist = listMinimap.find((m) => m.path === (panorama.minimap as any)?.src);
-        if (!isExist && regexPath.test((panorama.minimap as any).src)) {
-          const name = (panorama.minimap as any).src.split(/[\\/]/).pop()!.split('.')[0];
+      const panoramaAny = panorama as any;
+      if (panoramaAny.minimap && panoramaAny.minimap.src) {
+        const isExist = listMinimap.find((m) => m.path === panoramaAny.minimap?.src);
+        if (!isExist && regexPath.test(panoramaAny.minimap.src)) {
+          const name = panoramaAny.minimap.src.split(/[\\/]/).pop()!.split('.')[0];
           listMinimap.push({
-            path: (panorama.minimap as any).src,
+            path: panoramaAny.minimap.src,
             name: `${name}.jpg`,
           });
 
-          (panorama.minimap as any).src = `${name}.jpg`;
+          panoramaAny.minimap.src = `${name}.jpg`;
         }
       }
 
@@ -442,12 +581,34 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         const base64Data = panorama.thumbnail.replace(/^data:image\/\w+;base64,/, '');
         const bufferThumbnail = Buffer.from(base64Data, 'base64');
 
-        await (
-          await Jimp.read(bufferThumbnail)
-        )
-          .resize(300, Jimp.AUTO)
-          .quality(80)
-          .writeAsync(join(pathProject, 'thumbnails', `${panorama.name}.jpg`));
+        const thumbnailImage = await Jimp.read(bufferThumbnail);
+
+        if (isRender) {
+          // Create thumbnails for all devices
+          await thumbnailImage
+            .clone()
+            .resize(300, Jimp.AUTO)
+            .quality(80)
+            .writeAsync(join(path, name, 'pc', 'thumbnails', `${panorama.name}.jpg`));
+
+          await thumbnailImage
+            .clone()
+            .resize(300, Jimp.AUTO)
+            .quality(80)
+            .writeAsync(join(path, name, 'tablet', 'thumbnails', `${panorama.name}.jpg`));
+
+          await thumbnailImage
+            .clone()
+            .resize(300, Jimp.AUTO)
+            .quality(80)
+            .writeAsync(join(path, name, 'mobile', 'thumbnails', `${panorama.name}.jpg`));
+        } else {
+          // Keep old structure for backward compatibility
+          await thumbnailImage
+            .resize(300, Jimp.AUTO)
+            .quality(80)
+            .writeAsync(join(pathProject, 'thumbnails', `${panorama.name}.jpg`));
+        }
 
         panorama.thumbnail = `${panorama.name}.jpg`;
       }
@@ -458,10 +619,30 @@ export const saveProject = async (name: string, project: RenderProject, isRender
 
   await Promise.all(
     listMinimap.map(async (minimap) => {
-      const pathMiniMap = join(pathProject, 'minimap', minimap.name);
       const bufferMiniMap = readFileSync(minimap.path.substring(7));
+      const minimapImage = await Jimp.read(bufferMiniMap);
 
-      await (await Jimp.read(bufferMiniMap)).resize(400, Jimp.AUTO).writeAsync(pathMiniMap);
+      if (isRender) {
+        // Create minimaps for all devices
+        await minimapImage
+          .clone()
+          .resize(400, Jimp.AUTO)
+          .writeAsync(join(path, name, 'pc', 'minimap', minimap.name));
+
+        await minimapImage
+          .clone()
+          .resize(400, Jimp.AUTO)
+          .writeAsync(join(path, name, 'tablet', 'minimap', minimap.name));
+
+        await minimapImage
+          .clone()
+          .resize(400, Jimp.AUTO)
+          .writeAsync(join(path, name, 'mobile', 'minimap', minimap.name));
+      } else {
+        // Keep old structure for backward compatibility
+        const pathMiniMap = join(pathProject, 'minimap', minimap.name);
+        await minimapImage.resize(400, Jimp.AUTO).writeAsync(pathMiniMap);
+      }
     }),
   );
 
@@ -542,7 +723,8 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     // Fallback: check from panoramas (old structure for backward compatibility)
     if (!isExist) {
       isExist = allPanoramas.some((p) => {
-        return p.minimap && (p.minimap as any).src && (p.minimap as any).src === cm;
+        const panoramaAny = p as any;
+        return panoramaAny.minimap && panoramaAny.minimap.src && panoramaAny.minimap.src === cm;
       });
     }
 

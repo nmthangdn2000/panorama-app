@@ -1,5 +1,5 @@
 import { Modal } from 'flowbite';
-import { itemRadioTileSize } from './html';
+import { itemRadioTileSize, deviceTileSizeSection } from './html';
 import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 
 let currentProgress = 0;
@@ -42,24 +42,52 @@ const renderProject = () => {
 
     // Get metadata from location (now stored at location level)
     let widthPanorama: number | undefined;
+    let heightPanorama: number | undefined;
     if (window.locations && window.locations.length > 0) {
       widthPanorama = window.locations[0].metadata?.width;
+      heightPanorama = window.locations[0].metadata?.height;
     }
 
-    const faceSize = widthPanorama / 4;
-    const tileSizes: number[] = [];
-    const tileSizesOptions = [2, 4, 8, 16];
+    if (!widthPanorama || !heightPanorama) {
+      console.error('Panorama metadata not found');
+      return;
+    }
 
-    for (let i = 0; i < tileSizesOptions.length; i++) {
-      if (faceSize % tileSizesOptions[i] === 0) {
-        tileSizes.push(faceSize / tileSizesOptions[i]);
+    // Calculate tile sizes for each device
+    const calculateTileSizes = (width: number, height: number) => {
+      const faceSize = width / 4;
+      const tileSizes: number[] = [];
+      const tileSizesOptions = [2, 4, 8, 16];
+
+      for (let i = 0; i < tileSizesOptions.length; i++) {
+        if (faceSize % tileSizesOptions[i] === 0) {
+          tileSizes.push(faceSize / tileSizesOptions[i]);
+        }
       }
-    }
 
-    formSettingRenderPanorama.querySelector('div')!.innerHTML = tileSizes
-      .sort((a, b) => a - b)
-      .map((size, index) => itemRadioTileSize(size, index))
-      .join('');
+      return tileSizes;
+    };
+
+    // PC: Original size
+    const pcTileSizes = calculateTileSizes(widthPanorama, heightPanorama);
+
+    // Tablet: 4096x2048 (minimum)
+    const tabletWidth = 4096;
+    const tabletHeight = 2048;
+    const tabletTileSizes = calculateTileSizes(tabletWidth, tabletHeight);
+
+    // Mobile: 2048x1024 (minimum)
+    const mobileWidth = 2048;
+    const mobileHeight = 1024;
+    const mobileTileSizes = calculateTileSizes(mobileWidth, mobileHeight);
+
+    // Render device sections
+    const container = formSettingRenderPanorama.querySelector('div')!;
+    container.innerHTML = `
+      ${deviceTileSizeSection('pc', pcTileSizes, widthPanorama, heightPanorama)}
+      ${deviceTileSizeSection('tablet', tabletTileSizes, tabletWidth, tabletHeight)}
+      ${deviceTileSizeSection('mobile', mobileTileSizes, mobileWidth, mobileHeight)}
+    `;
 
     // get data from form
     formSettingRenderPanorama.addEventListener('submit', async (e) => {
@@ -68,11 +96,20 @@ const renderProject = () => {
 
       const data = new FormData(formSettingRenderPanorama);
 
-      const size = data.get('item_size_radio') as number | null;
+      const pcSize = data.get('item_size_radio_pc') as string | null;
+      const tabletSize = data.get('item_size_radio_tablet') as string | null;
+      const mobileSize = data.get('item_size_radio_mobile') as string | null;
 
-      if (!size) return;
+      if (!pcSize || !tabletSize || !mobileSize) {
+        console.error('All device sizes are required');
+        return;
+      }
 
-      handleRenderProject(size);
+      handleRenderProject({
+        pc: Number(pcSize),
+        tablet: Number(tabletSize),
+        mobile: Number(mobileSize),
+      });
     });
   });
 
@@ -136,7 +173,7 @@ window.api.projectPanorama.processingProject((percentage: number) => {
   }
 });
 
-const handleRenderProject = async (size: number) => {
+const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: number }) => {
   const url = new URL(window.location.href);
   const name = url.searchParams.get('name');
 
@@ -157,8 +194,15 @@ const handleRenderProject = async (size: number) => {
       ...location,
       metadata: {
         ...location.metadata,
-        faceSize: Number(size),
-        nbTiles: location.metadata ? Math.floor(location.metadata.width / 4 / size) : 0,
+        // PC faceSize and nbTiles
+        faceSize: Number(sizes.pc),
+        nbTiles: location.metadata ? Math.floor(location.metadata.width / 4 / sizes.pc) : 0,
+        // Tablet faceSize and nbTiles (based on 4096x2048)
+        tabletFaceSize: Number(sizes.tablet),
+        tabletNbTiles: Math.floor(4096 / 4 / sizes.tablet),
+        // Mobile faceSize and nbTiles (based on 2048x1024)
+        mobileFaceSize: Number(sizes.mobile),
+        mobileNbTiles: Math.floor(2048 / 4 / sizes.mobile),
       },
     }));
   }
@@ -172,7 +216,7 @@ const handleRenderProject = async (size: number) => {
     panoramas = window.panoramas;
   }
 
-  const result = await window.api.projectPanorama.renderProject(name, size, {
+  const result = await window.api.projectPanorama.renderProject(name, sizes, {
     panoramas: panoramas,
     locations: updatedLocations, // Include updated locations with faceSize and nbTiles
   });

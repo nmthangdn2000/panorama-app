@@ -597,8 +597,9 @@ export class Panorama implements PanoramaType {
       miniMap.firstElementChild!.appendChild(divMarker);
 
       if (!isCurrentLocation) {
-        // Find first panorama image from this location
-        const firstOptionPanoramaImage = location.options[0]?.panorama.image;
+        // Find panorama image from this location (prefer second option if available)
+        const selectedOption = location.options.length > 1 ? location.options[1] : location.options[0];
+        const firstOptionPanoramaImage = selectedOption?.panorama.image;
         if (firstOptionPanoramaImage) {
           divMarker.querySelector('#point_marker_location_mini_map')!.addEventListener('click', () => {
             this.setPanorama(firstOptionPanoramaImage);

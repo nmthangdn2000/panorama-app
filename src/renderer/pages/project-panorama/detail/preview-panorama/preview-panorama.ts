@@ -54,9 +54,9 @@ const previewPanorama = () => {
     locations,
   );
 
-  // Set initial panorama (first option of first location)
+  // Set initial panorama (prefer second option if available, otherwise first option)
   const firstLocation = locations[0];
-  const firstOption = firstLocation.options[0];
+  const firstOption = firstLocation.options.length > 1 ? firstLocation.options[1] : firstLocation.options[0];
   window.viewerPanorama.setPanorama(firstOption.panorama.image);
 
   const swiper = new Swiper('.carousel_swiper', {
@@ -91,7 +91,9 @@ const previewPanorama = () => {
 
   // Create slides for each location
   locations.forEach((location, locationIndex) => {
-    const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || location.options[0];
+    // Prefer second option if available, otherwise first option
+    const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || 
+      (location.options.length > 1 ? location.options[1] : location.options[0]);
 
     // Handle different image path formats
     let imageSrc = '';
@@ -180,7 +182,9 @@ const previewPanorama = () => {
         console.log('Found location:', location);
 
         if (location) {
-          const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || location.options[0];
+          // Prefer second option if available, otherwise first option
+    const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || 
+      (location.options.length > 1 ? location.options[1] : location.options[0]);
           console.log('Setting panorama to:', defaultOption.panorama.image);
           window.viewerPanorama.setPanorama(defaultOption.panorama.image);
 

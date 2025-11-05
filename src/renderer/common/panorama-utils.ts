@@ -48,7 +48,8 @@ export const convertPanoramasToLocations = (panoramas: PanoramaDataType[]): Pano
       id: locationId,
       name: firstPanorama.name || `Location ${index + 1}`,
       description: firstPanorama.description || `Location with ${panoramaGroup.length} options`,
-      defaultOption: options[0].id,
+      // Prefer second option if available, otherwise first option
+      defaultOption: options.length > 1 ? options[1].id : options[0].id,
       pointPosition: pointPosition,
       cameraPosition: cameraPosition,
       minimap: minimap,

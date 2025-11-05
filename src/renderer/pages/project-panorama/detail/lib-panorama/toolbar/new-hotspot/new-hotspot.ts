@@ -136,7 +136,9 @@ export class NewHotSpot implements ToolbarDebugHTML {
       if (!toLocation) return;
 
       // Get the default option of the target location
-      const toOption = toLocation.options.find((option) => option.id === toLocation.defaultOption) || toLocation.options[0];
+      // Prefer second option if available, otherwise first option
+      const toOption = toLocation.options.find((option) => option.id === toLocation.defaultOption) || 
+        (toLocation.options.length > 1 ? toLocation.options[1] : toLocation.options[0]);
       if (!toOption) return;
 
       const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);

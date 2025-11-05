@@ -1,7 +1,9 @@
 import { PanoramaLocationType } from '../lib-panorama/panorama.type';
 
 export const itemLocationPanorama = (location: PanoramaLocationType, borderColor: string) => {
-  const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || location.options[0];
+  // Prefer second option if available, otherwise first option
+  const defaultOption = location.options.find((opt) => opt.id === location.defaultOption) || 
+    (location.options.length > 1 ? location.options[1] : location.options[0]);
   const defaultPanorama = defaultOption.panorama;
 
   const regex = /[\/\\]/;
