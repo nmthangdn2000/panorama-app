@@ -243,11 +243,31 @@ export const renderProject = async (name: string, sizes: { pc: number; tablet: n
 
     const toolPath = isExistTool ? toolPath1 : toolPath2;
 
+    // Get metadata from locations to use faceSize for each device
+    // If metadata exists in locations, use it; otherwise fallback to sizes parameter
+    let deviceFaceSizes: { pc: number; tablet: number; mobile: number } = {
+      pc: sizes.pc,
+      tablet: sizes.tablet,
+      mobile: sizes.mobile,
+    };
+
+    if (panoramaLocations && panoramaLocations.length > 0) {
+      const firstLocation = panoramaLocations[0];
+      if (firstLocation.metadata) {
+        // Use faceSize from metadata if available, otherwise use sizes parameter
+        deviceFaceSizes = {
+          pc: firstLocation.metadata.pc?.faceSize || sizes.pc,
+          tablet: firstLocation.metadata.tablet?.faceSize || sizes.tablet,
+          mobile: firstLocation.metadata.mobile?.faceSize || sizes.mobile,
+        };
+      }
+    }
+
     // Render cube map for all devices
     const devices: Array<{ name: 'pc' | 'tablet' | 'mobile'; size: number }> = [
-      { name: 'pc', size: sizes.pc },
-      { name: 'tablet', size: sizes.tablet },
-      { name: 'mobile', size: sizes.mobile },
+      { name: 'pc', size: deviceFaceSizes.pc },
+      { name: 'tablet', size: deviceFaceSizes.tablet },
+      { name: 'mobile', size: deviceFaceSizes.mobile },
     ];
 
     for (const device of devices) {
@@ -379,9 +399,8 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     if (!existsSync(join(pathProject, 'panoramas-low'))) {
       mkdirSync(join(pathProject, 'panoramas-low'), { recursive: true });
     }
-    if (!existsSync(join(pathProject, 'thumbnails'))) {
-      mkdirSync(join(pathProject, 'thumbnails'), { recursive: true });
-    }
+    // Note: thumbnails are now saved to device folders (pc/thumbnails, tablet/thumbnails, mobile/thumbnails)
+    // No need to create root thumbnails folder
     if (!existsSync(join(pathProject, 'minimap'))) {
       mkdirSync(join(pathProject, 'minimap'), { recursive: true });
     }
@@ -443,7 +462,13 @@ export const saveProject = async (name: string, project: RenderProject, isRender
         // If it's a file path, copy the file and use filename
         if (panorama.isNew) {
           console.log('Panorama is new, copying file');
-          const pathImage = join(pathProject, 'panoramas', `${panorama.name}.jpg`);
+          // When rendering, use device folder structure; otherwise use root panoramas folder
+          const pathImage = isRender ? join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`) : join(pathProject, 'panoramas', `${panorama.name}.jpg`);
+          // Ensure destination directory exists
+          const destDir = isRender ? join(path, name, 'pc', 'panoramas') : join(pathProject, 'panoramas');
+          if (!existsSync(destDir)) {
+            mkdirSync(destDir, { recursive: true });
+          }
           copyFileSync(panorama.image.substring(7), pathImage);
 
           if (isRender) {
@@ -710,7 +735,11 @@ export const saveProject = async (name: string, project: RenderProject, isRender
   }
 
   // remove panorama (only when not rendering - for backward compatibility)
-  const currentPanoramas = readdirSync(join(path, name, 'panoramas'));
+  const panoramasPath = join(path, name, 'panoramas');
+  if (!existsSync(panoramasPath)) {
+    return true;
+  }
+  const currentPanoramas = readdirSync(panoramasPath);
   console.log('currentPanoramas', currentPanoramas);
 
   currentPanoramas.forEach((cp) => {
@@ -733,38 +762,47 @@ export const saveProject = async (name: string, project: RenderProject, isRender
     }
   });
 
-  const currentThumbnails = readdirSync(join(path, name, 'thumbnails'));
-
-  currentThumbnails.forEach((ct) => {
-    const isExist = allPanoramas.find((p) => p.thumbnail === ct);
-
-    if (!isExist) {
-      rmSync(join(path, name, 'thumbnails', ct));
+  // Clean up thumbnails from device folders (pc, tablet, mobile)
+  const deviceFolders = ['pc', 'tablet', 'mobile'];
+  deviceFolders.forEach((device) => {
+    const thumbnailsPath = join(path, name, device, 'thumbnails');
+    if (existsSync(thumbnailsPath)) {
+      const currentThumbnails = readdirSync(thumbnailsPath);
+      currentThumbnails.forEach((ct) => {
+        const isExist = allPanoramas.find((p) => p.thumbnail === ct);
+        if (!isExist) {
+          rmSync(join(thumbnailsPath, ct));
+        }
+      });
     }
   });
 
-  const currentMinimap = readdirSync(join(path, name, 'minimap'));
+  // Check minimap directory - try root minimap first (old structure), then device folders (new structure)
+  const minimapPath = join(path, name, 'minimap');
+  if (existsSync(minimapPath)) {
+    const currentMinimap = readdirSync(minimapPath);
 
-  currentMinimap.forEach((cm) => {
-    // Check minimap from panoramaLocations (new structure)
-    let isExist = false;
-    if (panoramaLocations && panoramaLocations.length > 0) {
-      isExist = panoramaLocations.some((location: PanoramaLocationType) => {
-        return location.minimap && location.minimap.src && location.minimap.src === cm;
-      });
-    }
-    // Fallback: check from panoramas (old structure for backward compatibility)
-    if (!isExist) {
-      isExist = allPanoramas.some((p) => {
-        const panoramaAny = p as any;
-        return panoramaAny.minimap && panoramaAny.minimap.src && panoramaAny.minimap.src === cm;
-      });
-    }
+    currentMinimap.forEach((cm) => {
+      // Check minimap from panoramaLocations (new structure)
+      let isExist = false;
+      if (panoramaLocations && panoramaLocations.length > 0) {
+        isExist = panoramaLocations.some((location: PanoramaLocationType) => {
+          return location.minimap && location.minimap.src && location.minimap.src === cm;
+        });
+      }
+      // Fallback: check from panoramas (old structure for backward compatibility)
+      if (!isExist) {
+        isExist = allPanoramas.some((p) => {
+          const panoramaAny = p as any;
+          return panoramaAny.minimap && panoramaAny.minimap.src && panoramaAny.minimap.src === cm;
+        });
+      }
 
-    if (!isExist) {
-      rmSync(join(path, name, 'minimap', cm));
-    }
-  });
+      if (!isExist) {
+        rmSync(join(minimapPath, cm));
+      }
+    });
+  }
 
   return true;
 };

@@ -191,28 +191,47 @@ const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: 
   let updatedLocations = window.locations;
 
   if (window.locations && window.locations.length > 0) {
-    updatedLocations = window.locations.map((location) => ({
-      ...location,
-      metadata: {
-        ...location.metadata,
-        // PC faceSize and nbTiles
-        pc: {
-          ...location.metadata?.pc,
-          faceSize: Number(sizes.pc),
-          nbTiles: location.metadata?.pc?.width ? Math.floor(location.metadata.pc.width / 4 / sizes.pc) : 0,
+    updatedLocations = window.locations.map((location) => {
+      const pcWidth = location.metadata?.pc?.width || 8192;
+      const pcHeight = location.metadata?.pc?.height || 4096;
+      
+      // Calculate tablet and mobile sizes if not already set
+      const tabletWidth = location.metadata?.tablet?.width || Math.min(4096, Math.round(pcWidth / 2));
+      const tabletHeight = location.metadata?.tablet?.height || Math.min(2048, Math.round(pcHeight / 2));
+      const mobileWidth = location.metadata?.mobile?.width || Math.min(2048, Math.round(pcWidth / 4));
+      const mobileHeight = location.metadata?.mobile?.height || Math.min(1024, Math.round(pcHeight / 4));
+      
+      return {
+        ...location,
+        metadata: {
+          ...location.metadata,
+          // PC faceSize and nbTiles
+          pc: {
+            ...location.metadata?.pc,
+            width: pcWidth,
+            height: pcHeight,
+            faceSize: Number(sizes.pc),
+            nbTiles: location.metadata?.pc?.width ? Math.floor(location.metadata.pc.width / 4 / sizes.pc) : 0,
+          },
+          // Tablet faceSize and nbTiles
+          tablet: {
+            ...location.metadata?.tablet,
+            width: tabletWidth,
+            height: tabletHeight,
+            faceSize: Number(sizes.tablet),
+            nbTiles: Math.floor(tabletWidth / 4 / sizes.tablet),
+          },
+          // Mobile faceSize and nbTiles
+          mobile: {
+            ...location.metadata?.mobile,
+            width: mobileWidth,
+            height: mobileHeight,
+            faceSize: Number(sizes.mobile),
+            nbTiles: Math.floor(mobileWidth / 4 / sizes.mobile),
+          },
         },
-        // Tablet faceSize and nbTiles (based on 4096x2048)
-        tablet: {
-          faceSize: Number(sizes.tablet),
-          nbTiles: Math.floor(4096 / 4 / sizes.tablet),
-        },
-        // Mobile faceSize and nbTiles (based on 2048x1024)
-        mobile: {
-          faceSize: Number(sizes.mobile),
-          nbTiles: Math.floor(2048 / 4 / sizes.mobile),
-        },
-      },
-    }));
+      };
+    });
   }
 
   // Use new structure (locations) with fallback to old structure (panoramas)

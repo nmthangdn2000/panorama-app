@@ -39,6 +39,18 @@ const openDialogSelectImages = () => {
 
       // Create separate location for each image
       // pointPosition, cameraPosition, minimap, metadata are now at location level
+      const pcWidth = path.metadata.width;
+      const pcHeight = path.metadata.height;
+
+      // Calculate sizes for different devices
+      // Tablet: 4096x2048 (or scale down by 2x from PC)
+      const tabletWidth = Math.min(4096, Math.round(pcWidth / 2));
+      const tabletHeight = Math.min(2048, Math.round(pcHeight / 2));
+
+      // Mobile: 2048x1024 (or scale down by 4x from PC)
+      const mobileWidth = Math.min(2048, Math.round(pcWidth / 4));
+      const mobileHeight = Math.min(1024, Math.round(pcHeight / 4));
+
       const newLocation: PanoramaLocationType = {
         id: nanoid(),
         name: `Location ${window.locations.length + 1}`,
@@ -48,8 +60,16 @@ const openDialogSelectImages = () => {
         cameraPosition: { yaw: 4.720283855981834, pitch: -0.0004923518129509308 },
         metadata: {
           pc: {
-            width: path.metadata.width,
-            height: path.metadata.height,
+            width: pcWidth,
+            height: pcHeight,
+          },
+          tablet: {
+            width: tabletWidth,
+            height: tabletHeight,
+          },
+          mobile: {
+            width: mobileWidth,
+            height: mobileHeight,
           },
         },
         options: [newOption],

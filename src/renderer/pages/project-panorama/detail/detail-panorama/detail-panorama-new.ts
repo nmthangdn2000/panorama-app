@@ -47,7 +47,19 @@ const openDialogSelectImages = () => {
     // Create one location with all options
     // Get metadata from first image if available
     const firstImageMetadata = folderPath[0]?.metadata;
-    
+
+    // Calculate sizes for different devices
+    const pcWidth = firstImageMetadata.width;
+    const pcHeight = firstImageMetadata.height;
+
+    // Tablet: 4096x2048 (or scale down by 2x from PC)
+    const tabletWidth = Math.min(4096, Math.round(pcWidth / 2));
+    const tabletHeight = Math.min(2048, Math.round(pcHeight / 2));
+
+    // Mobile: 2048x1024 (or scale down by 4x from PC)
+    const mobileWidth = Math.min(2048, Math.round(pcWidth / 4));
+    const mobileHeight = Math.min(1024, Math.round(pcHeight / 4));
+
     const newLocation: PanoramaLocationType = {
       id: nanoid(),
       name: `Location ${window.locations.length + 1}`,
@@ -61,8 +73,16 @@ const openDialogSelectImages = () => {
       },
       metadata: {
         pc: {
-          width: firstImageMetadata.width,
-          height: firstImageMetadata.height,
+          width: pcWidth,
+          height: pcHeight,
+        },
+        tablet: {
+          width: tabletWidth,
+          height: tabletHeight,
+        },
+        mobile: {
+          width: mobileWidth,
+          height: mobileHeight,
         },
       },
       markers: [],
