@@ -110,20 +110,49 @@ export class OriginalPerspective implements ToolbarDebugHTML {
           }
 
           // Update thumbnail (still on panorama)
+          const thumbnailBase64 = await new Promise<string>((resolve) => {
+            (document.querySelector('.psv-container canvas')! as HTMLCanvasElement).toBlob((blob) => {
+              if (!blob) {
+                resolve(currentPanorama.thumbnail);
+                return;
+              }
+
+              const reader = new FileReader();
+              reader.onloadend = () => resolve(reader.result! as string);
+              reader.readAsDataURL(blob);
+            });
+          });
+
+          console.log('Updating thumbnail for panorama:', currentPanorama.id, currentPanorama.name);
+
+          // Update thumbnail in panoramas array
           const index = this.panoramas.findIndex((panorama) => panorama.id === currentPanorama.id);
           if (index >= 0) {
-            this.panoramas[index].thumbnail = await new Promise((resolve) => {
-              (document.querySelector('.psv-container canvas')! as HTMLCanvasElement).toBlob((blob) => {
-                if (!blob) {
-                  resolve(this.panoramas[index].thumbnail);
-                  return;
-                }
+            this.panoramas[index].thumbnail = thumbnailBase64;
+            console.log('Updated thumbnail in panoramas array');
+          }
 
-                const reader = new FileReader();
-                reader.onloadend = () => resolve(reader.result! as string);
-                reader.readAsDataURL(blob);
-              });
-            });
+          // Update thumbnail in window.locations (this is what gets saved)
+          if (window.locations && window.locations.length > 0) {
+            let found = false;
+            for (const location of window.locations) {
+              const foundOption = location.options.find((option) => option.panorama.id === currentPanorama.id);
+              if (foundOption) {
+                foundOption.panorama.thumbnail = thumbnailBase64;
+                found = true;
+                console.log('Updated thumbnail in window.locations for location:', location.name, 'option:', foundOption.name);
+                break;
+              }
+            }
+            if (!found) {
+              console.warn('Could not find panorama in window.locations with id:', currentPanorama.id);
+              console.log(
+                'Available panorama IDs in locations:',
+                window.locations.flatMap((loc) => loc.options.map((opt) => opt.panorama.id)),
+              );
+            }
+          } else {
+            console.warn('window.locations is empty or undefined');
           }
 
           // opacity 1 to 0.5 to 1

@@ -137,8 +137,8 @@ export class NewHotSpot implements ToolbarDebugHTML {
 
       // Get the default option of the target location
       // Prefer second option if available, otherwise first option
-      const toOption = toLocation.options.find((option) => option.id === toLocation.defaultOption) || 
-        (toLocation.options.length > 1 ? toLocation.options[1] : toLocation.options[0]);
+      const toOption =
+        toLocation.options.find((option) => option.id === toLocation.defaultOption) || (toLocation.options.length > 1 ? toLocation.options[1] : toLocation.options[0]);
       if (!toOption) return;
 
       const markersPlugin = this.viewer.getPlugin<MarkersPlugin>(MarkersPlugin);
@@ -146,9 +146,7 @@ export class NewHotSpot implements ToolbarDebugHTML {
       // Find the current location that contains the current panorama
       let currentLocation: PanoramaLocationType | undefined;
       if (window.locations) {
-        currentLocation = window.locations.find((location) => 
-          location.options.some((option) => option.panorama.image === currentPanorama.image)
-        );
+        currentLocation = window.locations.find((location) => location.options.some((option) => option.panorama.image === currentPanorama.image));
       }
 
       if (!currentLocation) {
@@ -198,18 +196,6 @@ export class NewHotSpot implements ToolbarDebugHTML {
 
       console.log('Calling saveProjectPanorama() immediately after adding marker');
       saveProjectPanorama();
-
-      // Also call save immediately without debounce for critical operations
-      setTimeout(() => {
-        console.log('Force saving project after marker addition');
-        const url = new URL(window.location.href);
-        const name = url.searchParams.get('name');
-        if (name && window.locations) {
-          window.api.projectPanorama.saveProject(name, {
-            locations: window.locations,
-          });
-        }
-      }, 200);
     });
   }
 
@@ -231,9 +217,7 @@ export class NewHotSpot implements ToolbarDebugHTML {
       // Find the current location that contains the current panorama
       let currentLocation: PanoramaLocationType | undefined;
       if (window.locations) {
-        currentLocation = window.locations.find((location) => 
-          location.options.some((option) => option.panorama.image === currentPanorama.image)
-        );
+        currentLocation = window.locations.find((location) => location.options.some((option) => option.panorama.image === currentPanorama.image));
       }
 
       if (!currentLocation || !currentLocation.markers) {

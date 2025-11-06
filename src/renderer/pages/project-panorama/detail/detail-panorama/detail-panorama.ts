@@ -3,7 +3,7 @@ import { PanoramaDataType, PanoramaOptionType, PanoramaLocationType } from '../l
 import { destroyViewerPanorama } from '../preview-panorama/preview-panorama';
 // import { itemImagePanorama } from './html'; // Not used anymore
 import { itemLocationPanorama, itemOptionPanorama } from './location-html';
-import { debounce } from '../../../../common/util';
+import { debounce } from '../lib-panorama/util';
 
 const btnRemoveAllPanorama = document.getElementById('btn_remove_all_panorama')! as HTMLButtonElement;
 const imagePanoramaContainer = document.getElementById('image_panorama_container')! as HTMLDivElement;
@@ -397,22 +397,21 @@ const initSortableList = (e: DragEvent) => {
 /**
  * Save project panorama
  */
-export const saveProjectPanorama = debounce(() => {
-  const url = new URL(window.location.href);
-  const name = url.searchParams.get('name');
+export const saveProjectPanorama = () =>
+  debounce(() => {
+    const url = new URL(window.location.href);
+    const name = url.searchParams.get('name');
 
-  if (!name) {
-    console.log('No project name found, cannot save');
-    return;
-  }
+    if (!name) {
+      console.log('No project name found, cannot save');
+      return;
+    }
 
-  console.log('Saving project:', name, 'with locations:', window.locations);
-
-  // Save only locations (new structure)
-  window.api.projectPanorama.saveProject(name, {
-    locations: window.locations,
-  });
-}, 100); // Reduced delay from 1000ms to 100ms
+    // Save only locations (new structure)
+    window.api.projectPanorama.saveProject(name, {
+      locations: window.locations,
+    });
+  }, 100); // Reduced delay from 1000ms to 100ms
 
 export default () => {
   openDialogSelectImages();

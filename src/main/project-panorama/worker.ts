@@ -139,7 +139,10 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
               .toFile(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
 
             // Tablet: Resized version
-            await originalImage.clone().resize(finalTabletWidth, finalTabletHeight).toFile(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
+            await originalImage
+              .clone()
+              .resize(finalTabletWidth, finalTabletHeight)
+              .toFile(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
             await originalImage
               .clone()
               .resize(finalTabletWidth, finalTabletHeight)
@@ -148,7 +151,10 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
               .toFile(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
 
             // Mobile: Resized version
-            await originalImage.clone().resize(finalMobileWidth, finalMobileHeight).toFile(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
+            await originalImage
+              .clone()
+              .resize(finalMobileWidth, finalMobileHeight)
+              .toFile(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
             await originalImage
               .clone()
               .resize(finalMobileWidth, finalMobileHeight)
@@ -197,7 +203,10 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
                 .toFile(join(path, name, 'pc', 'panoramas-low', `${panorama.name}-low.jpg`));
 
               // Tablet: Resized version
-              await originalImage.clone().resize(tabletWidth, tabletHeight).toFile(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
+              await originalImage
+                .clone()
+                .resize(tabletWidth, tabletHeight)
+                .toFile(join(path, name, 'tablet', 'panoramas', `${panorama.name}.jpg`));
               await originalImage
                 .clone()
                 .resize(tabletWidth, tabletHeight)
@@ -206,7 +215,10 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
                 .toFile(join(path, name, 'tablet', 'panoramas-low', `${panorama.name}-low.jpg`));
 
               // Mobile: Resized version
-              await originalImage.clone().resize(mobileWidth, mobileHeight).toFile(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
+              await originalImage
+                .clone()
+                .resize(mobileWidth, mobileHeight)
+                .toFile(join(path, name, 'mobile', 'panoramas', `${panorama.name}.jpg`));
               await originalImage
                 .clone()
                 .resize(mobileWidth, mobileHeight)
@@ -242,32 +254,24 @@ const saveProject = async (path: string, name: string, project: RenderProject, i
 
         const thumbnailImage = sharp(bufferThumbnail);
 
-        if (isRender) {
-          // Create thumbnails for all devices
-          await thumbnailImage
-            .clone()
-            .resize(300, null)
-            .jpeg({ quality: 80 })
-            .toFile(join(path, name, 'pc', 'thumbnails', `${panorama.name}.jpg`));
+        // Always save thumbnails to device folders (pc, tablet, mobile)
+        await thumbnailImage
+          .clone()
+          .resize(300, null)
+          .jpeg({ quality: 80 })
+          .toFile(join(path, name, 'pc', 'thumbnails', `${panorama.name}.jpg`));
 
-          await thumbnailImage
-            .clone()
-            .resize(300, null)
-            .jpeg({ quality: 80 })
-            .toFile(join(path, name, 'tablet', 'thumbnails', `${panorama.name}.jpg`));
+        await thumbnailImage
+          .clone()
+          .resize(300, null)
+          .jpeg({ quality: 80 })
+          .toFile(join(path, name, 'tablet', 'thumbnails', `${panorama.name}.jpg`));
 
-          await thumbnailImage
-            .clone()
-            .resize(300, null)
-            .jpeg({ quality: 80 })
-            .toFile(join(path, name, 'mobile', 'thumbnails', `${panorama.name}.jpg`));
-        } else {
-          // Keep old structure for backward compatibility
-          await thumbnailImage
-            .resize(300, null)
-            .jpeg({ quality: 80 })
-            .toFile(join(pathProject, 'thumbnails', `${panorama.name}.jpg`));
-        }
+        await thumbnailImage
+          .clone()
+          .resize(300, null)
+          .jpeg({ quality: 80 })
+          .toFile(join(path, name, 'mobile', 'thumbnails', `${panorama.name}.jpg`));
 
         panorama.thumbnail = `${panorama.name}.jpg`;
       }
