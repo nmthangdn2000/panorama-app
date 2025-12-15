@@ -72,14 +72,14 @@ const renderProject = () => {
     // PC: Original size
     const pcTileSizes = calculateTileSizes(widthPanorama);
 
-    // Tablet: 4096x2048 (minimum)
-    const tabletWidth = 4096;
-    const tabletHeight = 2048;
+    // Tablet: 6144x3072 (minimum)
+    const tabletWidth = 6144;
+    const tabletHeight = 3072;
     const tabletTileSizes = calculateTileSizes(tabletWidth);
 
-    // Mobile: 2048x1024 (minimum)
-    const mobileWidth = 2048;
-    const mobileHeight = 1024;
+    // Mobile: 4096x2048 (minimum)
+    const mobileWidth = 4096;
+    const mobileHeight = 2048;
     const mobileTileSizes = calculateTileSizes(mobileWidth);
 
     // Render device sections
@@ -194,13 +194,13 @@ const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: 
     updatedLocations = window.locations.map((location) => {
       const pcWidth = location.metadata?.pc?.width || 8192;
       const pcHeight = location.metadata?.pc?.height || 4096;
-      
+
       // Calculate tablet and mobile sizes if not already set
-      const tabletWidth = location.metadata?.tablet?.width || Math.min(4096, Math.round(pcWidth / 2));
-      const tabletHeight = location.metadata?.tablet?.height || Math.min(2048, Math.round(pcHeight / 2));
-      const mobileWidth = location.metadata?.mobile?.width || Math.min(2048, Math.round(pcWidth / 4));
-      const mobileHeight = location.metadata?.mobile?.height || Math.min(1024, Math.round(pcHeight / 4));
-      
+      const tabletWidth = location.metadata?.tablet?.width || Math.min(6144, Math.round(pcWidth / 1.33));
+      const tabletHeight = location.metadata?.tablet?.height || Math.min(3072, Math.round(pcHeight / 1.33));
+      const mobileWidth = location.metadata?.mobile?.width || Math.min(4096, Math.round(pcWidth / 2));
+      const mobileHeight = location.metadata?.mobile?.height || Math.min(2048, Math.round(pcHeight / 2));
+
       return {
         ...location,
         metadata: {

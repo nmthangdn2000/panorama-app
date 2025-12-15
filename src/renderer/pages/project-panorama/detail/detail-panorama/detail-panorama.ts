@@ -43,13 +43,13 @@ const openDialogSelectImages = () => {
       const pcHeight = path.metadata.height;
 
       // Calculate sizes for different devices
-      // Tablet: 4096x2048 (or scale down by 2x from PC)
-      const tabletWidth = Math.min(4096, Math.round(pcWidth / 2));
-      const tabletHeight = Math.min(2048, Math.round(pcHeight / 2));
+      // Tablet: 6144x3072 (or scale down by ~1.33x from PC)
+      const tabletWidth = Math.min(6144, Math.round(pcWidth / 1.33));
+      const tabletHeight = Math.min(3072, Math.round(pcHeight / 1.33));
 
-      // Mobile: 2048x1024 (or scale down by 4x from PC)
-      const mobileWidth = Math.min(2048, Math.round(pcWidth / 4));
-      const mobileHeight = Math.min(1024, Math.round(pcHeight / 4));
+      // Mobile: 4096x2048 (or scale down by 2x from PC)
+      const mobileWidth = Math.min(4096, Math.round(pcWidth / 2));
+      const mobileHeight = Math.min(2048, Math.round(pcHeight / 2));
 
       const newLocation: PanoramaLocationType = {
         id: nanoid(),
@@ -319,6 +319,7 @@ window.onEditLocationName = (locationId: string) => {
   if (newName && newName.trim()) {
     location.name = newName.trim();
     renderListImage();
+    saveProjectPanorama();
   }
 };
 
@@ -335,6 +336,7 @@ window.onEditPanoramaTitle = (locationId: string, optionId: string) => {
   if (newTitle && newTitle.trim()) {
     option.name = newTitle.trim();
     renderListImage();
+    saveProjectPanorama();
   }
 };
 

@@ -276,7 +276,7 @@ export const renderProject = async (name: string, sizes: { pc: number; tablet: n
       const outputPath = join(path, name, device.name, 'cube');
 
       await new Promise((resolve, reject) => {
-        const child = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', `${device.size}`, '--quality', '80']);
+        const child = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', `${device.size}`, '--quality', '100']);
 
         CHILD = child;
 
@@ -480,17 +480,17 @@ export const saveProject = async (name: string, project: RenderProject, isRender
             const originalHeight = metadata.height!;
 
             // Calculate sizes for different devices
-            // Tablet: 4096x2048 (resize to target, maintain aspect ratio)
-            const tabletTargetWidth = 4096;
-            const tabletTargetHeight = 2048;
+            // Tablet: 6144x3072 (resize to target, maintain aspect ratio)
+            const tabletTargetWidth = 6144;
+            const tabletTargetHeight = 3072;
             // Calculate scale to fit target while maintaining aspect ratio
             const tabletScale = Math.max(tabletTargetWidth / originalWidth, tabletTargetHeight / originalHeight);
             const finalTabletWidth = Math.round(originalWidth * tabletScale);
             const finalTabletHeight = Math.round(originalHeight * tabletScale);
 
-            // Mobile: 2048x1024 (resize to target, maintain aspect ratio)
-            const mobileTargetWidth = 2048;
-            const mobileTargetHeight = 1024;
+            // Mobile: 4096x2048 (resize to target, maintain aspect ratio)
+            const mobileTargetWidth = 4096;
+            const mobileTargetHeight = 2048;
             // Calculate scale to fit target while maintaining aspect ratio
             const mobileScale = Math.max(mobileTargetWidth / originalWidth, mobileTargetHeight / originalHeight);
             const finalMobileWidth = Math.round(originalWidth * mobileScale);
@@ -552,13 +552,19 @@ export const saveProject = async (name: string, project: RenderProject, isRender
               const originalHeight = metadata.height!;
 
               // Calculate sizes for different devices
-              // Tablet: ~1024px width (maintain aspect ratio)
-              const tabletWidth = 1024;
-              const tabletHeight = Math.round((tabletWidth / originalWidth) * originalHeight);
+              // Tablet: 6144x3072 (resize to target, maintain aspect ratio)
+              const tabletTargetWidth = 6144;
+              const tabletTargetHeight = 3072;
+              const tabletScale = Math.max(tabletTargetWidth / originalWidth, tabletTargetHeight / originalHeight);
+              const tabletWidth = Math.round(originalWidth * tabletScale);
+              const tabletHeight = Math.round(originalHeight * tabletScale);
 
-              // Mobile: ~768px width (maintain aspect ratio)
-              const mobileWidth = 768;
-              const mobileHeight = Math.round((mobileWidth / originalWidth) * originalHeight);
+              // Mobile: 4096x2048 (resize to target, maintain aspect ratio)
+              const mobileTargetWidth = 4096;
+              const mobileTargetHeight = 2048;
+              const mobileScale = Math.max(mobileTargetWidth / originalWidth, mobileTargetHeight / originalHeight);
+              const mobileWidth = Math.round(originalWidth * mobileScale);
+              const mobileHeight = Math.round(originalHeight * mobileScale);
 
               // PC: Original size (copy to pc folder)
               await originalImage.clone().toFile(join(path, name, 'pc', 'panoramas', `${panorama.name}.jpg`));
