@@ -15,4 +15,12 @@ export enum KEY_IPC {
   // settings
   GET_SETTINGS = 'settings:get',
   SET_SETTINGS = 'settings:set',
+
+  // image resizer
+  IMAGE_RESIZER_SELECT_IMAGES = 'imageResizer:selectImages',
+  IMAGE_RESIZER_SELECT_FOLDER = 'imageResizer:selectFolder',
+  IMAGE_RESIZER_SELECT_OUTPUT_FOLDER = 'imageResizer:selectOutputFolder',
+  IMAGE_RESIZER_RESIZE = 'imageResizer:resize',
+  IMAGE_RESIZER_PROGRESS = 'imageResizer:progress',
+  IMAGE_RESIZER_CANCEL = 'imageResizer:cancel',
 }

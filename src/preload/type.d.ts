@@ -4,10 +4,12 @@ import { PanoramaDataType, PanoramaLocationType } from '../renderer/pages/projec
 import { ProjectPanorama } from '../main/project-panorama/type';
 import { Panorama } from '../renderer/pages/project-panorama/detail/lib-panorama';
 import { SettingApi } from './setting';
+import { ImageResizerApi } from './image-resizer';
 
 export type Api = {
   projectPanorama: ProjectPanoramaApi;
   setting: SettingApi;
+  imageResizer: ImageResizerApi;
 };
 
 declare global {

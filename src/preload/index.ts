@@ -3,11 +3,13 @@ import { electronAPI } from '@electron-toolkit/preload';
 import { Api } from './type';
 import * as projectPanorama from './project-panorama';
 import * as setting from './setting';
+import * as imageResizer from './image-resizer';
 
 // Custom APIs for renderer
 const api: Api = {
   projectPanorama,
   setting,
+  imageResizer,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to
