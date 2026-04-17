@@ -1,6 +1,7 @@
-import { BrowserWindow, dialog, ipcMain } from 'electron';
+import { BrowserWindow, dialog } from 'electron';
 import { join, basename, extname, relative, dirname } from 'path';
 import { existsSync, mkdirSync, readdirSync, statSync } from 'fs';
+import { cpus } from 'os';
 import sharp from 'sharp';
 import { KEY_IPC } from '../../constants/common.constant';
 
@@ -18,6 +19,8 @@ export type ResizeOptions = {
 };
 
 const IMAGE_EXTENSIONS = new Set(['jpg', 'jpeg', 'png', 'webp', 'gif', 'tiff', 'bmp']);
+
+const CONCURRENCY = Math.max(2, Math.ceil(cpus().length / 2));
 
 const scanImages = (folder: string): string[] => {
   const results: string[] = [];
@@ -49,8 +52,7 @@ export const selectFolderForResize = async (): Promise<{ folderPath: string; ima
   });
   if (canceled) return undefined;
   const folderPath = filePaths[0];
-  const imagePaths = scanImages(folderPath);
-  return { folderPath, imagePaths };
+  return { folderPath, imagePaths: scanImages(folderPath) };
 };
 
 export const selectOutputFolder = async () => {
@@ -69,17 +71,21 @@ export const resizeImages = async (
   cancelled = false;
 
   const { width, height, maintainAspectRatio, format, quality, outputFolder, suffix } = options;
+  const total = imagePaths.length;
+  let completed = 0;
+  const success: string[] = [];
+  const failed: { path: string; error: string }[] = [];
 
   if (!existsSync(outputFolder)) mkdirSync(outputFolder, { recursive: true });
 
-  const success: string[] = [];
-  const failed: { path: string; error: string }[] = [];
-  const total = imagePaths.length;
+  const sendProgress = (payload: object) => {
+    const win = BrowserWindow.fromWebContents(event.sender);
+    if (win) win.webContents.send(KEY_IPC.IMAGE_RESIZER_PROGRESS, payload);
+  };
 
-  for (let i = 0; i < imagePaths.length; i++) {
-    if (cancelled) break;
+  const processOne = async (inputPath: string): Promise<void> => {
+    if (cancelled) return;
 
-    const inputPath = imagePaths[i];
     const name = basename(inputPath, extname(inputPath));
     const originalExt = extname(inputPath).replace('.', '').toLowerCase();
 
@@ -91,14 +97,11 @@ export const resizeImages = async (
       else if (originalExt === 'webp') { outputFormat = 'webp'; outputExt = 'webp'; }
       else { outputFormat = 'jpeg'; outputExt = 'jpg'; }
     } else if (format === 'png') {
-      outputFormat = 'png';
-      outputExt = 'png';
+      outputFormat = 'png'; outputExt = 'png';
     } else if (format === 'webp') {
-      outputFormat = 'webp';
-      outputExt = 'webp';
+      outputFormat = 'webp'; outputExt = 'webp';
     } else {
-      outputFormat = 'jpeg';
-      outputExt = 'jpg';
+      outputFormat = 'jpeg'; outputExt = 'jpg';
     }
 
     const outputFileName = `${name}${suffix}.${outputExt}`;
@@ -107,9 +110,10 @@ export const resizeImages = async (
     if (!existsSync(outputDir)) mkdirSync(outputDir, { recursive: true });
     const outputPath = join(outputDir, outputFileName);
 
+    let outputPath_: string | null = null;
+
     try {
       let image = sharp(inputPath);
-      const metadata = await image.metadata();
 
       if (width || height) {
         const resizeOpts: sharp.ResizeOptions = {};
@@ -132,22 +136,30 @@ export const resizeImages = async (
 
       await image.toFile(outputPath);
       success.push(outputPath);
+      outputPath_ = outputPath;
     } catch (err: any) {
       failed.push({ path: inputPath, error: err?.message || 'Unknown error' });
     }
 
-    const progress = Math.round(((i + 1) / total) * 100);
-    const win = BrowserWindow.fromWebContents(event.sender);
-    if (win) {
-      win.webContents.send(KEY_IPC.IMAGE_RESIZER_PROGRESS, {
-        current: i + 1,
-        total,
-        progress,
-        file: basename(inputPath),
-        outputPath: success[success.length - 1] ?? null,
-      });
+    completed++;
+    sendProgress({
+      current: completed,
+      total,
+      progress: Math.round((completed / total) * 100),
+      file: basename(inputPath),
+      outputPath: outputPath_,
+    });
+  };
+
+  const queue = [...imagePaths];
+  const worker = async () => {
+    while (queue.length > 0 && !cancelled) {
+      const inputPath = queue.shift();
+      if (inputPath) await processOne(inputPath);
     }
-  }
+  };
+
+  await Promise.all(Array.from({ length: Math.min(CONCURRENCY, total) }, worker));
 
   return { success, failed };
 };

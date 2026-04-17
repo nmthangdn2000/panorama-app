@@ -4,12 +4,14 @@ import { Api } from './type';
 import * as projectPanorama from './project-panorama';
 import * as setting from './setting';
 import * as imageResizer from './image-resizer';
+import * as imageCompressor from './image-compressor';
 
 // Custom APIs for renderer
 const api: Api = {
   projectPanorama,
   setting,
   imageResizer,
+  imageCompressor,
 };
 
 // Use `contextBridge` APIs to expose Electron APIs to

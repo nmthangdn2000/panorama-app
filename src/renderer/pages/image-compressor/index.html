@@ -1,39 +1,11 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Panorama</title>
-    <!-- https://developer.mozilla.org/en-US/docs/Web/HTTP/CSP -->
-    <!-- <meta
-      http-equiv="Content-Security-Policy"
-      content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:"
-    /> -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Compressor</title>
   </head>
-
-  <body data-theme="light">
-    <div class="flex justify-between items-center">
-      <button
-        data-drawer-target="logo-sidebar"
-        data-drawer-toggle="logo-sidebar"
-        aria-controls="logo-sidebar"
-        type="button"
-        class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg xl:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600"
-      >
-        <span class="sr-only">Open sidebar</span>
-        <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
-          <path
-            clip-rule="evenodd"
-            fill-rule="evenodd"
-            d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"
-          ></path>
-        </svg>
-      </button>
-      <div>
-        <p id="txt_project_name" class="text-4xl font-bold text-gray-900 dark:text-white">Project Name</p>
-      </div>
-      <div></div>
-    </div>
-
+  <body>
     <aside id="logo-sidebar" class="fixed top-0 left-0 z-40 w-64 h-screen transition-transform -translate-x-full xl:translate-x-0" aria-label="Sidebar">
       <div class="h-full px-3 py-4 overflow-y-auto bg-gray-50 dark:bg-gray-800">
         <a href="#" class="flex items-center ps-2.5 mb-5">
@@ -46,10 +18,7 @@
         </a>
         <ul class="space-y-2 font-medium">
           <li>
-            <a
-              href="../../../pages/project-panorama/index.html"
-              class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group"
-            >
+            <a href="../../pages/project-panorama/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg
                 class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white"
                 aria-hidden="true"
@@ -64,7 +33,7 @@
             </a>
           </li>
           <li>
-            <a href="../../../pages/settings/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <a href="../../pages/settings/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <g clip-path="url(#clip0_11_1221)">
                   <path
@@ -82,13 +51,19 @@
             </a>
           </li>
           <li>
-            <a href="../../../pages/image-resizer/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <a href="../../pages/image-resizer/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
               <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zm-8-2l-4-5-3 4h14l-5-7-2 3z"/></svg>
               <span class="ms-3">Image Resizer</span>
             </a>
           </li>
           <li>
-            <a href="../../../pages/image-compressor/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+            <a href="../../pages/image-resizer/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white hover:bg-gray-100 dark:hover:bg-gray-700 group">
+              <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M21 3H3c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h18c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H3V5h18v14zm-8-2l-4-5-3 4h14l-5-7-2 3z"/></svg>
+              <span class="ms-3">Image Resizer</span>
+            </a>
+          </li>
+          <li>
+            <a href="../../pages/image-compressor/index.html" class="flex items-center p-2 text-gray-900 rounded-lg dark:text-white bg-gray-100 dark:bg-gray-700 group">
               <svg class="w-5 h-5 text-gray-500 transition duration-75 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M20 6h-2.18c.07-.31.18-.61.18-.93C18 3.38 16.62 2 14.93 2c-.97 0-1.76.44-2.35 1.12L12 3.77l-.58-.65C10.82 2.44 10.03 2 9.07 2 7.38 2 6 3.38 6 5.07c0 .32.11.62.18.93H4c-1.11 0-2 .89-2 2v13c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5.07-2c.55 0 1.07.45 1.07 1.07 0 .36-.18.68-.44.88L12 9.29 8.44 5.95C8.18 5.75 8 5.43 8 5.07 8 4.45 8.52 4 9.07 4h.01c.28 0 .54.12.72.31L12 6.6l2.2-2.29c.18-.19.44-.31.72-.31h.01zM4 19V8h16v11H4z"/></svg>
               <span class="ms-3">Image Compressor</span>
             </a>
@@ -96,261 +71,103 @@
         </ul>
       </div>
     </aside>
-    <div class="p-4 xl:ml-64">
-      <div class="flex justify-between">
-        <div class="flex">
-          <button
-            id="btn-open-dialog"
-            type="button"
-            class="text-white inline-flex items-center gap-2 bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 focus:outline-none dark:focus:ring-blue-800"
-          >
-            <svg class="w-6 h-6 ext-white" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="currentColor" viewBox="0 0 24 24">
-              <path
-                fill-rule="evenodd"
-                d="M5 4a2 2 0 0 0-2 2v1h10.968l-1.9-2.28A2 2 0 0 0 10.532 4H5ZM3 19V9h18v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Zm9-8.5a1 1 0 0 1 1 1V13h1.5a1 1 0 1 1 0 2H13v1.5a1 1 0 1 1-2 0V15H9.5a1 1 0 1 1 0-2H11v-1.5a1 1 0 0 1 1-1Z"
-                clip-rule="evenodd"
-              />
-            </svg>
-
-            Add Location
-          </button>
-          <button
-            id="btn_remove_all_panorama"
-            type="button"
-            class="inline-flex hidden justify-center items-center gap-2 focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-red-600 dark:hover:bg-red-700 dark:focus:ring-red-900"
-          >
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
-              <path
-                fill-rule="evenodd"
-                clip-rule="evenodd"
-                d="M8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6H19C19.5523 6 20 6.44772 20 7C20 7.55228 19.5523 8 19 8V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V8C4.44772 8 4 7.55228 4 7C4 6.44772 4.44772 6 5 6H8V4C8 3.46957 8.21071 2.96086 8.58579 2.58579ZM10 6H14V4H10V6ZM11 10C11 9.44772 10.5523 9 10 9C9.44772 9 9 9.44772 9 10V18C9 18.5523 9.44772 19 10 19C10.5523 19 11 18.5523 11 18V10ZM15 10C15 9.44772 14.5523 9 14 9C13.4477 9 13 9.44772 13 10V18C13 18.5523 13.4477 19 14 19C14.5523 19 15 18.5523 15 18V10Z"
-              ></path>
-            </svg>
-            Remove All
-          </button>
-        </div>
-        <div class="flex">
-          <button
-            id="btn_preview_panorama"
-            type="button"
-            class="inline-flex hidden justify-center items-center gap-2 focus:outline-none text-white bg-yellow-400 hover:bg-yellow-500 focus:ring-4 focus:ring-yellow-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:focus:ring-yellow-900"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <g clip-path="url(#clip0_17_17768)">
-                <path
-                  d="M12 4.5C7 4.5 2.73 7.61 1 12C2.73 16.39 7 19.5 12 19.5C17 19.5 21.27 16.39 23 12C21.27 7.61 17 4.5 12 4.5ZM12 17C9.24 17 7 14.76 7 12C7 9.24 9.24 7 12 7C14.76 7 17 9.24 17 12C17 14.76 14.76 17 12 17ZM12 9C10.34 9 9 10.34 9 12C9 13.66 10.34 15 12 15C13.66 15 15 13.66 15 12C15 10.34 13.66 9 12 9Z"
-                  fill="currentColor"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_17_17768">
-                  <rect width="24" height="24" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-            Preview
-          </button>
-          <button
-            id="btn_render_panorama"
-            type="button"
-            class="inline-flex hidden justify-center items-center gap-2 text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              version="1.1"
-              xmlns:xlink="http://www.w3.org/1999/xlink"
-              x="0"
-              y="0"
-              viewBox="0 0 24 24"
-              style="enable-background: new 0 0 512 512"
-              xml:space="preserve"
-              class=""
-              width="24"
-              height="24"
-            >
-              <g>
-                <path
-                  d="M6.75 14.425V9.566a1.258 1.258 0 0 1 .606-1.072l4-2.4a1.232 1.232 0 0 1 .394-.145V2h-.177a2 2 0 0 0-1.06.304L3.94 6.412A2 2 0 0 0 3 8.108v7.783a1.984 1.984 0 0 0 .19.817l3.589-2.071a1.22 1.22 0 0 1-.029-.212z"
-                  fill="currentColor"
-                  opacity="1"
-                  data-original="currentColor"
-                  class=""
-                ></path>
-                <path
-                  d="M7.25 9.566v4.859a.751.751 0 0 0 .373.648l4 2.326a.717.717 0 0 0 .127.034v-5.38L7.282 9.447a.717.717 0 0 0-.032.12zM12.643 6.094l4 2.4a1.257 1.257 0 0 1 .607 1.072v4.859a1.22 1.22 0 0 1-.028.211l3.588 2.072a1.984 1.984 0 0 0 .19-.816V8.108a2 2 0 0 0-.94-1.697l-6.573-4.108A2 2 0 0 0 12.427 2h-.177v3.95a1.242 1.242 0 0 1 .393.144z"
-                  fill="currentColor"
-                  opacity="1"
-                  data-original="currentColor"
-                  class=""
-                ></path>
-                <path
-                  d="m16.628 15.505-4 2.326a1.253 1.253 0 0 1-1.256 0l-4-2.326a1.239 1.239 0 0 1-.41-.398l-3.511 2.028a1.977 1.977 0 0 0 .489.452l6.574 4.109a2 2 0 0 0 1.06.304h.853a2 2 0 0 0 1.06-.304l6.573-4.109a1.977 1.977 0 0 0 .49-.452l-3.512-2.028a1.239 1.239 0 0 1-.41.398z"
-                  fill="currentColor"
-                  opacity="1"
-                  data-original="currentColor"
-                  class=""
-                ></path>
-                <path
-                  d="M12.25 12.054v5.38a.717.717 0 0 0 .127-.035l4-2.326a.751.751 0 0 0 .373-.648V9.566a.713.713 0 0 0-.032-.118zM16.386 8.923l-4-2.4a.751.751 0 0 0-.772 0l-4 2.4c-.037.022-.055.062-.087.09L12 11.62l4.473-2.609c-.032-.027-.05-.067-.087-.09z"
-                  fill="currentColor"
-                  opacity="1"
-                  data-original="currentColor"
-                  class=""
-                ></path>
-              </g>
-            </svg>
-            Render
-          </button>
-          <button
-            id="btn_export_panorama"
-            type="button"
-            class="inline-flex hidden justify-center items-center gap-2 text-gray-900 bg-white border border-gray-300 focus:outline-none hover:bg-gray-100 focus:ring-4 focus:ring-gray-100 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-gray-800 dark:text-white dark:border-gray-600 dark:hover:bg-gray-700 dark:hover:border-gray-600 dark:focus:ring-gray-700"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-              <g clip-path="url(#clip0_17_17429)">
-                <path
-                  d="M19.35 10.04C18.67 6.59 15.64 4 12 4C9.11 4 6.6 5.64 5.35 8.04C2.34 8.36 0 10.91 0 14C0 17.31 2.69 20 6 20H19C21.76 20 24 17.76 24 15C24 12.36 21.95 10.22 19.35 10.04ZM14 13V17H10V13H7L11.65 8.35C11.85 8.15 12.16 8.15 12.36 8.35L17 13H14Z"
-                  fill="currentColor"
-                />
-              </g>
-              <defs>
-                <clipPath id="clip0_17_17429">
-                  <rect width="24" height="24" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
-            Export
-          </button>
-        </div>
+    <div class="h-screen flex flex-col xl:ml-64 overflow-y-auto">
+      <div class="flex justify-between items-center px-4 pt-2">
+        <button data-drawer-target="logo-sidebar" data-drawer-toggle="logo-sidebar" aria-controls="logo-sidebar" type="button" class="inline-flex items-center p-2 mt-2 ms-3 text-sm text-gray-500 rounded-lg xl:hidden hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200 dark:text-gray-400 dark:hover:bg-gray-700 dark:focus:ring-gray-600">
+          <span class="sr-only">Open sidebar</span>
+          <svg class="w-6 h-6" aria-hidden="true" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"><path clip-rule="evenodd" fill-rule="evenodd" d="M2 4.75A.75.75 0 012.75 4h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 4.75zm0 10.5a.75.75 0 01.75-.75h7.5a.75.75 0 010 1.5h-7.5a.75.75 0 01-.75-.75zM2 10a.75.75 0 01.75-.75h14.5a.75.75 0 010 1.5H2.75A.75.75 0 012 10z"></path></svg>
+        </button>
+        <p class="text-2xl font-bold text-gray-900 dark:text-white uppercase py-3">Image Compressor</p>
+        <div></div>
       </div>
+      <div class="p-4 flex-1">
+        <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
 
-      <div class="p-4 border-2 border-gray-200 border-dashed rounded-lg dark:border-gray-700">
-        <p class="text-gray-900 dark:text-white text-center">No images have been added yet.</p>
-
-        <div class="flex flex-col gap-4 overflow-auto h-[calc(100vh-180px)]" id="image_panorama_container"></div>
-      </div>
-    </div>
-
-    <!-- Viewer modal -->
-    <div id="modal_viewer" tabindex="-1" class="hidden overflow-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-screen md:inset-0 h-screen">
-      <div class="relative p-4 w-full h-full bg-white">
-        <section id="viewer"></section>
-        <div class="fixed bottom-4 left-1/2 z-50 w-[calc(100%-100px)] -translate-x-1/2" id="carousel_container">
-          <div class="swiper carousel_swiper">
-            <div class="swiper-wrapper"></div>
+          <!-- Select source -->
+          <div class="mb-4 flex items-center gap-3 flex-wrap">
+            <button id="btn_select_images" type="button" class="text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-blue-600 dark:hover:bg-blue-700 whitespace-nowrap">Select Images</button>
+            <button id="btn_select_folder" type="button" class="text-white bg-purple-600 hover:bg-purple-700 focus:ring-4 focus:outline-none focus:ring-purple-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-purple-500 dark:hover:bg-purple-600 whitespace-nowrap">Select Folder</button>
+            <span id="label_image_count" class="text-sm text-gray-500 dark:text-gray-400">No files selected</span>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div
-      id="progress_modal"
-      data-modal-backdrop="static"
-      tabindex="-1"
-      aria-hidden="true"
-      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full"
-    >
-      <div class="relative p-4 w-full max-w-md max-h-full">
-        <!-- Modal content -->
-        <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-          <div class="p-4 md:p-5 flex flex-col justify-center items-center gap-8">
-            <p id="txt_processing_render_project" class="text-xl text-gray-900 dark:text-white">Processing export project...</p>
-            <div role="status" id="icon_processing">
-              <svg
-                aria-hidden="true"
-                class="inline w-8 h-8 text-gray-200 animate-spin dark:text-gray-600 fill-orange-500"
-                viewBox="0 0 100 101"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M100 50.5908C100 78.2051 77.6142 100.591 50 100.591C22.3858 100.591 0 78.2051 0 50.5908C0 22.9766 22.3858 0.59082 50 0.59082C77.6142 0.59082 100 22.9766 100 50.5908ZM9.08144 50.5908C9.08144 73.1895 27.4013 91.5094 50 91.5094C72.5987 91.5094 90.9186 73.1895 90.9186 50.5908C90.9186 27.9921 72.5987 9.67226 50 9.67226C27.4013 9.67226 9.08144 27.9921 9.08144 50.5908Z"
-                  fill="currentColor"
-                />
-                <path
-                  d="M93.9676 39.0409C96.393 38.4038 97.8624 35.9116 97.0079 33.5539C95.2932 28.8227 92.871 24.3692 89.8167 20.348C85.8452 15.1192 80.8826 10.7238 75.2124 7.41289C69.5422 4.10194 63.2754 1.94025 56.7698 1.05124C51.7666 0.367541 46.6976 0.446843 41.7345 1.27873C39.2613 1.69328 37.813 4.19778 38.4501 6.62326C39.0873 9.04874 41.5694 10.4717 44.0505 10.1071C47.8511 9.54855 51.7191 9.52689 55.5402 10.0491C60.8642 10.7766 65.9928 12.5457 70.6331 15.2552C75.2735 17.9648 79.3347 21.5619 82.5849 25.841C84.9175 28.9121 86.7997 32.2913 88.1811 35.8758C89.083 38.2158 91.5421 39.6781 93.9676 39.0409Z"
-                  fill="currentFill"
-                />
-              </svg>
-              <span class="sr-only">Loading...</span>
-            </div>
-            <div id="icon_success" class="hidden">
-              <svg
-                class="w-8 h-8 me-2 text-green-500 dark:text-green-400 flex-shrink-0"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  d="M10 .5a9.5 9.5 0 1 0 9.5 9.5A9.51 9.51 0 0 0 10 .5Zm3.707 8.207-4 4a1 1 0 0 1-1.414 0l-2-2a1 1 0 0 1 1.414-1.414L9 10.586l3.293-3.293a1 1 0 0 1 1.414 1.414Z"
-                />
-              </svg>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full dark:bg-gray-700">
-              <div id="progress_bar" class="bg-orange-500 text-xs font-medium text-orange-100 text-center p-0.5 leading-none rounded-full" style="width: 0%">0%</div>
-            </div>
-            <!-- Modal footer -->
-            <div class="flex items-center">
-              <button
-                id="btn_cancel_progress"
-                type="button"
-                class="py-2.5 px-5 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100 hover:text-orange-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
-              >
-                Cancel
+          <!-- Select output folder -->
+          <div class="mb-5 flex items-center gap-4">
+            <button id="btn_select_output" type="button" class="text-white bg-gray-600 hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-500 dark:hover:bg-gray-600 whitespace-nowrap">Output Folder</button>
+            <span id="label_output_folder" class="text-sm text-gray-500 dark:text-gray-400 truncate">Not selected</span>
+          </div>
+
+          <!-- Compression preset -->
+          <div class="mb-4">
+            <p class="block mb-2 text-sm font-medium text-gray-900 dark:text-white">Compression Level</p>
+            <div class="flex gap-2 flex-wrap">
+              <button data-preset="low" type="button" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">
+                Low <span class="text-xs opacity-70">(best quality)</span>
               </button>
-              <button
-                id="btn_ok_progress"
-                type="button"
-                class="hidden focus:outline-none text-white bg-green-500 hover:bg-green-600 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-green-500 dark:hover:bg-green-600 dark:focus:ring-green-700"
-              >
-                Ok
+              <button data-preset="medium" type="button" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-blue-600 text-white dark:bg-blue-500 hover:bg-blue-700 transition-colors">
+                Medium <span class="text-xs opacity-80">(recommended)</span>
+              </button>
+              <button data-preset="high" type="button" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">
+                High <span class="text-xs opacity-70">(smallest size)</span>
+              </button>
+              <button data-preset="custom" type="button" class="px-4 py-2 text-sm font-medium rounded-lg border border-gray-300 dark:border-gray-600 bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300 hover:bg-blue-600 hover:text-white transition-colors">
+                Custom
               </button>
             </div>
           </div>
-        </div>
-      </div>
-    </div>
 
-    <div
-      id="modal_setting_render_panorama"
-      tabindex="-1"
-      data-modal-target="modal_setting_render_panorama"
-      aria-hidden="true"
-      class="hidden overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center w-full md:inset-0 h-[calc(100%-1rem)] max-h-full"
-    >
-      <div class="relative p-4 w-full max-w-md max-h-full">
-        <!-- Modal content -->
-        <div class="relative bg-white rounded-lg shadow dark:bg-gray-700">
-          <!-- Modal header -->
-          <div class="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
-            <h3 class="text-lg font-semibold text-gray-900 dark:text-white">Select Size Tile Render</h3>
-            <button
-              id="btn_close_modal_setting_render_panorama"
-              type="button"
-              class="text-gray-400 bg-transparent hover:bg-gray-200 hover:text-gray-900 rounded-lg text-sm w-8 h-8 ms-auto inline-flex justify-center items-center dark:hover:bg-gray-600 dark:hover:text-white"
-            >
-              <svg class="w-3 h-3" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 14 14">
-                <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 1 6 6m0 0 6 6M7 7l6-6M7 7l-6 6" />
-              </svg>
-              <span class="sr-only">Close modal</span>
-            </button>
+          <!-- Custom quality -->
+          <div id="custom_quality_section" class="mb-4" style="display:none">
+            <label for="input_custom_quality" class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Quality: <span id="label_custom_quality">80</span>%</label>
+            <input id="input_custom_quality" type="range" min="1" max="100" value="80" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer dark:bg-gray-700" />
           </div>
-          <!-- Modal body -->
-          <p class="px-4 pt-2 text-gray-500 whitespace-pre-line dark:text-gray-400 italic">Size of each tile image after cropping the panorama image</p>
-          <form class="p-4 md:p-5" id="form_setting_render_panorama">
-            <div class="grid gap-4 mb-4 grid-cols-2"></div>
-            <button
-              type="submit"
-              class="text-white inline-flex items-center bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
-            >
-              Render start
-            </button>
-          </form>
+
+          <!-- Suffix -->
+          <div class="mb-5">
+            <label for="input_suffix" class="block mb-1 text-sm font-medium text-gray-900 dark:text-white">Output Suffix</label>
+            <input type="text" id="input_suffix" value="" placeholder="Leave empty to keep original name" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full md:w-64 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white" />
+          </div>
+
+          <!-- Action buttons -->
+          <div class="flex gap-3 mb-4">
+            <button id="btn_compress" type="button" disabled class="text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:outline-none focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-green-500 dark:hover:bg-green-600">Compress Images</button>
+            <button id="btn_cancel" type="button" class="hidden text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:outline-none focus:ring-red-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-red-500 dark:hover:bg-red-600">Cancel</button>
+          </div>
+
+          <!-- Progress -->
+          <div id="progress_section" class="mb-4" style="display:none">
+            <span id="progress_text" class="text-sm font-medium text-blue-700 dark:text-white">0%</span>
+            <div class="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-1">
+              <div id="progress_bar" class="bg-blue-600 h-2.5 rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+          </div>
+
+          <!-- Results -->
+          <div id="results_section" class="mt-4" style="display:none">
+            <div class="flex items-center justify-between mb-2 flex-wrap gap-2">
+              <h3 class="text-sm font-semibold text-gray-900 dark:text-white">Results</h3>
+              <div class="text-sm text-gray-600 dark:text-gray-400 flex gap-4">
+                <span id="stats_saved" class="font-semibold text-green-600 dark:text-green-400"></span>
+                <span id="stats_total"></span>
+              </div>
+            </div>
+            <div class="overflow-x-auto max-h-64 overflow-y-auto">
+              <table class="w-full text-sm text-left text-gray-500 dark:text-gray-400">
+                <thead class="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 sticky top-0">
+                  <tr>
+                    <th class="px-4 py-2">File</th>
+                    <th class="px-4 py-2">Original</th>
+                    <th class="px-4 py-2">Compressed</th>
+                    <th class="px-4 py-2">Saved</th>
+                  </tr>
+                </thead>
+                <tbody id="results_list"></tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
-
     <script type="module" src="./index.ts"></script>
   </body>
 </html>

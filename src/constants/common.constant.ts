@@ -16,6 +16,14 @@ export enum KEY_IPC {
   GET_SETTINGS = 'settings:get',
   SET_SETTINGS = 'settings:set',
 
+  // image compressor
+  IMAGE_COMPRESSOR_SELECT_IMAGES = 'imageCompressor:selectImages',
+  IMAGE_COMPRESSOR_SELECT_FOLDER = 'imageCompressor:selectFolder',
+  IMAGE_COMPRESSOR_SELECT_OUTPUT_FOLDER = 'imageCompressor:selectOutputFolder',
+  IMAGE_COMPRESSOR_COMPRESS = 'imageCompressor:compress',
+  IMAGE_COMPRESSOR_PROGRESS = 'imageCompressor:progress',
+  IMAGE_COMPRESSOR_CANCEL = 'imageCompressor:cancel',
+
   // image resizer
   IMAGE_RESIZER_SELECT_IMAGES = 'imageResizer:selectImages',
   IMAGE_RESIZER_SELECT_FOLDER = 'imageResizer:selectFolder',

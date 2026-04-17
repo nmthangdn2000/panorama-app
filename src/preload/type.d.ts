@@ -5,11 +5,13 @@ import { ProjectPanorama } from '../main/project-panorama/type';
 import { Panorama } from '../renderer/pages/project-panorama/detail/lib-panorama';
 import { SettingApi } from './setting';
 import { ImageResizerApi } from './image-resizer';
+import { ImageCompressorApi } from './image-compressor';
 
 export type Api = {
   projectPanorama: ProjectPanoramaApi;
   setting: SettingApi;
   imageResizer: ImageResizerApi;
+  imageCompressor: ImageCompressorApi;
 };
 
 declare global {

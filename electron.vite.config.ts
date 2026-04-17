@@ -50,6 +50,7 @@ export default defineConfig({
               detailProject: resolve(__dirname, 'src/renderer/pages/project-panorama/detail/index.html'),
               settings: resolve(__dirname, 'src/renderer/pages/settings/index.html'),
               imageResizer: resolve(__dirname, 'src/renderer/pages/image-resizer/index.html'),
+              imageCompressor: resolve(__dirname, 'src/renderer/pages/image-compressor/index.html'),
             },
           },
         },
