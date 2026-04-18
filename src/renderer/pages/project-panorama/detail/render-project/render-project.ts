@@ -1,5 +1,5 @@
 import { Modal } from 'flowbite';
-import { deviceTileSizeSection } from './html';
+import { deviceTileSizeSection, generateTilesCheckbox } from './html';
 import { convertLocationsToPanoramas } from '../../../../common/panorama-utils';
 
 let currentProgress = 0;
@@ -85,10 +85,45 @@ const renderProject = () => {
     // Render device sections
     const container = formSettingRenderPanorama.querySelector('div')!;
     container.innerHTML = `
-      ${deviceTileSizeSection('pc', pcTileSizes, widthPanorama, heightPanorama)}
-      ${deviceTileSizeSection('tablet', tabletTileSizes, tabletWidth, tabletHeight)}
-      ${deviceTileSizeSection('mobile', mobileTileSizes, mobileWidth, mobileHeight)}
+      ${generateTilesCheckbox()}
+      <div id="tile_size_sections" class="col-span-2 hidden flex-col gap-4">
+        ${deviceTileSizeSection('pc', pcTileSizes, widthPanorama, heightPanorama)}
+        ${deviceTileSizeSection('tablet', tabletTileSizes, tabletWidth, tabletHeight)}
+        ${deviceTileSizeSection('mobile', mobileTileSizes, mobileWidth, mobileHeight)}
+      </div>
     `;
+
+    const checkboxGenerateTiles = container.querySelector('#checkbox_generate_tiles') as HTMLInputElement;
+    const tileSizeSections = container.querySelector('#tile_size_sections') as HTMLDivElement;
+
+    // Toggle tile size sections visibility
+    checkboxGenerateTiles.addEventListener('change', () => {
+      tileSizeSections.classList.toggle('hidden', !checkboxGenerateTiles.checked);
+      tileSizeSections.classList.toggle('flex', checkboxGenerateTiles.checked);
+    });
+
+    // Highlight selected radio label
+    container.addEventListener('change', (e) => {
+      const target = e.target as HTMLInputElement;
+      if (target.type !== 'radio') return;
+      const groupName = target.name;
+      container.querySelectorAll<HTMLInputElement>(`input[name="${groupName}"]`).forEach((input) => {
+        const label = input.closest('label')!;
+        const selected = input.checked;
+        label.classList.toggle('border-blue-600', selected);
+        label.classList.toggle('bg-blue-50', selected);
+        label.classList.toggle('text-blue-700', selected);
+        label.classList.toggle('dark:bg-blue-900/30', selected);
+        label.classList.toggle('dark:border-blue-500', selected);
+        label.classList.toggle('dark:text-blue-400', selected);
+        label.classList.toggle('border-gray-200', !selected);
+        label.classList.toggle('bg-white', !selected);
+        label.classList.toggle('text-gray-700', !selected);
+        label.classList.toggle('dark:border-gray-600', !selected);
+        label.classList.toggle('dark:bg-gray-800', !selected);
+        label.classList.toggle('dark:text-gray-300', !selected);
+      });
+    });
 
     // get data from form
     formSettingRenderPanorama.addEventListener('submit', async (e) => {
@@ -96,21 +131,25 @@ const renderProject = () => {
       settingModalPanorama.hide();
 
       const data = new FormData(formSettingRenderPanorama);
+      const generateTiles = (container.querySelector('#checkbox_generate_tiles') as HTMLInputElement).checked;
 
       const pcSize = data.get('item_size_radio_pc') as string | null;
       const tabletSize = data.get('item_size_radio_tablet') as string | null;
       const mobileSize = data.get('item_size_radio_mobile') as string | null;
 
-      if (!pcSize || !tabletSize || !mobileSize) {
-        console.error('All device sizes are required');
+      if (generateTiles && (!pcSize || !tabletSize || !mobileSize)) {
+        console.error('All device sizes are required when generating tiles');
         return;
       }
 
-      handleRenderProject({
-        pc: Number(pcSize),
-        tablet: Number(tabletSize),
-        mobile: Number(mobileSize),
-      });
+      handleRenderProject(
+        {
+          pc: Number(pcSize) || 0,
+          tablet: Number(tabletSize) || 0,
+          mobile: Number(mobileSize) || 0,
+        },
+        generateTiles
+      );
     });
   });
 
@@ -174,7 +213,7 @@ window.api.projectPanorama.processingProject((percentage: number) => {
   }
 });
 
-const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: number }) => {
+const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: number }, generateTiles = false) => {
   const url = new URL(window.location.href);
   const name = url.searchParams.get('name');
 
@@ -245,7 +284,8 @@ const handleRenderProject = async (sizes: { pc: number; tablet: number; mobile: 
 
   const result = await window.api.projectPanorama.renderProject(name, sizes, {
     panoramas: panoramas,
-    locations: updatedLocations, // Include updated locations with faceSize and nbTiles
+    locations: updatedLocations,
+    generateTiles,
   });
 
   if (!result) {

@@ -11,24 +11,22 @@ export default defineConfig({
         input: {
           main: resolve(__dirname, 'src/main/index.ts'),
           worker: resolve(__dirname, 'src/main/project-panorama/worker.ts'),
+          'cubemap-worker': resolve(__dirname, 'src/main/project-panorama/cubemap-worker.ts'),
         },
         output: {
           entryFileNames: (chunkInfo) => {
-            if (chunkInfo.name === 'worker') {
-              return 'worker.js';
-            }
+            if (chunkInfo.name === 'worker') return 'worker.js';
+            if (chunkInfo.name === 'cubemap-worker') return 'cubemap-worker.js';
             return 'index.js';
           },
           chunkFileNames: (chunkInfo) => {
-            if (chunkInfo.name === 'worker') {
-              return 'worker.js';
-            }
+            if (chunkInfo.name === 'worker') return 'worker.js';
+            if (chunkInfo.name === 'cubemap-worker') return 'cubemap-worker.js';
             return 'index.js';
           },
           manualChunks: (id) => {
-            if (id.includes('worker.ts')) {
-              return 'worker';
-            }
+            if (id.includes('cubemap-worker.ts')) return 'cubemap-worker';
+            if (id.includes('worker.ts')) return 'worker';
             return 'index';
           },
         },

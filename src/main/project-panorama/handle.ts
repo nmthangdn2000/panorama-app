@@ -1,19 +1,19 @@
-import { ChildProcessWithoutNullStreams, spawn } from 'child_process';
 import { BrowserWindow, dialog } from 'electron';
 import { copyFileSync, createWriteStream, existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'fs';
 import { join } from 'path';
+import { cpus, freemem } from 'os';
 import { RenderProject, FileType, NewProject, ProjectPanorama } from './type';
 import { KEY_IPC } from '../../constants/common.constant';
 import archiver from 'archiver';
-import { platform } from 'os';
 import { getSetting } from '../setting/handle';
 import sharp from 'sharp';
 import { is } from '@electron-toolkit/utils';
 import { isBase64Image } from '../utils/util';
 import { Worker } from 'worker_threads';
 import { PanoramaLocationType, DataVirtualTourType } from '../../renderer/pages/project-panorama/detail/lib-panorama/panorama.type';
+import type { CubemapWorkerData } from './cubemap-worker';
 
-let CHILD: ChildProcessWithoutNullStreams | undefined;
+let CANCEL_REQUESTED = false;
 const regexPath = /[\/\\]/;
 
 export const checkPathProject = async () => {
@@ -201,7 +201,7 @@ const pushTaskProgress = (tasks: string[], totalProcess: number) => {
 
 export const renderProject = async (name: string, sizes: { pc: number; tablet: number; mobile: number }, renderData: RenderProject) => {
   try {
-    cancelProgress();
+    CANCEL_REQUESTED = false;
 
     const { panoramas, locations } = renderData;
     // Prioritize panoramas with calculated metadata from renderer
@@ -229,87 +229,99 @@ export const renderProject = async (name: string, sizes: { pc: number; tablet: n
     await saveProject(name, renderData, true);
     pushTaskProgress(tasks, totalProcess);
 
-    // panorama to cube
+    const generateTiles = renderData.generateTiles ?? false;
+    console.log('[cubemap] generateTiles =', generateTiles);
 
-    // check platform
-    const plf = platform();
+    // Always convert panorama → 6 cube faces; only tile when generateTiles = true
+    {
+      let deviceFaceSizes: { pc: number; tablet: number; mobile: number } = {
+        pc: sizes.pc,
+        tablet: sizes.tablet,
+        mobile: sizes.mobile,
+      };
 
-    const toolName = plf === 'darwin' ? 'cubemap-generator-macos' : 'cubemap-generator-win.exe';
-
-    // check is exist tool
-    const toolPath1 = join(process.cwd(), 'resources', toolName);
-    const toolPath2 = join(process.cwd(), 'resources', 'app.asar.unpacked', 'resources', toolName);
-    const isExistTool = existsSync(toolPath1);
-
-    const toolPath = isExistTool ? toolPath1 : toolPath2;
-
-    // Get metadata from locations to use faceSize for each device
-    // If metadata exists in locations, use it; otherwise fallback to sizes parameter
-    let deviceFaceSizes: { pc: number; tablet: number; mobile: number } = {
-      pc: sizes.pc,
-      tablet: sizes.tablet,
-      mobile: sizes.mobile,
-    };
-
-    if (panoramaLocations && panoramaLocations.length > 0) {
-      const firstLocation = panoramaLocations[0];
-      if (firstLocation.metadata) {
-        // Use faceSize from metadata if available, otherwise use sizes parameter
-        deviceFaceSizes = {
-          pc: firstLocation.metadata.pc?.faceSize || sizes.pc,
-          tablet: firstLocation.metadata.tablet?.faceSize || sizes.tablet,
-          mobile: firstLocation.metadata.mobile?.faceSize || sizes.mobile,
-        };
+      if (panoramaLocations && panoramaLocations.length > 0) {
+        const firstLocation = panoramaLocations[0];
+        if (firstLocation.metadata) {
+          deviceFaceSizes = {
+            pc: firstLocation.metadata.pc?.faceSize || sizes.pc,
+            tablet: firstLocation.metadata.tablet?.faceSize || sizes.tablet,
+            mobile: firstLocation.metadata.mobile?.faceSize || sizes.mobile,
+          };
+        }
       }
-    }
 
-    // Render cube map for all devices
-    const devices: Array<{ name: 'pc' | 'tablet' | 'mobile'; size: number }> = [
-      { name: 'pc', size: deviceFaceSizes.pc },
-      { name: 'tablet', size: deviceFaceSizes.tablet },
-      { name: 'mobile', size: deviceFaceSizes.mobile },
-    ];
+      const devices: Array<{ name: 'pc' | 'tablet' | 'mobile'; size: number }> = [
+        { name: 'pc', size: deviceFaceSizes.pc },
+        { name: 'tablet', size: deviceFaceSizes.tablet },
+        { name: 'mobile', size: deviceFaceSizes.mobile },
+      ];
 
-    for (const device of devices) {
-      const inputQualityPath = join(path, name, device.name, 'panoramas');
-      const inputLowPath = join(path, name, device.name, 'panoramas-low');
-      const outputPath = join(path, name, device.name, 'cube');
+      const cubemapWorkerPath = join(__dirname, 'cubemap-worker.js');
+      // Dynamically calculate pool size based on free RAM and image dimensions
+      let memPerWorker = 500 * 1024 * 1024; // fallback 500MB
+      const inputQualityPathTemp = join(path, name, devices[0].name, 'panoramas');
+      const firstFile = existsSync(inputQualityPathTemp)
+        ? readdirSync(inputQualityPathTemp).find((f) => statSync(join(inputQualityPathTemp, f)).isFile())
+        : undefined;
+      if (firstFile) {
+        try {
+          const meta = await sharp(join(inputQualityPathTemp, firstFile)).metadata();
+          const w = meta.width ?? 4096;
+          const h = meta.height ?? 2048;
+          const faceSize = Math.floor(w / 4);
+          // source RGBA (×2 for sharp pipeline copy) + 6 face RGBA (×2) + 500MB overhead
+          memPerWorker = w * h * 4 * 2 + 6 * faceSize * faceSize * 4 * 2 + 500 * 1024 * 1024;
+        } catch { /* keep fallback */ }
+      }
+      const freeRam = freemem();
+      const poolSize = Math.max(1, Math.min(
+        Math.floor(freeRam * 0.6 / memPerWorker), // use 60% of free RAM
+        cpus().length
+      ));
+      console.log(`[cubemap] worker path: ${cubemapWorkerPath} | exists: ${existsSync(cubemapWorkerPath)} | pool: ${poolSize}`);
 
-      await new Promise((resolve, reject) => {
-        const child = spawn(toolPath, ['--input-quality', inputQualityPath, '--input-low', inputLowPath, '--output', outputPath, '--size', `${device.size}`, '--quality', '100']);
+      for (const device of devices) {
+        if (CANCEL_REQUESTED) break;
 
-        CHILD = child;
+        const inputQualityPath = join(path, name, device.name, 'panoramas');
+        const inputLowPath = join(path, name, device.name, 'panoramas-low');
+        const outputPath = join(path, name, device.name);
 
-        child.stderr.on('data', (data) => {
-          const regex = /✔ PROCESSED SUCCESSFULLY PANORAMA LOW TO CUBE MAP:\s*(.*?)\n/;
+        const qualityFiles = existsSync(inputQualityPath)
+          ? readdirSync(inputQualityPath).filter((f) => statSync(join(inputQualityPath, f)).isFile())
+          : [];
 
-          const match = data.toString().match(regex);
+        const lowFiles = existsSync(inputLowPath)
+          ? readdirSync(inputLowPath).filter((f) => statSync(join(inputLowPath, f)).isFile()).sort((a, b) => a.length - b.length)
+          : [];
 
-          if (match) {
-            if (match[1]) {
-              pushTaskProgress(tasks, totalProcess);
-            }
-          }
+        console.log(`[cubemap] device=${device.name} files=${qualityFiles.length} pool=${poolSize}`);
+
+        // Build task list for this device
+        const spawnWorker = (qualityFile: string) => new Promise<void>((resolve, reject) => {
+          if (CANCEL_REQUESTED) return resolve();
+          const lastDot = qualityFile.lastIndexOf('.');
+          const folderName = qualityFile.substring(0, lastDot);
+          const fullQualityPath = join(inputQualityPath, qualityFile);
+          const escapedName = folderName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          const matchedLow = lowFiles.find((lf) => new RegExp(escapedName).test(lf));
+          const fullLowPath = matchedLow ? join(inputLowPath, matchedLow) : fullQualityPath;
+
+          const workerData: CubemapWorkerData = { qualityFile: fullQualityPath, lowFile: fullLowPath, folderName, outputPath, tileSize: device.size, quality: 100, generateTiles };
+          const worker = new Worker(cubemapWorkerPath, { workerData });
+          worker.on('message', (msg) => {
+            if (msg.success) { pushTaskProgress(tasks, totalProcess); resolve(); }
+            else { console.error('[cubemap] worker error:', msg.error); reject(new Error(msg.error || 'Worker failed')); }
+          });
+          worker.on('error', (err) => { console.error('[cubemap] worker threw:', err); reject(err); });
         });
 
-        child.on('error', (err) => {
-          console.log(`error: ${err.message}`);
-          CHILD = undefined;
-          reject(err);
-        });
-
-        child.on('close', (code) => {
-          console.log(`child process exited with code ${code} for device ${device.name}`);
-
-          if (code === 0) {
-            return resolve(true);
-          }
-
-          if (child.killed) {
-            child.kill();
-          }
-        });
-      });
+        // Run with concurrency pool: at most poolSize workers at once
+        const queue = [...qualityFiles];
+        const runLane = async () => { while (queue.length > 0) await spawnWorker(queue.shift()!); };
+        await Promise.all(Array.from({ length: Math.min(poolSize, qualityFiles.length) }, runLane));
+      }
     }
 
     if (tasks.length < totalProcess) {
@@ -326,11 +338,7 @@ export const renderProject = async (name: string, sizes: { pc: number; tablet: n
 };
 
 export const cancelProgress = () => {
-  if (CHILD && !CHILD.killed) {
-    CHILD.kill();
-    CHILD = undefined;
-  }
-
+  CANCEL_REQUESTED = true;
   return true;
 };
 

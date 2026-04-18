@@ -34,4 +34,5 @@ export type ProjectPanorama = {
 export type RenderProject = {
   panoramas?: PanoramaDataType[];
   locations?: PanoramaLocationType[] | DataVirtualTourType; // Can be old structure (array) or new structure (DataVirtualTourType)
+  generateTiles?: boolean;
 };
